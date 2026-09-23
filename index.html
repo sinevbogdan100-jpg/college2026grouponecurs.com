@@ -863,15 +863,27 @@ html, body {
 
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'toe-26-9-1-tracker';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
+        const appId = 'sbpgroup-toe-26-9-1';
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwFm2OB9BTKnGYmPG_siRsZoAh_cCMK2w",
+            authDomain: "sbpgroup-toe-26-9-1.firebaseapp.com",
+            projectId: "sbpgroup-toe-26-9-1",
+            storageBucket: "sbpgroup-toe-26-9-1.firebasestorage.app",
+            messagingSenderId: "984164177952",
+            appId: "1:984164177952:web:c332ee08c78ce87b4b4445",
+            measurementId: "G-V88BPGYH33"
+        };
 
-        let app, db, auth, userId = 'local-user';
+        // Единое облачное хранилище группы. Оно одинаковое для всех устройств.
+        const CLOUD_ROOT = ['toe_group', 'shared'];
+        let app, db, auth, userId = 'anonymous';
         let isCloudConnected = false;
+        let attendanceUnsubscribe = null;
+        let scheduleUnsubscribe = null;
 
         const students = [
             "Бондаренко Роман",
@@ -948,8 +960,6 @@ html, body {
         async function loadAttendanceForDate(dateStr) {
             let saved = localStorage.getItem(`toe_att_${dateStr}`);
 
-            // Надёжный резервный источник: IndexedDB. Он не зависит от того,
-            // как браузер хранит localStorage для локального HTML-файла.
             if (!saved) {
                 try {
                     const backup = await dbGet(`toe_att_${dateStr}`);
@@ -966,21 +976,54 @@ html, body {
                 try {
                     const parsed = JSON.parse(saved);
                     attendanceState = parsed.state || {};
-                    if (parsed.weekType) {
-                        currentWeekType = parsed.weekType;
-                        updateWeekTypeButtons(currentWeekType);
-                    }
+                    if (parsed.weekType) currentWeekType = parsed.weekType;
                 } catch(e) {
                     attendanceState = {};
                 }
             } else {
                 attendanceState = {};
                 currentWeekType = getWeekTypeForDate(new Date(dateStr));
-                updateWeekTypeButtons(currentWeekType);
             }
+
+            updateWeekTypeButtons(currentWeekType);
             renderApp();
-  updateWeekRangeLabels();
+            updateWeekRangeLabels();
             renderRosterList();
+
+            // Если облако подключено, общая запись имеет приоритет над локальной.
+            if (isCloudConnected && db) {
+                try {
+                    const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', dateStr));
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        attendanceState = data.state || {};
+                        if (data.weekType) currentWeekType = data.weekType;
+                        localStorage.setItem(`toe_att_${dateStr}`, JSON.stringify(data));
+                        updateWeekTypeButtons(currentWeekType);
+                        renderApp();
+                    }
+                } catch (e) {
+                    console.warn('Не удалось загрузить облачную посещаемость', e);
+                }
+            }
+        }
+
+        function subscribeToAttendance(dateStr) {
+            if (!isCloudConnected || !db) return;
+            if (attendanceUnsubscribe) attendanceUnsubscribe();
+            attendanceUnsubscribe = onSnapshot(
+                doc(db, ...CLOUD_ROOT, 'attendance_records', dateStr),
+                snap => {
+                    if (!snap.exists()) return;
+                    const data = snap.data();
+                    attendanceState = data.state || {};
+                    if (data.weekType) currentWeekType = data.weekType;
+                    localStorage.setItem(`toe_att_${dateStr}`, JSON.stringify(data));
+                    updateWeekTypeButtons(currentWeekType);
+                    renderApp();
+                },
+                err => console.warn('Realtime attendance error', err)
+            );
         }
 
         function updateWeekTypeButtons(type) {
@@ -1055,17 +1098,41 @@ html, body {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
                 userId = auth.currentUser?.uid || 'anonymous';
                 isCloudConnected = true;
+                updateCloudBadge(true);
+
+                const datePicker = document.getElementById('date-picker');
+                const today = datePicker?.value || getCurrentDateStr();
+                await loadAttendanceForDate(today);
+                subscribeToAttendance(today);
+                subscribeToSchedule();
             } catch (e) {
                 console.warn("Cloud offline, using local + IndexedDB storage mode", e);
                 isCloudConnected = false;
+                updateCloudBadge(false);
+                await loadAttendanceForDate(document.getElementById('date-picker')?.value || getCurrentDateStr());
             }
+        }
+
+        function subscribeToSchedule() {
+            if (!isCloudConnected || !db) return;
+            if (scheduleUnsubscribe) scheduleUnsubscribe();
+            scheduleUnsubscribe = onSnapshot(
+                doc(db, ...CLOUD_ROOT, 'schedule', 'main'),
+                snap => {
+                    if (!snap.exists()) return;
+                    const data = snap.data();
+                    if (data.numerator) scheduleDataNumerator = data.numerator;
+                    if (data.denominator) scheduleDataDenominator = data.denominator;
+                    localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
+                    localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
+                    renderSchedule(currentScheduleDay);
+                    if (typeof updateHomeNextLesson === 'function') updateHomeNextLesson();
+                },
+                err => console.warn('Realtime schedule error', err)
+            );
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -1687,6 +1754,17 @@ html, body {
             await savePersistentValue('toe_schedule_num', num);
             await savePersistentValue('toe_schedule_den', den);
             await savePersistentValue('toe_schedule_last_saved', new Date().toISOString());
+            if (isCloudConnected && db) {
+                try {
+                    await setDoc(doc(db, ...CLOUD_ROOT, 'schedule', 'main'), {
+                        numerator: scheduleDataNumerator,
+                        denominator: scheduleDataDenominator,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn('Cloud schedule save failed; local copy is safe', e);
+                }
+            }
             try { await createAutomaticBackup(); } catch (e) { console.warn('Автоматическая резервная копия расписания не создана', e); }
             updateBackupStatus();
         }
@@ -1700,6 +1778,18 @@ html, body {
                 const parsedDen = den ? JSON.parse(den) : null;
                 if (parsedNum) Object.keys(scheduleDataNumerator).forEach(k => { if (Array.isArray(parsedNum[k])) scheduleDataNumerator[k] = parsedNum[k]; });
                 if (parsedDen) Object.keys(scheduleDataDenominator).forEach(k => { if (Array.isArray(parsedDen[k])) scheduleDataDenominator[k] = parsedDen[k]; });
+                if (isCloudConnected && db) {
+                    try {
+                        const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'schedule', 'main'));
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            if (data.numerator) scheduleDataNumerator = data.numerator;
+                            if (data.denominator) scheduleDataDenominator = data.denominator;
+                            localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
+                            localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
+                        }
+                    } catch (e) { console.warn('Не удалось загрузить облачное расписание', e); }
+                }
             } catch(e) { console.warn('Не удалось загрузить изменённое расписание', e); }
         }
 
@@ -2029,7 +2119,7 @@ function renderApp() {
 
             if (isCloudConnected && db) {
                 try {
-                    await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'attendance_records', dateVal), dataToSave);
+                    await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', dateVal), dataToSave);
                 } catch(e) {
                     console.warn("Cloud save failed; local backup is safe", e);
                 }
