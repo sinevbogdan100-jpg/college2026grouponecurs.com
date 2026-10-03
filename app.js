@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step18-root";
+} from "./firebase.js?v=20261003-step18-1-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step18-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-root";
+} from "./utils.js?v=20261003-step18-1-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-1-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step18-root";
+} from "./schedule.js?v=20261003-step18-1-root";
 
         
-window.__SITE_BUILD__ = 'step18-2026-10-03';
+window.__SITE_BUILD__ = 'step18.1-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -2368,6 +2368,18 @@ function renderHomeDayTimeline(){const box=document.getElementById('home-day-tim
 setInterval(renderHomeDayTimeline,15000);setTimeout(renderHomeDayTimeline,700);
 
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
+const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
+function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}
+function saveReadNotificationIds(ids){try{localStorage.setItem(NOTIFICATIONS_READ_KEY,JSON.stringify([...ids].slice(-500)));}catch(e){}}
+function notificationTimeLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function escapeNotificationText(value){return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
+function renderNotifications(){const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
+function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
+function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
+window.openNotifications=function(){document.getElementById('notifications-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());renderNotifications();setTimeout(markNotificationsRead,250);};
+window.closeNotifications=function(){document.getElementById('notifications-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
+window.publishNotification=async function(){if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}const title=document.getElementById('notification-title')?.value.trim()||'';const text=document.getElementById('notification-text')?.value.trim()||'';if(!title&&!text){showToast('Введите заголовок или текст');return;}const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;try{await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccessLogin||'Владелец',type:'announcement'});const t=document.getElementById('notification-title'),b=document.getElementById('notification-text');if(t)t.value='';if(b)b.value='';showToast('Уведомление опубликовано');}catch(e){console.warn('publish notification',e);showToast('Не удалось опубликовать уведомление');}};
 let activeSupportThreadId='';
 function isSupportStaff(){return currentAccessRole==='owner'||(currentAccessRole==='admin'&&canUseSupportStaff());}
 function ownSupportThreadId(){return auth?.currentUser?.uid || visitorSupportId;}
