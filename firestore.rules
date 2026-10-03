@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return signedIn()
+        && request.auth.token.email == 'owner.toe2691@example.com';
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email in [
+          'admin1.toe2691@example.com',
+          'admin2.toe2691@example.com'
+        ];
+    }
+
+    function isEditor() {
+      return isOwner() || isAdmin();
+    }
+
+    match /toe_group/shared/attendance_records/{docId} {
+      // Все посетители сайта входят анонимно и могут читать данные.
+      allow read: if signedIn();
+
+      // Данные главной страницы и состав группы меняет только владелец.
+      allow write: if isOwner()
+        && (docId == 'group_info_shared' || docId == 'students_shared');
+
+      // Журнал и его производную статистику могут менять владелец и два администратора.
+      allow write: if isEditor()
+        && (docId == 'roster_stats_shared' || docId.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+    }
+
+    match /toe_group/shared/schedule/{docId} {
+      allow read: if signedIn();
+      allow write: if isEditor() && docId == 'main';
+    }
+  }
+}

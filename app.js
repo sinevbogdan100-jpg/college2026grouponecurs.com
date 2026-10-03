@@ -1,6 +1,11 @@
 import {
     createFirebaseServices,
     signInAnonymously,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    setPersistence,
+    browserLocalPersistence,
     doc,
     setDoc,
     getDoc,
@@ -10,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step9-root";
+} from "./firebase.js?v=20261003-step10-root";
 
 import {
     getWeekTypeForDate,
@@ -22,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step9-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step9-root";
+} from "./utils.js?v=20261003-step10-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step10-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -34,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step9-root";
+} from "./schedule.js?v=20261003-step10-root";
 
         
-window.__SITE_BUILD__ = 'step9-2026-10-03';
+window.__SITE_BUILD__ = 'step10-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -57,7 +62,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const el = document.getElementById('firebase-diagnostic-status'); if (!el) return;
             el.innerHTML = [
               diagRow('Firebase SDK / инициализация', firebaseDiag.init, firebaseDiag.error),
-              diagRow('Firebase Anonymous Auth', firebaseDiag.auth?.ok ?? null, firebaseDiag.auth?.detail),
+              diagRow('Firebase Auth', firebaseDiag.auth?.ok ?? null, firebaseDiag.auth?.detail),
               diagRow('Firestore чтение', firebaseDiag.read?.ok ?? null, firebaseDiag.read?.detail),
               diagRow('Firestore запись', firebaseDiag.write?.ok ?? null, firebaseDiag.write?.detail),
               diagRow('Realtime listener', firebaseDiag.realtime?.ok ?? null, firebaseDiag.realtime?.detail),
@@ -95,24 +100,26 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 firebaseDiag.read = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
                 diagLog('Firestore READ ERROR', firebaseDiag.read.detail);
             }
-            try {
-                // ВАЖНО: тестируем запись именно в РАЗРЕШЁННЫЙ правилами путь attendance_records.
-                // Ранее диагностика ошибочно писала в /diagnostics/connection, которого нет в правилах,
-                // поэтому она всегда показывала permission-denied даже при исправной записи журнала.
-                const oldData = (await getDoc(ref)).data() || null;
-                const marker = `firebase-diagnostic-${Date.now()}`;
-                await setDoc(ref, { __firebaseDiagnostic: marker }, { merge: true });
-                if (oldData) {
-                    await updateDoc(ref, { __firebaseDiagnostic: deleteField() });
-                } else {
-                    await deleteDoc(ref);
-                }
-                firebaseDiag.write = {ok:true, detail:`Запись в разрешённый путь прошла и тестовый маркер удалён: toe_group/shared/attendance_records/${date}`};
-                diagLog('Firestore WRITE OK', firebaseDiag.write.detail);
-            } catch(e) {
-                if (window.__rtd) { window.__rtd.log('WRITE ERROR: '+(e?.code||'')+' '+(e?.message||e)); window.__rtd.render(); }
+            if (!isEditorRole()) {
+                firebaseDiag.write = {ok:null, detail:'Режим просмотра: проверка записи выполняется только после входа владельца/администратора.'};
+                diagLog('Firestore WRITE SKIPPED: viewer mode');
+            } else {
+                try {
+                    const oldData = (await getDoc(ref)).data() || null;
+                    const marker = `firebase-diagnostic-${Date.now()}`;
+                    await setDoc(ref, { __firebaseDiagnostic: marker }, { merge: true });
+                    if (oldData) {
+                        await updateDoc(ref, { __firebaseDiagnostic: deleteField() });
+                    } else {
+                        await deleteDoc(ref);
+                    }
+                    firebaseDiag.write = {ok:true, detail:`Запись в журнал разрешена для текущей роли: toe_group/shared/attendance_records/${date}`};
+                    diagLog('Firestore WRITE OK', firebaseDiag.write.detail);
+                } catch(e) {
+                    if (window.__rtd) { window.__rtd.log('WRITE ERROR: '+(e?.code||'')+' '+(e?.message||e)); window.__rtd.render(); }
                     firebaseDiag.write = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
-                diagLog('Firestore WRITE ERROR', firebaseDiag.write.detail);
+                    diagLog('Firestore WRITE ERROR', firebaseDiag.write.detail);
+                }
             }
             try {
                 let diagUnsub = null;
@@ -160,6 +167,45 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         const GROUP_INFO_DOC_ID = 'group_info_shared';
         const ROSTER_STATS_DOC_ID = 'roster_stats_shared';
         const STUDENTS_DOC_ID = 'students_shared';
+
+        // Три фиксированные учётные записи редакторов. Пароли никогда не хранятся в коде.
+        // В интерфейсе используются короткие логины, а Firebase Authentication работает с внутренними email.
+        const AUTH_ACCOUNTS = Object.freeze({
+            owner:  { email: 'owner.toe2691@example.com',  role: 'owner', label: 'Владелец' },
+            admin1: { email: 'admin1.toe2691@example.com', role: 'admin', label: 'Администратор 1' },
+            admin2: { email: 'admin2.toe2691@example.com', role: 'admin', label: 'Администратор 2' }
+        });
+        let currentAccessRole = 'viewer';
+        let currentAccountLogin = '';
+        let authStateUnsubscribe = null;
+
+        function getAccountByUser(user) {
+            const email = String(user?.email || '').trim().toLowerCase();
+            if (!email || user?.isAnonymous) return null;
+            return Object.entries(AUTH_ACCOUNTS).find(([, account]) => account.email.toLowerCase() === email) || null;
+        }
+
+        function isEditorRole() {
+            return currentAccessRole === 'owner' || currentAccessRole === 'admin';
+        }
+
+        function isOwnerRole() {
+            return currentAccessRole === 'owner';
+        }
+
+        function applyAccessRoleFromUser(user) {
+            const found = getAccountByUser(user);
+            currentAccountLogin = found?.[0] || '';
+            currentAccessRole = found?.[1]?.role || 'viewer';
+            sessionStorage.setItem('toe_role', currentAccessRole);
+            if (isEditorRole()) sessionStorage.setItem('toe_admin', '1');
+            else sessionStorage.removeItem('toe_admin');
+            if (isOwnerRole()) sessionStorage.setItem('toe_owner', '1');
+            else sessionStorage.removeItem('toe_owner');
+            window.__toeRole = currentAccessRole;
+            window.__toeLogin = currentAccountLogin;
+            updateAdminUI();
+        }
         window.__attendanceListenerActive = false;
         window.__firebaseDebug = window.__firebaseDebug || {init:false, auth:null};
         window.__firebaseUid = '';
@@ -498,29 +544,37 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 firebaseDiag.error = null;
                 diagLog('Firebase initializeApp/getAuth/getFirestore OK');
 
-                // Авторизуем каждого посетителя анонимно. Это необходимо для правил
-                // Firestore вида: allow read, write: if request.auth != null;
+                // Посетитель остаётся анонимным, а три редактора входят через Firebase Email/Password.
+                // Ждём восстановления сохранённой Firebase-сессии, чтобы не перезаписать вход владельца/админа анонимным пользователем.
                 try {
+                    await setPersistence(auth, browserLocalPersistence);
+                    if (typeof auth.authStateReady === 'function') await auth.authStateReady();
                     if (!auth.currentUser) {
-                        diagLog('Запрашиваем анонимную авторизацию Firebase...');
+                        diagLog('Запрашиваем анонимную авторизацию Firebase для режима просмотра...');
                         await signInAnonymously(auth);
                     }
-                    if (auth.currentUser) {
-                        userId = auth.currentUser.uid;
-                        window.__firebaseUid = auth.currentUser.uid;
-                        window.__firebaseDebug.auth = auth.currentUser.uid;
-                        firebaseDiag.auth = {ok:true, detail:`Anonymous Auth OK. UID: ${auth.currentUser.uid}`};
-                        diagLog('Anonymous Auth OK', {uid: auth.currentUser.uid});
-                        isCloudConnected = true;
-                        updateCloudBadge(true);
-                    } else {
-                        throw new Error('Firebase не вернул currentUser после signInAnonymously');
-                    }
+                    if (!auth.currentUser) throw new Error('Firebase не вернул currentUser после авторизации');
+
+                    applyAccessRoleFromUser(auth.currentUser);
+                    if (authStateUnsubscribe) authStateUnsubscribe();
+                    authStateUnsubscribe = onAuthStateChanged(auth, user => {
+                        if (user) applyAccessRoleFromUser(user);
+                        else applyAccessRoleFromUser(null);
+                    });
+
+                    userId = auth.currentUser.uid;
+                    window.__firebaseUid = auth.currentUser.uid;
+                    window.__firebaseDebug.auth = auth.currentUser.uid;
+                    const roleLabel = isOwnerRole() ? 'Владелец' : (currentAccessRole === 'admin' ? 'Администратор' : 'Посетитель');
+                    firebaseDiag.auth = {ok:true, detail:`Firebase Auth OK. Роль: ${roleLabel}. UID: ${auth.currentUser.uid}`};
+                    diagLog('Firebase Auth OK', {uid: auth.currentUser.uid, role: currentAccessRole, login: currentAccountLogin || 'viewer'});
+                    isCloudConnected = true;
+                    updateCloudBadge(true);
                 } catch (e) {
                     firebaseDiag.auth = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
                     firebaseDiag.error = firebaseDiag.auth.detail;
-                    diagLog('ANONYMOUS AUTH ERROR', firebaseDiag.auth.detail);
-                    console.error('Firebase anonymous auth error:', e);
+                    diagLog('FIREBASE AUTH ERROR', firebaseDiag.auth.detail);
+                    console.error('Firebase auth error:', e);
                     isCloudConnected = false;
                     updateCloudBadge(false);
                 }
@@ -818,6 +872,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function persistGroupInfoToCloud(info) {
+            if (!isOwnerRole()) return false;
             if (!isCloudConnected || !db || !auth?.currentUser) return false;
             const payload = {
                 ...DEFAULT_GROUP_INFO,
@@ -877,8 +932,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                         }
                     } catch (_) {}
 
-                    // Если облачных данных ещё нет — переносим текущие локальные настройки.
-                    await persistGroupInfoToCloud(getGroupInfo());
+                    // Первый облачный документ может создать только владелец.
+                    if (isOwnerRole()) await persistGroupInfoToCloud(getGroupInfo());
                 }, err => {
                     console.warn('Realtime group info error', err);
                 });
@@ -910,6 +965,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function syncStudentCountToCloud() {
+            if (!isOwnerRole()) return false;
             const info = { ...getGroupInfo(), studentCount: students.length };
             saveGroupInfoLocally(info);
             return persistGroupInfoToCloud(info);
@@ -930,6 +986,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function persistStudentsToCloud(records = studentRecords) {
+            if (!isOwnerRole()) return false;
             const normalized = normalizeStudentRecords(records);
             storeStudentRecordsLocally(normalized);
             syncStudentCountLocally();
@@ -980,7 +1037,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 studentsUnsubscribe = onSnapshot(ref, async snap => {
                     if (snap.exists()) {
                         applyStudentsPayload(snap.data() || {});
-                    } else {
+                    } else if (isOwnerRole()) {
                         await persistStudentsToCloud(studentRecords);
                     }
                 }, err => {
@@ -996,8 +1053,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         window.addStudent = async function() {
-            if (sessionStorage.getItem('toe_admin') !== '1') {
-                showToast('Добавлять студентов может только администратор');
+            if (!isOwnerRole()) {
+                showToast('Добавлять студентов может только владелец');
                 return;
             }
             const input = document.getElementById('new-student-name');
@@ -1024,8 +1081,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.removeStudent = async function(index) {
-            if (sessionStorage.getItem('toe_admin') !== '1') {
-                showToast('Удалять студентов может только администратор');
+            if (!isOwnerRole()) {
+                showToast('Удалять студентов может только владелец');
                 return;
             }
             const record = studentRecords[index];
@@ -1037,6 +1094,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.saveGroupInfo = async function() {
+            if (!isOwnerRole()) { showToast('Данные главной страницы может менять только владелец'); return; }
             const info = getGroupInfo();
             saveGroupInfoLocally(info);
             const cloudOk = await persistGroupInfoToCloud(info);
@@ -1049,13 +1107,13 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 el.contentEditable = 'false';
                 el.title = 'Количество меняется автоматически по составу группы';
             } else {
-                el.contentEditable = sessionStorage.getItem('toe_admin') === '1' ? 'true' : 'false';
+                el.contentEditable = isOwnerRole() ? 'true' : 'false';
             }
             el.setAttribute('spellcheck', 'false');
         }
 
         async function syncGroupFieldFromDisplay(el) {
-            if (!el || sessionStorage.getItem('toe_admin') !== '1') return;
+            if (!el || !isOwnerRole()) return;
             const field = el.dataset.groupField;
             const info = getGroupInfo();
             let value = el.textContent.trim();
@@ -1090,15 +1148,15 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             setupInlineGroupEditing();
         }
 
-        // Администраторские настройки редактора
+        // Настройки доступа: владелец + два администратора. Обычные посетители работают без входа.
         window.openAdminSettings = function() {
             const modal = document.getElementById('admin-settings-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            const isAdmin = sessionStorage.getItem('toe_admin') === '1';
-            if (isAdmin) loadGroupInfoToAdminForm();
-            document.getElementById('admin-login-box').classList.toggle('hidden', isAdmin);
-            document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin);
+            if (isOwnerRole()) loadGroupInfoToAdminForm();
+            document.getElementById('admin-login-box')?.classList.toggle('hidden', isEditorRole());
+            document.getElementById('admin-panel')?.classList.toggle('hidden', !isEditorRole());
+            updateAdminUI();
         };
 
         window.closeAdminSettings = function() {
@@ -1107,36 +1165,80 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             modal.classList.remove('flex');
         };
 
-        window.adminLogin = function() {
-            const password = document.getElementById('admin-password').value;
-            if (password === '1245') {
-                sessionStorage.setItem('toe_admin', '1');
-                document.getElementById('admin-login-box').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                document.getElementById('admin-password').value = '';
-                updateAdminUI();
-                showToast('Режим администратора включён');
-            } else {
-                showToast('Неверный пароль');
+        window.adminLogin = async function() {
+            if (!auth) { showToast('Firebase ещё загружается. Попробуйте через пару секунд.'); return; }
+            const loginInput = document.getElementById('admin-login');
+            const passwordInput = document.getElementById('admin-password');
+            const button = document.getElementById('admin-login-btn');
+            const login = String(loginInput?.value || '').trim().toLowerCase();
+            const password = String(passwordInput?.value || '');
+            const account = AUTH_ACCOUNTS[login];
+            if (!account) { showToast('Неизвестный логин'); loginInput?.focus(); return; }
+            if (!password) { showToast('Введите пароль'); passwordInput?.focus(); return; }
+            if (button) { button.disabled = true; button.textContent = 'Вход…'; }
+            try {
+                const credential = await signInWithEmailAndPassword(auth, account.email, password);
+                applyAccessRoleFromUser(credential.user);
+                if (currentAccessRole === 'viewer') throw new Error('У этой учётной записи нет прав редактора');
+                if (loginInput) loginInput.value = '';
+                if (passwordInput) passwordInput.value = '';
+                document.getElementById('admin-login-box')?.classList.add('hidden');
+                document.getElementById('admin-panel')?.classList.remove('hidden');
+                showToast(isOwnerRole() ? 'Вход выполнен: Владелец' : `${account.label}: вход выполнен`);
+            } catch (e) {
+                console.warn('Editor login failed', e);
+                const code = String(e?.code || '');
+                if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) showToast('Неверный логин или пароль');
+                else if (code.includes('operation-not-allowed')) showToast('В Firebase нужно включить вход Email/Password');
+                else showToast('Не удалось войти');
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Войти'; }
             }
         };
 
         function updateAdminUI() {
-            const isAdmin = sessionStorage.getItem('toe_admin') === '1';
-            document.body.classList.toggle('admin-mode', isAdmin);
+            const editor = isEditorRole();
+            const owner = isOwnerRole();
+            document.body.classList.toggle('admin-mode', editor);
+            document.body.classList.toggle('owner-mode', owner);
             const hint = document.getElementById('journal-admin-hint');
-            if (hint) hint.classList.toggle('hidden', isAdmin);
+            if (hint) hint.classList.toggle('hidden', editor);
             const rosterTools = document.getElementById('roster-admin-tools');
-            if (rosterTools) rosterTools.classList.toggle('hidden', !isAdmin);
+            if (rosterTools) rosterTools.classList.toggle('hidden', !owner);
+            const loginBox = document.getElementById('admin-login-box');
+            const panel = document.getElementById('admin-panel');
+            if (loginBox) loginBox.classList.toggle('hidden', editor);
+            if (panel) panel.classList.toggle('hidden', !editor);
+            const backup = document.getElementById('owner-backup-section');
+            if (backup) backup.classList.toggle('hidden', !owner);
+            const banner = document.getElementById('admin-role-banner');
+            const description = document.getElementById('admin-role-description');
+            if (banner) banner.textContent = owner ? 'Владелец: полный доступ включён.' : (editor ? `${AUTH_ACCOUNTS[currentAccountLogin]?.label || 'Администратор'}: режим редактирования включён.` : '');
+            if (description) description.textContent = owner
+                ? 'Доступно всё: главная страница, состав группы, журнал, расписание и резервные копии.'
+                : 'Доступно только редактирование журнала и расписания. Главная страница и состав группы доступны только для просмотра.';
             setupInlineGroupEditing();
             renderRosterList();
         }
 
-        window.adminLogout = function() {
-            sessionStorage.removeItem('toe_admin');
-            updateAdminUI();
-            closeAdminSettings();
-            showToast('Вы вышли из редактора');
+        window.adminLogout = async function() {
+            try {
+                if (auth) await signOut(auth);
+                applyAccessRoleFromUser(null);
+                if (auth) {
+                    await signInAnonymously(auth);
+                    applyAccessRoleFromUser(auth.currentUser);
+                }
+                updateAdminUI();
+                closeAdminSettings();
+                showToast('Вы вышли из редактора');
+            } catch (e) {
+                console.warn('Editor logout failed', e);
+                applyAccessRoleFromUser(null);
+                updateAdminUI();
+                closeAdminSettings();
+                showToast('Вы вышли из редактора');
+            }
         };
 
         updateAdminUI();
@@ -1230,7 +1332,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         window.createManualBackup = async function() {
-            if (sessionStorage.getItem('toe_admin') !== '1') { showToast('Только для администратора'); return; }
+            if (!isOwnerRole()) { showToast('Резервные копии доступны только владельцу'); return; }
             try {
                 await createAutomaticBackup();
                 updateBackupStatus();
@@ -1239,7 +1341,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.restoreLatestBackup = async function() {
-            if (sessionStorage.getItem('toe_admin') !== '1') { showToast('Только для администратора'); return; }
+            if (!isOwnerRole()) { showToast('Резервные копии доступны только владельцу'); return; }
             if (!confirm('Восстановить данные из последней резервной копии? Текущие локальные данные будут заменены.')) return;
             try {
                 const raw = await dbGet('toe_full_backup_latest');
@@ -1346,6 +1448,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function rebuildRosterStatsFromCloud() {
+            if (!isEditorRole()) return false;
             if (!isCloudConnected || !db || !auth?.currentUser) return false;
             if (rosterStatsRebuildInFlight) {
                 rosterStatsRebuildPending = true;
@@ -1381,6 +1484,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function scheduleRosterStatsRebuild(delay = 700) {
+            if (!isEditorRole()) return;
             if (rosterStatsRebuildTimer) clearTimeout(rosterStatsRebuildTimer);
             rosterStatsRebuildTimer = setTimeout(() => { void rebuildRosterStatsFromCloud(); }, delay);
         }
@@ -1499,8 +1603,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 showToast('В субботу и воскресенье журнал недоступен');
                 return;
             }
-            if (sessionStorage.getItem('toe_admin') !== '1') {
-                showToast('Изменение журнала доступно только администратору');
+            if (!isEditorRole()) {
+                showToast('Изменение журнала доступно только владельцу или администратору');
                 return;
             }
             attendanceState[studentName] = status;
@@ -1515,8 +1619,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 showToast('В субботу и воскресенье журнал недоступен');
                 return;
             }
-            if (sessionStorage.getItem('toe_admin') !== '1') {
-                showToast('Изменение журнала доступно только администратору');
+            if (!isEditorRole()) {
+                showToast('Изменение журнала доступно только владельцу или администратору');
                 return;
             }
             const selectedStudents = getStudentsForDate(selectedDate);
@@ -1624,6 +1728,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function saveCurrentDateState() {
+            if (!isEditorRole()) return false;
             setSaveStatus('Сохранение…', true);
             const dateVal = document.getElementById('date-picker').value || getCurrentDateStr();
             const dataToSave = {
@@ -1717,7 +1822,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             // Кнопка всегда доступна. Если пользователь ещё не вошёл как администратор,
             // открываем окно входа вместо того, чтобы делать кнопку визуально/логически
             // неактивной. Само изменение статусов по-прежнему доступно только админу.
-            if (sessionStorage.getItem('toe_admin') !== '1') {
+            if (!isEditorRole()) {
                 openAdminSettings();
                 showToast('Сначала войдите как администратор');
                 return;

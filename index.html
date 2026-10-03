@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step6">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step9-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step10-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -75,22 +75,30 @@
             </div>
             <div class="pt-2 border-t border-slate-100"></div>
             <div id="admin-login-box" class="space-y-3">
-                <input id="admin-password" type="password" inputmode="numeric" maxlength="4" placeholder="Пароль администратора" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400">
-                <button onclick="adminLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Войти</button>
+                <div>
+                    <label for="admin-login" class="block text-[11px] font-semibold text-slate-600 mb-1">Логин</label>
+                    <input id="admin-login" type="text" autocomplete="username" placeholder="owner / admin1 / admin2" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400">
+                </div>
+                <div>
+                    <label for="admin-password" class="block text-[11px] font-semibold text-slate-600 mb-1">Пароль</label>
+                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Пароль" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400">
+                </div>
+                <button id="admin-login-btn" onclick="adminLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Войти</button>
+                <p class="text-[9px] text-slate-400 text-center">Доступ имеют только владелец и два администратора.</p>
             </div>
             <div id="admin-panel" class="hidden space-y-3">
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">Режим администратора включён.</div>
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">Данные группы теперь редактируются прямо на главной странице: нажмите на нужное значение рядом с «Куратор», «Староста», «Зам. старосты» или «Студентов».</div>
-                <div class="pt-2 border-t border-slate-100 space-y-2">
-                    <div class="text-[11px] font-semibold text-slate-600">Резервная копия журнала</div>
+                <div id="admin-role-banner" class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">Редактор включён.</div>
+                <div id="admin-role-description" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600"></div>
+                <div id="owner-backup-section" class="hidden pt-2 border-t border-slate-100 space-y-2">
+                    <div class="text-[11px] font-semibold text-slate-600">Резервная копия сайта</div>
                     <div id="backup-status" class="text-[10px] text-slate-400">Резервная копия ещё не создана</div>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="createManualBackup()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Создать копию</button>
                         <button onclick="restoreLatestBackup()" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 text-xs font-semibold">Восстановить данные</button>
                     </div>
-                    <p class="text-[9px] text-slate-400">Копия обновляется автоматически при изменении журнала и расписания.</p>
+                    <p class="text-[9px] text-slate-400">Эти действия доступны только владельцу.</p>
                 </div>
-                <button onclick="adminLogout()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Выйти из редактора</button>
+                <button onclick="adminLogout()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Выйти</button>
             </div>
         </div>
     </div>
@@ -399,7 +407,7 @@
 
 
 
-    <script type="module" src="app.js?v=20261003-step9-root"></script>
+    <script type="module" src="app.js?v=20261003-step10-root"></script>
 
     <div id="report-preview-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -429,7 +437,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step9-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step10-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -451,7 +459,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step9-root"></script>
+<script src="realtime-debug.js?v=20261003-step10-root"></script>
 
 </body>
 </html>

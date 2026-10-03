@@ -1,0 +1,33 @@
+STEP10 — настройка трёх учётных записей
+
+1. Firebase Console -> Authentication -> Sign-in method.
+   Оставьте включённым Anonymous (он нужен обычным посетителям) и дополнительно включите Email/Password.
+
+2. Firebase Console -> Authentication -> Users -> Add user.
+   Создайте ровно 3 пользователя с этими email:
+
+   Владелец:
+   owner.toe2691@example.com
+
+   Администратор 1:
+   admin1.toe2691@example.com
+
+   Администратор 2:
+   admin2.toe2691@example.com
+
+   Пароли задайте сами. Пароли НЕ нужно добавлять в файлы сайта и НЕ нужно публиковать на GitHub.
+
+3. На самом сайте для входа используются короткие логины:
+   owner
+   admin1
+   admin2
+
+4. Firebase Console -> Firestore Database -> Rules.
+   Замените правила содержимым файла firestore.rules и нажмите Publish.
+
+Права:
+- Посетитель: только просмотр.
+- owner: полный доступ ко всему.
+- admin1/admin2: только журнал и расписание.
+
+Важно: если Email/Password не включён или пользователи не созданы, вход редактора работать не будет.

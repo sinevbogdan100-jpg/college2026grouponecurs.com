@@ -290,9 +290,9 @@ body {
 }
 #admin-settings-btn { top: 8px !important; right: 8px !important; }
 .admin-inline-edit { transition: background .15s, box-shadow .15s; }
-body.admin-mode .admin-inline-edit { cursor: text; border-radius: 7px; padding: 2px 5px; margin: -2px -5px; }
-body.admin-mode .admin-inline-edit:hover, body.admin-mode .admin-inline-edit:focus { outline: none; background: #eef2ff; box-shadow: 0 0 0 1px #c7d2fe; }
-body:not(.admin-mode) .admin-inline-edit { cursor: default; }
+body.owner-mode .admin-inline-edit { cursor: text; border-radius: 7px; padding: 2px 5px; margin: -2px -5px; }
+body.owner-mode .admin-inline-edit:hover, body.owner-mode .admin-inline-edit:focus { outline: none; background: #eef2ff; box-shadow: 0 0 0 1px #c7d2fe; }
+body:not(.owner-mode) .admin-inline-edit { cursor: default; }
 
 /* На ПК режим остаётся доступным через переключатель */
 body.layout-pc #view-home,
@@ -506,4 +506,4 @@ html, body {
 </style>
 /* Управление составом группы */
 .roster-admin-actions { display: none; }
-body.admin-mode .roster-admin-actions { display: flex; }
+body.owner-mode .roster-admin-actions { display: flex; }
