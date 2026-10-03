@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-home1-2026-10-03';
+window.__SITE_BUILD__ = 'step18.3-home-ref1-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -2393,9 +2393,101 @@ window.useAttendanceNotePreset=function(t){document.getElementById('attendance-n
 window.saveAttendanceNote=async function(){if(!editingAttendanceNoteStudent)return;attendanceNotes[editingAttendanceNoteStudent]=document.getElementById('attendance-note-text').value.trim();window.__journalDirty=true;await saveCurrentDateState();closeAttendanceNote();renderApp();};
 
 function parseMinutes(text){const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);return m?{start:+m[1]*60+(+m[2]),end:+m[3]*60+(+m[4])}:null;}
-function renderHomeDayTimeline(){const box=document.getElementById('home-day-timeline');if(!box)return;const now=new Date(),dayKey=getScheduleDayKey(now);if(!dayKey){box.innerHTML='<div class="empty-state">Сегодня учебных занятий нет.</div>';return;}const type=getWeekTypeForDate(now),source=getScheduleDataForWeek(type),list=(source[dayKey]||[]).filter(x=>!x.isClassHour);if(!list.length){box.innerHTML='<div class="empty-state">На сегодня занятий нет.</div>';return;}const mins=now.getHours()*60+now.getMinutes();box.innerHTML=list.map((it,i)=>{const r=parseMinutes(it.time);const state=r?(mins>=r.end?'past':mins>=r.start?'current':'future'):'future';let progress=state==='past'?100:state==='current'?Math.max(3,Math.min(100,((mins-r.start)/(r.end-r.start))*100)):0;const floor=getFloorFromRoom(it.room);return `<div class="home-lesson ${state}"><div class="timeline-rail"><span class="timeline-dot"></span>${i<list.length-1?'<span class="timeline-line"></span>':''}</div><div class="home-lesson-body"><div class="home-lesson-time">${it.time}</div><strong>${it.subject}</strong><span>${it.room||''}${floor?` · ${floor} этаж`:''}${it.teacher?` · ${it.teacher}`:''}</span>${state==='current'?`<div class="lesson-progress"><i style="width:${progress}%"></i></div>`:''}${it.breakDuration&&i<list.length-1?`<div class="break-label"><i class="fa-regular fa-clock"></i>${it.breakDuration}</div>`:''}</div></div>`;}).join('');applyKzTranslations(box);}
-setInterval(renderHomeDayTimeline,15000);setTimeout(renderHomeDayTimeline,700);
-
+function homeMinutesLabel(total){const value=Math.max(0,Math.ceil(total));return value===1?'1 мин':`${value} мин`;}
+function renderHomeReferenceDate(now=new Date()){
+    const dateEl=document.getElementById('home-reference-date');
+    const weekdayEl=document.getElementById('home-reference-weekday');
+    if(!dateEl||!weekdayEl)return;
+    const locale=currentLang()==='kz'?'kk-KZ':'ru-RU';
+    dateEl.textContent=now.toLocaleDateString(locale,{day:'numeric',month:'long',year:'numeric'});
+    const weekday=now.toLocaleDateString(locale,{weekday:'long'});
+    weekdayEl.textContent=weekday.charAt(0).toUpperCase()+weekday.slice(1);
+}
+function homeBreakInfo(current,next){
+    const a=parseMinutes(current?.time),b=parseMinutes(next?.time);
+    if(!a||!b||b.start<=a.end)return null;
+    return {start:a.end,end:b.start,duration:b.start-a.end};
+}
+function renderHomeLessonCard(entry,nowMinutes){
+    const {it,index,r}=entry;
+    const floor=getFloorFromRoom(it.room);
+    const current=!!r&&nowMinutes>=r.start&&nowMinutes<r.end;
+    const remaining=current?r.end-nowMinutes:0;
+    const progress=current?Math.max(1,Math.min(100,((nowMinutes-r.start)/(r.end-r.start))*100)):0;
+    return `<article class="home-ref-lesson-card ${current?'current':''}">
+        <div class="home-ref-lesson-row">
+            <div class="home-ref-lesson-number">${index+1}</div>
+            <div class="home-ref-lesson-main">
+                <strong>${it.subject||'Занятие'}</strong>
+                <span>${it.time||''}</span>
+            </div>
+            <div class="home-ref-lesson-meta">
+                <div><span>Кабинет</span><strong>${it.room||'—'}</strong></div>
+                <div><span>Этаж</span><strong>${floor||'—'}</strong></div>
+            </div>
+        </div>
+        ${current?`<div class="home-ref-progress-row">
+            <div class="home-ref-progress-labels"><strong>Идёт урок</strong><span>Осталось ${homeMinutesLabel(remaining)}</span></div>
+            <div class="home-ref-progress"><i style="width:${progress}%"></i></div>
+            <div class="home-ref-progress-percent">${Math.round(progress)}%</div>
+        </div>`:''}
+    </article>`;
+}
+function renderHomeBreakCard(info,active=false,nowMinutes=0){
+    const startH=String(Math.floor(info.start/60)).padStart(2,'0'),startM=String(info.start%60).padStart(2,'0');
+    const endH=String(Math.floor(info.end/60)).padStart(2,'0'),endM=String(info.end%60).padStart(2,'0');
+    const remaining=active?Math.max(0,info.end-nowMinutes):info.duration;
+    return `<article class="home-ref-break-card ${active?'current':''}">
+        <div class="home-ref-break-icon"><i class="fa-solid fa-mug-hot"></i></div>
+        <div class="home-ref-break-main"><strong>${active?'Идёт перемена':'Перемена'}</strong><span>${startH}:${startM} – ${endH}:${endM}</span></div>
+        <div class="home-ref-break-duration">${homeMinutesLabel(remaining)}</div>
+    </article>`;
+}
+function renderHomeDayTimeline(){
+    const box=document.getElementById('home-day-timeline');
+    if(!box)return;
+    const now=new Date();
+    renderHomeReferenceDate(now);
+    const dayKey=getScheduleDayKey(now);
+    if(!dayKey){box.innerHTML='<div class="home-ref-empty">Сегодня учебных занятий нет.</div>';return;}
+    const type=getWeekTypeForDate(now),source=getScheduleDataForWeek(type);
+    const raw=(source[dayKey]||[]).filter(x=>!x.isClassHour);
+    if(!raw.length){box.innerHTML='<div class="home-ref-empty">На сегодня занятий нет.</div>';return;}
+    const entries=raw.map((it,index)=>({it,index,r:parseMinutes(it.time)})).filter(x=>x.r);
+    if(!entries.length){box.innerHTML='<div class="home-ref-empty">Расписание на сегодня ещё не заполнено.</div>';return;}
+    const mins=now.getHours()*60+now.getMinutes();
+    let activeLesson=entries.findIndex(x=>mins>=x.r.start&&mins<x.r.end);
+    let activeBreak=-1;
+    for(let i=0;i<entries.length-1;i++){
+        const info=homeBreakInfo(entries[i].it,entries[i+1].it);
+        if(info&&mins>=info.start&&mins<info.end){activeBreak=i;break;}
+    }
+    let startIndex=0;
+    if(activeLesson>=0) startIndex=activeLesson;
+    else if(activeBreak>=0) startIndex=activeBreak+1;
+    else {
+        const upcoming=entries.findIndex(x=>mins<x.r.end);
+        if(upcoming<0){box.innerHTML='<div class="home-ref-empty">Занятия на сегодня закончились.</div>';return;}
+        startIndex=upcoming;
+    }
+    const selected=entries.slice(startIndex,startIndex+3);
+    let html='';
+    if(activeBreak>=0){
+        const bi=homeBreakInfo(entries[activeBreak].it,entries[activeBreak+1].it);
+        if(bi)html+=renderHomeBreakCard(bi,true,mins);
+    }
+    selected.forEach((entry,pos)=>{
+        html+=renderHomeLessonCard(entry,mins);
+        if(pos<selected.length-1){
+            const next=selected[pos+1];
+            const bi=homeBreakInfo(entry.it,next.it);
+            if(bi)html+=renderHomeBreakCard(bi,false,mins);
+        }
+    });
+    box.innerHTML=html;
+    applyKzTranslations(box);
+}
+setInterval(renderHomeDayTimeline,15000);setTimeout(renderHomeDayTimeline,250);
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
 function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}
@@ -2403,9 +2495,29 @@ function saveReadNotificationIds(ids){try{localStorage.setItem(NOTIFICATIONS_REA
 function notificationTimeLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function escapeNotificationText(value){return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
 function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
-function renderNotifications(){const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
+function renderHomeLatestNotification(){
+    const box=document.getElementById('home-latest-notification');
+    if(!box)return;
+    const n=notificationsCache[0];
+    if(!n){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
+    const title=escapeNotificationText(n.title||'Объявление');
+    const body=escapeNotificationText(n.text||'');
+    const lower=(title+' '+body).toLowerCase();
+    const icon=lower.includes('распис')?'fa-calendar-days':lower.includes('поддерж')?'fa-comments':'fa-bullhorn';
+    let time='';
+    if(n.createdAt){
+        const d=new Date(n.createdAt);
+        if(!Number.isNaN(d.getTime()))time=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    }
+    box.innerHTML=`<button class="home-ref-notification-card" onclick="openNotifications()">
+        <span class="home-ref-notification-icon"><i class="fa-solid ${icon}"></i></span>
+        <span class="home-ref-notification-copy"><strong>${title}</strong><span>${body||'Открыть уведомление'}</span></span>
+        <span class="home-ref-notification-time">${time}</span>
+    </button>`;
+}
+function renderNotifications(){renderHomeLatestNotification();const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
 function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
-function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
+function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();renderHomeLatestNotification();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
 window.openNotifications=function(){document.getElementById('notifications-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());renderNotifications();setTimeout(markNotificationsRead,250);};
 window.closeNotifications=function(){document.getElementById('notifications-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
 window.publishNotification=async function(){if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}const title=document.getElementById('notification-title')?.value.trim()||'';const text=document.getElementById('notification-text')?.value.trim()||'';if(!title&&!text){showToast('Введите заголовок или текст');return;}const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;try{await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccessLogin||'Владелец',type:'announcement'});const t=document.getElementById('notification-title'),b=document.getElementById('notification-text');if(t)t.value='';if(b)b.value='';showToast('Уведомление опубликовано');}catch(e){console.warn('publish notification',e);showToast('Не удалось опубликовать уведомление');}};
