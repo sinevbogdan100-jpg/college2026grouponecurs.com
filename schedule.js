@@ -685,8 +685,8 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                 </div>
                 <strong class="schedule-ref-subject">${scheduleEscape(item.subject || 'Занятие')}</strong>
                 <div class="schedule-ref-meta">
-                    <span><i class="fa-regular fa-square"></i>${scheduleEscape(item.room || '—')}</span>
-                    ${item.teacher ? `<span><i class="fa-regular fa-user"></i>${scheduleEscape(item.teacher)}</span>` : ''}
+                    <span><i class="fa-solid fa-door-open"></i>${scheduleEscape(item.room || '—')}</span>
+                    ${item.teacher ? `<span><i class="fa-solid fa-user-graduate"></i>${scheduleEscape(item.teacher)}</span>` : ''}
                 </div>
                 ${changeHtml}
                 <div class="schedule-admin-actions">

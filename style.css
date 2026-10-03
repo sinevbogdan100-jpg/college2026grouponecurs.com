@@ -3613,3 +3613,155 @@ body.schedule-edit-mode #view-schedule .schedule-admin-actions{display:flex}
     transform:translateY(-1px);
   }
 }
+
+
+/* ===== MOBILE UI POLISH 2 — 2026-10-04 ===== */
+@media(max-width:767px){
+  /* HOME: text a little larger, keeping the approved layout. */
+  #view-home .home-ref-student-line{
+    font-size:13px !important;
+    line-height:1.25 !important;
+  }
+  #view-home .home-ref-role-card>div>span{
+    font-size:11.5px !important;
+    line-height:1.2 !important;
+  }
+  #view-home .home-ref-role-card>div>strong{
+    font-size:13px !important;
+    line-height:1.3 !important;
+  }
+  #view-home .home-ref-today-head h2{
+    font-size:24px !important;
+  }
+  #view-home .home-ref-date strong{
+    font-size:14px !important;
+  }
+  #view-home .home-ref-date span{
+    font-size:12.5px !important;
+  }
+  #view-home .home-ref-lesson-main span{
+    font-size:12px !important;
+  }
+  #view-home .home-ref-lesson-meta span{
+    font-size:9.5px !important;
+  }
+  #view-home .home-ref-lesson-meta strong{
+    font-size:11.5px !important;
+  }
+  #view-home .home-ref-section-head button{
+    font-size:11.5px !important;
+    gap:5px !important;
+  }
+  #view-home .home-ref-notification-empty{
+    font-size:11.5px !important;
+    line-height:1.4 !important;
+  }
+
+  /* Bottom nav: larger icons and labels on phones. */
+  .bottom-nav{
+    min-height:70px !important;
+    padding-top:7px !important;
+    padding-bottom:calc(7px + env(safe-area-inset-bottom)) !important;
+  }
+  .bottom-nav button{
+    min-height:54px !important;
+    gap:4px !important;
+  }
+  .bottom-nav button i{
+    font-size:20px !important;
+  }
+  .bottom-nav button span{
+    font-size:10.5px !important;
+    line-height:1.15 !important;
+    font-weight:650 !important;
+  }
+
+  /* JOURNAL: no search, only sync status + group action. */
+  #view-tracker .journal-ref-controls{
+    grid-template-columns:minmax(0,1fr) auto !important;
+    gap:8px !important;
+  }
+  #view-tracker .journal-ref-save{
+    justify-self:start !important;
+    font-size:9.5px !important;
+  }
+  #view-tracker .journal-ref-edit-tools{
+    justify-self:end !important;
+  }
+  #view-tracker .journal-inline-actions{
+    padding:13px !important;
+  }
+  #view-tracker .journal-inline-actions h2{
+    font-size:14px !important;
+    margin-bottom:10px !important;
+  }
+  #view-tracker .journal-inline-actions button{
+    min-height:48px !important;
+    font-size:11.5px !important;
+    gap:7px !important;
+  }
+  #view-tracker .journal-inline-actions button i{
+    font-size:13px !important;
+  }
+
+  /* Attendance assessment: larger status blocks, counts and group percentage. */
+  #view-tracker .journal-assessment-view .journal-group-tiles{
+    gap:9px !important;
+  }
+  #view-tracker .journal-assessment-view .journal-group-tiles>div{
+    min-height:76px !important;
+    padding:11px 7px !important;
+  }
+  #view-tracker .journal-assessment-view .journal-group-tiles span{
+    font-size:10.5px !important;
+  }
+  #view-tracker .journal-assessment-view .journal-group-tiles strong{
+    font-size:23px !important;
+  }
+  #view-tracker .journal-assessment-view .journal-group-meta{
+    font-size:11.5px !important;
+    font-weight:650 !important;
+  }
+  #view-tracker .journal-assessment-view .journal-group-progress{
+    height:10px !important;
+  }
+
+  #view-tracker .assessment-student-row>span:not(.assessment-student-main){
+    min-height:42px !important;
+    font-size:12px !important;
+    border-radius:10px !important;
+  }
+  #view-tracker .assessment-student-row>span:not(.assessment-student-main)::before{
+    font-size:12px !important;
+    font-weight:850 !important;
+  }
+  #view-tracker .assessment-percent{
+    font-size:16px !important;
+  }
+
+  #view-tracker .assessment-detail-stats>div{
+    min-height:80px !important;
+  }
+  #view-tracker .assessment-detail-stats span{
+    font-size:10.5px !important;
+  }
+  #view-tracker .assessment-detail-stats strong{
+    font-size:24px !important;
+  }
+
+  /* SCHEDULE: larger clock icon/time on break, plus clearer metadata icons. */
+  #view-schedule .schedule-ref-break-card time{
+    font-size:12px !important;
+    gap:7px !important;
+  }
+  #view-schedule .schedule-ref-break-card time i{
+    font-size:14px !important;
+  }
+  #view-schedule .schedule-ref-meta i{
+    width:15px !important;
+    font-size:13px !important;
+  }
+}
+
+/* Search is intentionally removed from the Journal. */
+#view-tracker .journal-ref-search{display:none !important}
