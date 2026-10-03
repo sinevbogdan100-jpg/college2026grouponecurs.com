@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-roster-recovery1-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-mobile-journal2-leader-photos1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -968,8 +968,16 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             curator: 'Негманова Г.Б.',
             headman: 'Синёв Б.П.',
             deputy: '—',
+            curatorAvatar: '',
+            headmanAvatar: '',
+            deputyAvatar: '',
             studentCount: 19
         };
+
+        function normalizeLeaderAvatar(value) {
+            const avatar = String(value || '');
+            return /^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(avatar) && avatar.length <= 40000 ? avatar : '';
+        }
 
         function readLocalGroupInfo() {
             try {
@@ -992,6 +1000,28 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             renderGroupInfo();
         }
 
+        function renderLeaderAvatarElement(el, avatar) {
+            if (!el) return;
+            const safeAvatar = normalizeLeaderAvatar(avatar);
+            el.classList.toggle('has-photo', !!safeAvatar);
+            el.innerHTML = safeAvatar
+                ? `<img src="${safeAvatar}" alt="">`
+                : '<i class="fa-regular fa-user"></i>';
+            el.setAttribute('aria-disabled', canEditGroupInfo() ? 'false' : 'true');
+        }
+
+        function renderLeaderAvatars(info) {
+            const map = {
+                curator: info.curatorAvatar,
+                headman: info.headmanAvatar,
+                deputy: info.deputyAvatar
+            };
+            Object.entries(map).forEach(([role, avatar]) => {
+                renderLeaderAvatarElement(document.getElementById(`leader-avatar-${role}-home`), avatar);
+                renderLeaderAvatarElement(document.getElementById(`leader-avatar-${role}-roster`), avatar);
+            });
+        }
+
         function renderGroupInfo() {
             const info = getGroupInfo();
             const ids = {
@@ -1012,6 +1042,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             });
+            renderLeaderAvatars(info);
         }
 
         function normalizeGroupInfoCloudData(data = {}) {
@@ -1020,9 +1051,94 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 curator: data.curator ?? DEFAULT_GROUP_INFO.curator,
                 headman: data.headman ?? DEFAULT_GROUP_INFO.headman,
                 deputy: data.deputy ?? DEFAULT_GROUP_INFO.deputy,
+                curatorAvatar: normalizeLeaderAvatar(data.curatorAvatar),
+                headmanAvatar: normalizeLeaderAvatar(data.headmanAvatar),
+                deputyAvatar: normalizeLeaderAvatar(data.deputyAvatar),
                 studentCount: Number.isFinite(Number(data.studentCount)) ? Number(data.studentCount) : DEFAULT_GROUP_INFO.studentCount
             };
         }
+
+        let leaderPhotoEditRole = '';
+        let leaderPhotoDraft = '';
+
+        function leaderRoleLabel(role) {
+            return ({ curator:'Куратор', headman:'Староста', deputy:'Зам. старосты' })[role] || 'Профиль';
+        }
+
+        function leaderRoleName(role, info = getGroupInfo()) {
+            return ({ curator:info.curator, headman:info.headman, deputy:info.deputy })[role] || '—';
+        }
+
+        function renderLeaderPhotoPreview() {
+            const preview = document.getElementById('leader-profile-preview');
+            if (!preview) return;
+            preview.classList.toggle('has-photo', !!leaderPhotoDraft);
+            preview.innerHTML = leaderPhotoDraft
+                ? `<img src="${leaderPhotoDraft}" alt="">`
+                : '<i class="fa-regular fa-user"></i>';
+            document.getElementById('leader-profile-remove-photo')?.classList.toggle('hidden', !leaderPhotoDraft);
+        }
+
+        window.openLeaderPhotoEditor = function(role) {
+            if (!['curator','headman','deputy'].includes(role)) return;
+            if (!canEditGroupInfo()) {
+                showToast('Фото руководства может менять только пользователь с правом редактирования данных группы');
+                return;
+            }
+            const info = getGroupInfo();
+            leaderPhotoEditRole = role;
+            leaderPhotoDraft = normalizeLeaderAvatar(info[`${role}Avatar`]);
+            const title = document.getElementById('leader-profile-modal-title');
+            const name = document.getElementById('leader-profile-name');
+            if (title) title.textContent = leaderRoleLabel(role);
+            if (name) name.textContent = leaderRoleName(role, info);
+            const input = document.getElementById('leader-profile-photo');
+            if (input) input.value = '';
+            renderLeaderPhotoPreview();
+            document.getElementById('leader-profile-modal')?.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        };
+
+        window.closeLeaderPhotoEditor = function() {
+            document.getElementById('leader-profile-modal')?.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            leaderPhotoEditRole = '';
+            leaderPhotoDraft = '';
+        };
+
+        window.handleLeaderProfilePhoto = async function(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            try {
+                leaderPhotoDraft = await compressStudentAvatar(file);
+                renderLeaderPhotoPreview();
+            } catch (e) {
+                showToast(e?.message || 'Не удалось обработать фото');
+                if (input) input.value = '';
+            }
+        };
+
+        window.removeLeaderProfilePhoto = function() {
+            leaderPhotoDraft = '';
+            const input = document.getElementById('leader-profile-photo');
+            if (input) input.value = '';
+            renderLeaderPhotoPreview();
+        };
+
+        window.saveLeaderProfilePhoto = async function() {
+            if (!canEditGroupInfo() || !['curator','headman','deputy'].includes(leaderPhotoEditRole)) return;
+            const info = getGroupInfo();
+            const next = { ...info, [`${leaderPhotoEditRole}Avatar`]: normalizeLeaderAvatar(leaderPhotoDraft) };
+            const approxBytes = new Blob([JSON.stringify(next)]).size;
+            if (approxBytes > 250000) {
+                showToast('Фотографии профилей слишком большие');
+                return;
+            }
+            saveGroupInfoLocally(next);
+            const ok = await persistGroupInfoToCloud(next);
+            closeLeaderPhotoEditor();
+            showToast(ok ? 'Фото профиля сохранено' : 'Фото сохранено только на этом устройстве');
+        };
 
         function applyCloudGroupInfo(data = {}) {
             const updatedAt = String(data.updatedAt || '');
@@ -2358,7 +2474,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 const note = attendanceNotes[name] || '';
                 let noteControl = '<span class="journal-ref-note-placeholder" aria-hidden="true"></span>';
                 if (currentStatus && editable) {
-                    noteControl = `<button class="journal-ref-note ${note ? 'has-note' : ''}" onclick="openAttendanceNote('${safeName}')" title="${note || 'Добавить примечание'}"><i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span></button>`;
+                    noteControl = note
+                        ? `<button class="journal-ref-note has-note" onclick="openAttendanceNote('${safeName}')" title="Изменить примечание"><i class="fa-regular fa-note-sticky"></i><span>${escapeStudentText(note)}</span></button>`
+                        : `<button class="journal-ref-note empty-note" onclick="openAttendanceNote('${safeName}')" title="Добавить примечание" aria-label="Добавить примечание"><i class="fa-solid fa-pencil"></i><span>Добавить примечание</span></button>`;
                 } else if (currentStatus && note) {
                     noteControl = `<span class="journal-ref-note-view"><i class="fa-regular fa-note-sticky"></i><span>${escapeStudentText(note)}</span></span>`;
                 }

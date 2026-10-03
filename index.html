@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.3-roster-recovery1-2026-10-04">
+    <meta name="app-build" content="step18.3-mobile-journal2-leader-photos1-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-mobile-journal1">
+    <link rel="stylesheet" href="style.css?v=20261004-mobile-journal2-leader-photos1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -229,15 +229,15 @@
 
             <section class="home-ref-roles">
                 <article class="home-ref-role-card">
-                    <i class="fa-regular fa-user"></i>
+                    <button type="button" id="leader-avatar-curator-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button>
                     <div><span>Куратор</span><strong id="group-curator" class="admin-inline-edit" data-group-field="curator" tabindex="0">Негманова Г.Б.</strong></div>
                 </article>
                 <article class="home-ref-role-card">
-                    <i class="fa-regular fa-user"></i>
+                    <button type="button" id="leader-avatar-headman-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button>
                     <div><span>Староста</span><strong id="group-headman" class="admin-inline-edit" data-group-field="headman" tabindex="0">Синёв Б.П.</strong></div>
                 </article>
                 <article class="home-ref-role-card">
-                    <i class="fa-regular fa-user"></i>
+                    <button type="button" id="leader-avatar-deputy-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button>
                     <div><span>Зам. старосты</span><strong id="group-deputy" class="admin-inline-edit" data-group-field="deputy" tabindex="0">—</strong></div>
                 </article>
             </section>
@@ -452,9 +452,9 @@
         </div>
 
         <div class="group-leadership-grid">
-            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
-            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
-            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-curator-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-headman-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-deputy-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
 
         <div id="roster-admin-tools" class="hidden roster-profile-tools">
@@ -468,6 +468,34 @@
         <div id="roster-container" class="space-y-2">
             <!-- Populated via JS -->
         </div>
+    </div>
+
+    <div id="leader-profile-modal" class="app-overlay hidden" onclick="if(event.target===this) closeLeaderPhotoEditor()">
+        <section class="leader-profile-modal-card">
+            <div class="student-profile-modal-head">
+                <div><span>Фото профиля</span><h2 id="leader-profile-modal-title">Профиль</h2></div>
+                <button type="button" onclick="closeLeaderPhotoEditor()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="student-profile-preview-wrap">
+                <div id="leader-profile-preview" class="leader-profile-preview"><i class="fa-regular fa-user"></i></div>
+                <div><strong id="leader-profile-name">—</strong><span>Фото будет отображаться на Главной и в разделе «Группа».</span></div>
+            </div>
+
+            <div class="student-profile-field">
+                <span>Фотография</span>
+                <div class="student-photo-actions">
+                    <label class="student-photo-upload"><i class="fa-regular fa-image"></i> Выбрать фото<input id="leader-profile-photo" type="file" accept="image/*" onchange="handleLeaderProfilePhoto(this)"></label>
+                    <button id="leader-profile-remove-photo" type="button" onclick="removeLeaderProfilePhoto()"><i class="fa-regular fa-trash-can"></i> Убрать фото</button>
+                </div>
+                <small>Фотография будет видна всем посетителям сайта. Перед сохранением изображение уменьшается и пере-кодируется без EXIF/геометок.</small>
+            </div>
+
+            <div class="student-profile-modal-actions">
+                <button type="button" class="secondary" onclick="closeLeaderPhotoEditor()">Отмена</button>
+                <button type="button" class="primary" onclick="saveLeaderProfilePhoto()">Сохранить</button>
+            </div>
+        </section>
     </div>
 
     <div id="student-profile-modal" class="app-overlay hidden" onclick="if(event.target===this) closeStudentProfileEditor()">
@@ -593,7 +621,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-roster-recovery1"></script>
+    <script type="module" src="app.js?v=20261004-mobile-journal2-leader-photos1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
