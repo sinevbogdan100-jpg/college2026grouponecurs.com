@@ -1,6 +1,6 @@
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step18-1-root";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step18-1-root";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step18-1-root";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step18-3-recovery1";
+import { getWeekTypeForDate } from "./utils.js?v=20261003-step18-3-recovery1";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step18-3-recovery1";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
