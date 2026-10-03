@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261004-schedule-ref-polish1";
 
         
-window.__SITE_BUILD__ = 'step18.3-schedule-ref-polish1-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-schedule-desktop-home-weekend1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -2837,14 +2837,24 @@ window.saveAttendanceNote=async function(){if(!editingAttendanceNoteStudent)retu
 
 function parseMinutes(text){const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);return m?{start:+m[1]*60+(+m[2]),end:+m[3]*60+(+m[4])}:null;}
 function homeMinutesLabel(total){const value=Math.max(0,Math.ceil(total));return value===1?'1 мин':`${value} мин`;}
-function renderHomeReferenceDate(now=new Date()){
+function renderHomeReferenceDate(displayDate=new Date(),isNearestStudyDay=false){
     const dateEl=document.getElementById('home-reference-date');
     const weekdayEl=document.getElementById('home-reference-weekday');
+    const titleEl=document.getElementById('home-reference-title');
     if(!dateEl||!weekdayEl)return;
     const locale=currentLang()==='kz'?'kk-KZ':'ru-RU';
-    dateEl.textContent=now.toLocaleDateString(locale,{day:'numeric',month:'long',year:'numeric'});
-    const weekday=now.toLocaleDateString(locale,{weekday:'long'});
+    dateEl.textContent=displayDate.toLocaleDateString(locale,{day:'numeric',month:'long',year:'numeric'});
+    const weekday=displayDate.toLocaleDateString(locale,{weekday:'long'});
     weekdayEl.textContent=weekday.charAt(0).toUpperCase()+weekday.slice(1);
+    if(titleEl) titleEl.textContent=isNearestStudyDay?'Ближайший учебный день':'Сегодня';
+}
+
+function getHomeStudyDate(now=new Date()){
+    const target=new Date(now);
+    target.setHours(0,0,0,0);
+    if(target.getDay()===6) target.setDate(target.getDate()+2);
+    else if(target.getDay()===0) target.setDate(target.getDate()+1);
+    return target;
 }
 function homeBreakInfo(current,next){
     const a=parseMinutes(current?.time),b=parseMinutes(next?.time);
@@ -2889,15 +2899,40 @@ function renderHomeBreakCard(info,active=false,nowMinutes=0){
 function renderHomeDayTimeline(){
     const box=document.getElementById('home-day-timeline');
     if(!box)return;
+
     const now=new Date();
-    renderHomeReferenceDate(now);
-    const dayKey=getScheduleDayKey(now);
-    if(!dayKey){box.innerHTML='<div class="home-ref-empty">Сегодня учебных занятий нет.</div>';return;}
-    const type=getWeekTypeForDate(now),source=getScheduleDataForWeek(type);
+    const studyDate=getHomeStudyDate(now);
+    const isNearestStudyDay=studyDate.toDateString()!==new Date(now.getFullYear(),now.getMonth(),now.getDate()).toDateString();
+    renderHomeReferenceDate(studyDate,isNearestStudyDay);
+
+    const dayKey=getScheduleDayKey(studyDate);
+    if(!dayKey){box.innerHTML='<div class="home-ref-empty">Учебных занятий нет.</div>';return;}
+
+    const type=getWeekTypeForDate(studyDate);
+    const source=getScheduleDataForWeek(type);
     const raw=(source[dayKey]||[]).filter(x=>!x.isClassHour);
-    if(!raw.length){box.innerHTML='<div class="home-ref-empty">На сегодня занятий нет.</div>';return;}
+    if(!raw.length){box.innerHTML='<div class="home-ref-empty">На ближайший учебный день занятий нет.</div>';return;}
+
     const entries=raw.map((it,index)=>({it,index,r:parseMinutes(it.time)})).filter(x=>x.r);
-    if(!entries.length){box.innerHTML='<div class="home-ref-empty">Расписание на сегодня ещё не заполнено.</div>';return;}
+    if(!entries.length){box.innerHTML='<div class="home-ref-empty">Расписание ещё не заполнено.</div>';return;}
+
+    // На выходных показываем понедельник с начала дня, без ложного статуса "идёт".
+    if(isNearestStudyDay){
+        let html='';
+        const selected=entries.slice(0,3);
+        selected.forEach((entry,pos)=>{
+            html+=renderHomeLessonCard(entry,-1);
+            if(pos<selected.length-1){
+                const next=selected[pos+1];
+                const bi=homeBreakInfo(entry.it,next.it);
+                if(bi)html+=renderHomeBreakCard(bi,false,0);
+            }
+        });
+        box.innerHTML=html;
+        applyKzTranslations(box);
+        return;
+    }
+
     const mins=now.getHours()*60+now.getMinutes();
     let activeLesson=entries.findIndex(x=>mins>=x.r.start&&mins<x.r.end);
     let activeBreak=-1;
@@ -2905,6 +2940,7 @@ function renderHomeDayTimeline(){
         const info=homeBreakInfo(entries[i].it,entries[i+1].it);
         if(info&&mins>=info.start&&mins<info.end){activeBreak=i;break;}
     }
+
     let startIndex=0;
     if(activeLesson>=0) startIndex=activeLesson;
     else if(activeBreak>=0) startIndex=activeBreak+1;
@@ -2913,6 +2949,7 @@ function renderHomeDayTimeline(){
         if(upcoming<0){box.innerHTML='<div class="home-ref-empty">Занятия на сегодня закончились.</div>';return;}
         startIndex=upcoming;
     }
+
     const selected=entries.slice(startIndex,startIndex+3);
     let html='';
     if(activeBreak>=0){

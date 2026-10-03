@@ -3357,3 +3357,259 @@ body.schedule-edit-mode #view-schedule .schedule-admin-actions{display:flex}
   #view-schedule .schedule-ref-subject{font-size:15px !important}
   #view-schedule .schedule-ref-meta span{font-size:10.5px !important}
 }
+
+
+/* ===== SCHEDULE DESKTOP + HOME WEEKEND POLISH — 2026-10-04 ===== */
+/* Время пары визуально такое же вторичное, как кабинет и преподаватель. */
+#view-schedule .schedule-ref-card-head time,
+#view-schedule .schedule-ref-row.current .schedule-ref-card-head time{
+  color:#687b9c !important;
+}
+#view-schedule .schedule-ref-row.past .schedule-ref-card-head time{
+  color:#8794aa !important;
+}
+
+/* Главная: убираем лишний воздух сверху, не меняя сами карточки. */
+#view-home.home-reference{
+  padding-top:6px !important;
+}
+#view-home.home-reference .home-ref-topbar{
+  height:52px !important;
+  min-height:52px !important;
+  margin-bottom:5px !important;
+}
+#view-home .home-ref-shell{
+  gap:9px !important;
+}
+#view-home .home-ref-group-card{
+  min-height:82px !important;
+  padding-top:13px !important;
+  padding-bottom:13px !important;
+}
+#view-home #home-reference-title{
+  max-width:58%;
+  font-size:22px;
+  line-height:1.08;
+}
+
+@media(min-width:768px){
+  /* На ПК оставляем тот же референс, но заметно крупнее. */
+  #view-schedule.schedule-reference-page{
+    max-width:1040px !important;
+    padding:24px 34px 64px !important;
+  }
+  #view-schedule .schedule-ref-topbar{
+    min-height:68px !important;
+    margin-bottom:14px !important;
+  }
+  #view-schedule .schedule-ref-title h1{
+    font-size:30px !important;
+  }
+  #view-schedule .schedule-ref-topbtn{
+    width:48px !important;
+    height:48px !important;
+    font-size:21px !important;
+  }
+
+  #view-schedule .schedule-ref-week-switch{
+    margin-bottom:14px !important;
+    padding:5px !important;
+    border-radius:15px !important;
+  }
+  #view-schedule .schedule-ref-week-switch button{
+    min-height:50px !important;
+    font-size:15px !important;
+    border-radius:11px !important;
+  }
+
+  #view-schedule .schedule-ref-datebar{
+    grid-template-columns:52px minmax(0,1fr) 52px !important;
+    gap:10px !important;
+    margin-bottom:14px !important;
+  }
+  #view-schedule .schedule-ref-date-arrow{
+    width:52px !important;
+    height:52px !important;
+    font-size:16px !important;
+  }
+  #view-schedule .schedule-ref-date-copy{
+    min-height:52px !important;
+    padding:8px 14px !important;
+  }
+  #view-schedule .schedule-ref-date-copy strong{
+    font-size:14px !important;
+  }
+  #view-schedule .schedule-ref-date-copy>span{
+    margin-top:4px !important;
+    font-size:11px !important;
+  }
+
+  #view-schedule .schedule-ref-days{
+    gap:10px !important;
+    margin-bottom:15px !important;
+  }
+  #view-schedule .schedule-ref-days button{
+    min-height:78px !important;
+    padding:10px 5px !important;
+    border-radius:14px !important;
+  }
+  #view-schedule .schedule-ref-days button strong{
+    font-size:15px !important;
+  }
+  #view-schedule .schedule-ref-days button span{
+    margin-top:7px !important;
+    font-size:12px !important;
+  }
+
+  #view-schedule #schedule-live-summary{
+    margin-bottom:15px !important;
+  }
+  #view-schedule .schedule-live-card{
+    padding:17px 18px !important;
+    border-radius:17px !important;
+  }
+  #view-schedule .schedule-live-today{
+    grid-template-columns:46px minmax(0,1fr) !important;
+    gap:11px !important;
+  }
+  #view-schedule .schedule-live-icon{
+    width:46px !important;
+    height:46px !important;
+    font-size:20px !important;
+    border-radius:12px !important;
+  }
+  #view-schedule .schedule-live-today strong{
+    font-size:18px !important;
+  }
+  #view-schedule .schedule-live-today span:not(.schedule-live-icon){
+    margin-top:5px !important;
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-live-state strong{
+    font-size:16px !important;
+  }
+  #view-schedule .schedule-live-state span{
+    margin-top:5px !important;
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-live-progress{
+    height:10px !important;
+    margin:14px 0 10px !important;
+  }
+  #view-schedule .schedule-live-card p{
+    font-size:13px !important;
+    font-weight:600 !important;
+  }
+
+  #view-schedule .schedule-ref-day-heading{
+    margin:18px 5px 12px !important;
+    font-size:20px !important;
+  }
+  #view-schedule .schedule-ref-row,
+  #view-schedule .schedule-ref-break{
+    grid-template-columns:74px minmax(0,1fr) !important;
+  }
+  #view-schedule .schedule-ref-number{
+    width:42px !important;
+    height:42px !important;
+    margin-top:13px !important;
+    font-size:14px !important;
+  }
+  #view-schedule .schedule-ref-rail>i{
+    top:44px !important;
+    width:3px !important;
+  }
+  #view-schedule .schedule-ref-card{
+    min-height:112px !important;
+    padding:14px 18px 14px 0 !important;
+  }
+  #view-schedule .schedule-ref-card-head time{
+    font-size:14px !important;
+    font-weight:650 !important;
+  }
+  #view-schedule .schedule-ref-state{
+    padding:7px 10px !important;
+    font-size:11px !important;
+  }
+  #view-schedule .schedule-ref-subject{
+    margin-top:4px !important;
+    font-size:19px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-ref-meta{
+    margin-top:9px !important;
+    gap:8px 18px !important;
+  }
+  #view-schedule .schedule-ref-meta span{
+    gap:7px !important;
+    font-size:13px !important;
+  }
+  #view-schedule .schedule-ref-meta i{
+    width:15px !important;
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-ref-change{
+    margin-top:10px !important;
+    padding:9px 11px !important;
+    font-size:11.5px !important;
+  }
+  #view-schedule .schedule-ref-row.current .schedule-ref-card{
+    margin:5px 12px 5px 0 !important;
+    min-height:106px !important;
+    padding:13px 16px !important;
+    border-radius:14px !important;
+  }
+
+  #view-schedule .schedule-ref-break-rail{
+    min-height:66px !important;
+  }
+  #view-schedule .schedule-ref-break-rail::before{
+    width:3px !important;
+  }
+  #view-schedule .schedule-ref-break-rail span{
+    width:36px !important;
+    height:36px !important;
+    margin-top:15px !important;
+    border:4px solid #fff !important;
+  }
+  #view-schedule .schedule-ref-break-rail span i{
+    display:block !important;
+    font-size:14px !important;
+  }
+  #view-schedule .schedule-ref-break-card{
+    min-height:58px !important;
+    margin:5px 12px 5px 0 !important;
+    padding:12px 14px !important;
+    border-radius:12px !important;
+  }
+  #view-schedule .schedule-ref-break-card strong{
+    font-size:13px !important;
+  }
+  #view-schedule .schedule-ref-break-card time{
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-ref-break-card>b{
+    padding:6px 9px !important;
+    font-size:10.5px !important;
+  }
+
+  /* На ПК Главная тоже начинает выше, без старого большого отступа 82px. */
+  #view-home.home-reference{
+    padding-top:54px !important;
+  }
+}
+
+/* На мобильном ещё немного поднимаем верх страницы. */
+@media(max-width:767px){
+  #view-home.home-reference{
+    padding-top:4px !important;
+  }
+  #view-home.home-reference .home-ref-topbar{
+    height:50px !important;
+    min-height:50px !important;
+    margin-bottom:4px !important;
+  }
+  #view-home .home-ref-page-title{
+    transform:translateY(-1px);
+  }
+}
