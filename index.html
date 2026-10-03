@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step15-2026-10-03">
+    <meta name="app-build" content="step16-2026-10-03">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step15-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step16-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -320,9 +320,6 @@
                         <div id="save-status" class="save-status shrink-0"><span class="dot"></span><span id="save-status-text">Сохранено</span></div>
                         <span id="selected-date-label" class="text-[10px] font-semibold text-slate-500 truncate">Сегодня</span>
                     </div>
-                    <button type="button" id="manual-save-journal-btn" onclick="saveJournalManually()" class="shrink-0 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-[11px] font-semibold shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed" title="Сохранить журнал сейчас">
-                        <i class="fa-solid fa-floppy-disk"></i><span>Сохранить</span>
-                    </button>
                 </div>
                 <div class="date-nav mt-2">
                     <button type="button" onclick="changeJournalDate(-1)"><i class="fa-solid fa-chevron-left mr-1"></i>Предыдущий день</button>
@@ -481,7 +478,7 @@
 
 
 
-    <script type="module" src="app.js?v=20261003-step15-root"></script>
+    <script type="module" src="app.js?v=20261003-step16-root"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -511,7 +508,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step15-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step16-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -533,7 +530,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step15-root"></script>
+<script src="realtime-debug.js?v=20261003-step16-root"></script>
 
 </body>
 </html>
