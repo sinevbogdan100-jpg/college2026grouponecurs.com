@@ -338,9 +338,30 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 const joinedAt = typeof item === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(String(item?.joinedAt || ''))
                     ? String(item.joinedAt)
                     : '';
-                result.push({ name, joinedAt });
+                const genderRaw = typeof item === 'object' ? String(item?.gender || '') : '';
+                const gender = genderRaw === 'male' || genderRaw === 'female' ? genderRaw : '';
+                const avatarRaw = typeof item === 'object' ? String(item?.avatar || '') : '';
+                const avatar = /^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(avatarRaw) && avatarRaw.length <= 40000 ? avatarRaw : '';
+                result.push({ name, joinedAt, gender, avatar });
             });
             return result.sort((a,b) => a.name.localeCompare(b.name, 'ru-RU', {sensitivity:'base'}));
+        }
+
+        function getStudentRecordByName(name) {
+            return studentRecords.find(item => item.name === name) || { name: String(name || ''), joinedAt: '', gender: '', avatar: '' };
+        }
+
+        function escapeStudentText(value) {
+            return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        function studentAvatarMarkup(recordOrName, className = '') {
+            const record = typeof recordOrName === 'string' ? getStudentRecordByName(recordOrName) : (recordOrName || {});
+            const cls = ['student-profile-avatar', record.gender || 'neutral', className].filter(Boolean).join(' ');
+            if (record.avatar && /^data:image\//i.test(record.avatar)) {
+                return `<span class="${cls} has-photo"><img src="${record.avatar}" alt=""></span>`;
+            }
+            return `<span class="${cls}"><i class="fa-solid fa-user"></i></span>`;
         }
 
         function readLocalStudentRecords() {
@@ -1075,6 +1096,11 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         async function persistStudentsToCloud(records = studentRecords) {
             if (!canManageStudents()) return false;
             const normalized = normalizeStudentRecords(records);
+            const approxBytes = new Blob([JSON.stringify(normalized)]).size;
+            if (approxBytes > 800000) {
+                showToast('Профили стали слишком большими для облачной записи. Уменьшите или удалите часть фотографий.');
+                return false;
+            }
             storeStudentRecordsLocally(normalized);
             syncStudentCountLocally();
             renderStudentDependentViews();
@@ -1849,22 +1875,155 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             container.innerHTML = '';
             const info = getGroupInfo();
             const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
-            if(rc) rc.textContent=info.curator||'—'; if(rh) rh.textContent=info.headman||'—'; if(rd) rd.textContent=info.deputy||'—';
-            students.forEach((name, index) => {
+            if(rc) rc.textContent=info.curator||'—';
+            if(rh) rh.textContent=info.headman||'—';
+            if(rd) rd.textContent=info.deputy||'—';
+
+            studentRecords.forEach((record, index) => {
                 const item = document.createElement('div');
                 item.className = 'roster-person-card';
                 item.innerHTML = `
                     <div class="roster-person-main">
-                        <div class="roster-avatar"><i class="fa-regular fa-user"></i></div>
-                        <div class="roster-person-text"><strong>${index+1}. ${name}</strong><span>Студент группы</span></div>
+                        ${studentAvatarMarkup(record, 'roster-profile-avatar')}
+                        <div class="roster-person-text"><strong>${index+1}. ${escapeStudentText(record.name)}</strong><span>Студент группы</span></div>
                     </div>
                     <div class="roster-admin-actions roster-person-actions">
-                        <button onclick="renameStudent(${index})" title="Изменить"><i class="fa-regular fa-pen-to-square"></i></button>
+                        <button onclick="openStudentProfileEditor(${index})" title="Профиль"><i class="fa-regular fa-pen-to-square"></i></button>
                         <button class="danger" onclick="removeStudent(${index})" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
                     </div>`;
                 container.appendChild(item);
             });
         }
+
+        let studentProfileEditIndex = -1;
+        let studentProfileGenderDraft = '';
+        let studentProfileAvatarDraft = '';
+
+        function renderStudentProfilePreview() {
+            const preview = document.getElementById('student-profile-preview');
+            if (!preview) return;
+            preview.className = 'student-profile-preview ' + (studentProfileGenderDraft || 'neutral') + (studentProfileAvatarDraft ? ' has-photo' : '');
+            preview.innerHTML = studentProfileAvatarDraft
+                ? `<img src="${studentProfileAvatarDraft}" alt="">`
+                : '<i class="fa-solid fa-user"></i>';
+            document.getElementById('student-gender-male')?.classList.toggle('active', studentProfileGenderDraft === 'male');
+            document.getElementById('student-gender-female')?.classList.toggle('active', studentProfileGenderDraft === 'female');
+            document.getElementById('student-profile-remove-photo')?.classList.toggle('hidden', !studentProfileAvatarDraft);
+        }
+
+        window.openStudentProfileEditor = function(index = -1) {
+            if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
+            studentProfileEditIndex = Number.isInteger(index) ? index : -1;
+            const record = studentProfileEditIndex >= 0 ? studentRecords[studentProfileEditIndex] : null;
+            studentProfileGenderDraft = record?.gender || '';
+            studentProfileAvatarDraft = record?.avatar || '';
+            const nameInput = document.getElementById('student-profile-name');
+            if (nameInput) nameInput.value = record?.name || '';
+            const photoInput = document.getElementById('student-profile-photo');
+            if (photoInput) photoInput.value = '';
+            const title = document.getElementById('student-profile-modal-title');
+            if (title) title.textContent = record ? 'Редактирование ученика' : 'Добавление ученика';
+            renderStudentProfilePreview();
+            document.getElementById('student-profile-modal')?.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            setTimeout(() => nameInput?.focus(), 50);
+        };
+
+        window.closeStudentProfileEditor = function() {
+            document.getElementById('student-profile-modal')?.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            studentProfileEditIndex = -1;
+            studentProfileGenderDraft = '';
+            studentProfileAvatarDraft = '';
+        };
+
+        window.setStudentProfileGender = function(gender) {
+            if (gender !== 'male' && gender !== 'female') return;
+            studentProfileGenderDraft = gender;
+            renderStudentProfilePreview();
+        };
+
+        async function compressStudentAvatar(file) {
+            if (!file || !String(file.type || '').startsWith('image/')) throw new Error('Выберите изображение');
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Не удалось прочитать фото'));
+                reader.readAsDataURL(file);
+            });
+            const image = await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Не удалось открыть фото'));
+                img.src = dataUrl;
+            });
+            const attempts = [[144,.78],[128,.72],[112,.66],[96,.60]];
+            let last = '';
+            for (const [size, quality] of attempts) {
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = size;
+                const ctx = canvas.getContext('2d', { alpha:false });
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0,0,size,size);
+                const width = image.naturalWidth || image.width;
+                const height = image.naturalHeight || image.height;
+                const side = Math.min(width,height);
+                const sx = (width-side)/2;
+                const sy = (height-side)/2;
+                ctx.drawImage(image,sx,sy,side,side,0,0,size,size);
+                last = canvas.toDataURL('image/jpeg',quality);
+                if (last.length <= 36000) return last;
+            }
+            if (last.length > 40000) throw new Error('Фото получилось слишком большим. Выберите другое изображение.');
+            return last;
+        }
+
+        window.handleStudentProfilePhoto = async function(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            try {
+                studentProfileAvatarDraft = await compressStudentAvatar(file);
+                renderStudentProfilePreview();
+            } catch (e) {
+                showToast(e?.message || 'Не удалось обработать фото');
+                if (input) input.value = '';
+            }
+        };
+
+        window.removeStudentProfilePhoto = function() {
+            studentProfileAvatarDraft = '';
+            const input = document.getElementById('student-profile-photo');
+            if (input) input.value = '';
+            renderStudentProfilePreview();
+        };
+
+        window.saveStudentProfile = async function() {
+            if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
+            const name = normalizeStudentName(document.getElementById('student-profile-name')?.value);
+            if (!name) { showToast('Введите фамилию и имя ученика'); return; }
+            if (name.length > 80 || /[<>&"'\x60]/.test(name)) { showToast('Проверьте имя ученика'); return; }
+            if (studentProfileGenderDraft !== 'male' && studentProfileGenderDraft !== 'female') {
+                showToast('Выберите пол ученика');
+                return;
+            }
+            if (students.some((existing,i) => i !== studentProfileEditIndex && existing.toLocaleLowerCase('ru-RU') === name.toLocaleLowerCase('ru-RU'))) {
+                showToast('Такой ученик уже есть в группе');
+                return;
+            }
+            const existing = studentProfileEditIndex >= 0 ? studentRecords[studentProfileEditIndex] : null;
+            const record = {
+                name,
+                joinedAt: existing?.joinedAt || getCurrentDateStr(),
+                gender: studentProfileGenderDraft,
+                avatar: studentProfileAvatarDraft || ''
+            };
+            const next = studentProfileEditIndex >= 0
+                ? studentRecords.map((item,i) => i === studentProfileEditIndex ? record : item)
+                : [...studentRecords, record];
+            const ok = await persistStudentsToCloud(next);
+            closeStudentProfileEditor();
+            showToast(ok ? (existing ? 'Профиль ученика обновлён' : 'Ученик добавлен в облако') : 'Изменения сохранены только на этом устройстве');
+        };
 
         window.renameStudent = async function(index) {
             if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
