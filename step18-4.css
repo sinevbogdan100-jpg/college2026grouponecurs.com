@@ -1,0 +1,13 @@
+/* STEP18.4 — approved visual redesign.
+   This stylesheet is intentionally isolated from Firebase/data logic. */
+:root{
+  --ui-bg:#f7f9fd;
+  --ui-card:#ffffff;
+  --ui-ink:#0f1933;
+  --ui-muted:#657395;
+  --ui-line:#e5eaf4;
+  --ui-purple:#5b35ff;
+  --ui-purple-soft:#f0ecff;
+}
+html,body{background:var(--ui-bg)!important;color:var(--ui-ink)!important;overflow-x:hidden}
+#view-home,#view-tracker,#view-schedule,#view-roster{box-sizing:border-box;width:100%;margin-left:auto!important;margin-right:auto!important}
