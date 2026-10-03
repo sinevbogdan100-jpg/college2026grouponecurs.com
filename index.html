@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.3-home1-2026-10-03">
+    <meta name="app-build" content="step18.3-home-ref1-2026-10-03">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step18-3-home1">
+    <link rel="stylesheet" href="style.css?v=20261003-step18-3-home-ref1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -208,83 +208,61 @@
         </div>
     </div>
 
-    <div id="view-home" class="home-redesign max-w-md mx-auto min-h-screen flex flex-col pb-20">
-        <div class="app-mobile-topbar home-topbar">
-            <button class="top-icon-btn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
-            <div class="topbar-title">
-                <span>Машиностроительный колледж</span>
-                <strong id="topbar-group-name">ТОЭ-26-9-1</strong>
-            </div>
-            <button class="top-icon-btn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
+    <div id="view-home" class="home-reference max-w-md mx-auto min-h-screen flex flex-col pb-20">
+        <div class="app-mobile-topbar home-ref-topbar">
+            <button class="home-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="home-ref-page-title">Главная</div>
+            <button class="home-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
                 <i class="fa-regular fa-bell"></i>
                 <span id="notification-badge" class="notification-badge hidden">0</span>
             </button>
         </div>
 
-        <div class="home-page-shell">
-            <section class="home-heading-card">
-                <div class="home-heading-icon"><i class="fa-solid fa-people-group"></i></div>
-                <div class="home-heading-text">
-                    <span>Машиностроительный колледж</span>
+        <main class="home-ref-shell">
+            <section class="home-ref-group-card">
+                <div class="home-ref-group-icon"><i class="fa-solid fa-user-group"></i></div>
+                <div class="home-ref-group-copy">
                     <h1 id="group-name" class="admin-inline-edit" data-group-field="groupName" tabindex="0">ТОЭ-26-9-1</h1>
+                    <div class="home-ref-student-line"><span id="group-student-count">19</span> студентов</div>
                 </div>
             </section>
 
-            <section id="home-today-card" class="home-next-card">
-                <div class="home-next-card-head">
-                    <div class="home-next-card-caption">
-                        <span id="home-date-caption">Следующая пара</span>
-                        <strong id="home-today-date">Загрузка...</strong>
+            <section class="home-ref-roles">
+                <article class="home-ref-role-card">
+                    <i class="fa-regular fa-user"></i>
+                    <div><span>Куратор</span><strong id="group-curator" class="admin-inline-edit" data-group-field="curator" tabindex="0">Негманова Г.Б.</strong></div>
+                </article>
+                <article class="home-ref-role-card">
+                    <i class="fa-regular fa-user"></i>
+                    <div><span>Староста</span><strong id="group-headman" class="admin-inline-edit" data-group-field="headman" tabindex="0">Синёв Б.П.</strong></div>
+                </article>
+                <article class="home-ref-role-card">
+                    <i class="fa-regular fa-user"></i>
+                    <div><span>Зам. старосты</span><strong id="group-deputy" class="admin-inline-edit" data-group-field="deputy" tabindex="0">—</strong></div>
+                </article>
+            </section>
+
+            <section class="home-ref-today">
+                <div class="home-ref-today-head">
+                    <h2>Сегодня</h2>
+                    <div class="home-ref-date">
+                        <strong id="home-reference-date">—</strong>
+                        <span id="home-reference-weekday">—</span>
                     </div>
-                    <div id="home-today-week" class="home-week-badge">—</div>
                 </div>
-                <div class="home-next-card-body">
-                    <div class="home-next-card-icon"><i class="fa-solid fa-book-open"></i></div>
-                    <div id="home-next-lesson" class="home-next-lesson">Загрузка расписания...</div>
-                </div>
+                <div id="home-day-timeline" class="home-ref-schedule-list"></div>
             </section>
 
-            <section class="home-info-grid" aria-label="Информация о группе">
-                <article class="home-info-card">
-                    <div class="home-info-icon"><i class="fa-solid fa-users"></i></div>
-                    <div class="home-info-value" id="group-student-count" title="Количество меняется автоматически по составу группы">19</div>
-                    <div class="home-info-label">студентов</div>
-                </article>
-
-                <article class="home-info-card">
-                    <div class="home-info-icon"><i class="fa-regular fa-user"></i></div>
-                    <div id="group-curator" class="home-info-value home-info-name admin-inline-edit" data-group-field="curator" tabindex="0">Негманова Г.Б.</div>
-                    <div class="home-info-label">куратор</div>
-                </article>
-
-                <article class="home-info-card">
-                    <div class="home-info-icon"><i class="fa-regular fa-user"></i></div>
-                    <div id="group-headman" class="home-info-value home-info-name admin-inline-edit" data-group-field="headman" tabindex="0">Синёв Б.П.</div>
-                    <div class="home-info-label">староста</div>
-                </article>
-
-                <article class="home-info-card">
-                    <div class="home-info-icon"><i class="fa-regular fa-user"></i></div>
-                    <div id="group-deputy" class="home-info-value home-info-name admin-inline-edit" data-group-field="deputy" tabindex="0">—</div>
-                    <div class="home-info-label">зам. старосты</div>
-                </article>
-            </section>
-
-            <section class="home-timeline-card home-schedule-card">
-                <div class="home-section-head">
-                    <div>
-                        <span class="eyebrow">Сегодня</span>
-                        <h2>Расписание на сегодня</h2>
-                    </div>
-                    <button onclick="switchView('schedule')">Открыть <i class="fa-solid fa-arrow-right"></i></button>
+            <section class="home-ref-notifications">
+                <div class="home-ref-section-head">
+                    <h2>Последние уведомления</h2>
+                    <button onclick="openNotifications()">Все уведомления <i class="fa-solid fa-chevron-right"></i></button>
                 </div>
-                <div id="home-day-timeline" class="home-day-timeline"></div>
+                <div id="home-latest-notification"></div>
             </section>
 
-            <div class="home-footer-note">
-                <span id="group-name-footer">ТОЭ-26-9-1</span> • Автоматическое сохранение
-            </div>
-        </div>
+            <span id="group-name-footer" class="hidden">ТОЭ-26-9-1</span>
+        </main>
     </div>
 
     <div id="view-tracker" class="hidden min-h-screen flex flex-col">
@@ -568,7 +546,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261003-step18-3-home1"></script>
+    <script type="module" src="app.js?v=20261003-step18-3-home-ref1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
