@@ -1427,3 +1427,13 @@ body{background:linear-gradient(180deg,#fafaff 0,#f5f6fb 100%);color:var(--ink)}
   body.layout-pc #view-home.home-reference{max-width:760px!important;padding-left:18px!important;padding-right:18px!important}
   #view-home .home-ref-topbar{display:none!important}
 }
+
+
+/* ===== GLOBAL NAV ICONS — reference black set ===== */
+.bottom-nav button i{
+  color:#000 !important;
+  opacity:1 !important;
+}
+.bottom-nav button.active i{
+  color:#000 !important;
+}
