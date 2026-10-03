@@ -278,6 +278,7 @@ function renderScheduleSummary(entries, selectedDate) {
     let icon = 'fa-book-open';
     let title = 'Сегодня';
     let stateTitle = 'Занятия';
+    let stateIcon = '';
     let stateTime = '';
     let footer = '';
     let progress = 0;
@@ -291,8 +292,8 @@ function renderScheduleSummary(entries, selectedDate) {
         footer = `До конца пары: ${scheduleRemainingLabel(state.entry.range.end - state.minutes)}`;
     } else if (state.type === 'break') {
         mode = 'break';
-        icon = 'fa-mug-hot';
         stateTitle = 'Перемена';
+        stateIcon = 'fa-mug-hot';
         stateTime = `${scheduleClock(state.start)} – ${scheduleClock(state.end)}`;
         const duration = Math.max(1, state.end - state.start);
         progress = Math.max(0, Math.min(100, ((state.minutes - state.start) / duration) * 100));
@@ -319,7 +320,7 @@ function renderScheduleSummary(entries, selectedDate) {
                     <div><strong>${title}</strong><span>${scheduleEscape(scheduleFormatFullDate(selectedDate))}</span></div>
                 </div>
                 <div class="schedule-live-state">
-                    <strong>${scheduleEscape(stateTitle)}</strong>
+                    <strong>${stateIcon ? `<i class="fa-solid ${stateIcon}"></i>` : ''}${scheduleEscape(stateTitle)}</strong>
                     <span>${scheduleEscape(stateTime)}</span>
                 </div>
             </div>
@@ -712,7 +713,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
             pastBreak ? 'past' : ''
         ].filter(Boolean).join(' ');
         breakRow.innerHTML = `
-            <div class="schedule-ref-break-rail"><span></span></div>
+            <div class="schedule-ref-break-rail"><span><i class="fa-solid fa-mug-hot"></i></span></div>
             <div class="schedule-ref-break-card">
                 <div><i class="fa-solid fa-mug-hot"></i><strong>Перемена — ${duration} минут</strong></div>
                 <time><i class="fa-regular fa-clock"></i>${scheduleClock(start)} – ${scheduleClock(end)}</time>

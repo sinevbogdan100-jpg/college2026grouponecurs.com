@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-schedule-ref-final1";
+} from "./schedule.js?v=20261004-schedule-ref-polish1";
 
         
-window.__SITE_BUILD__ = 'step18.3-schedule-ref-final1-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-schedule-ref-polish1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====

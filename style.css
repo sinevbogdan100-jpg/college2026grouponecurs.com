@@ -3048,3 +3048,312 @@ body.schedule-edit-mode #view-schedule .schedule-admin-actions{display:flex}
   #view-schedule .schedule-ref-break-card strong{font-size:10.5px}
   #view-schedule .schedule-ref-break-card time{font-size:9.5px}
 }
+
+
+/* ===== SCHEDULE REFERENCE POLISH — 2026-10-04 ===== */
+#view-schedule .schedule-live-state strong{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+}
+#view-schedule .schedule-live-state strong i{font-size:.95em}
+#view-schedule .schedule-ref-break-rail span{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#view-schedule .schedule-ref-break-rail span i{display:none}
+
+@media(max-width:767px){
+  #view-schedule.schedule-reference-page{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  #view-schedule .schedule-ref-topbar{
+    min-height:60px !important;
+    margin-bottom:8px !important;
+  }
+  #view-schedule .schedule-ref-title h1{
+    font-size:22px !important;
+  }
+  #view-schedule .schedule-ref-topbtn{
+    width:44px !important;
+    height:44px !important;
+    font-size:20px !important;
+  }
+
+  #view-schedule .schedule-ref-week-switch{
+    margin-bottom:11px !important;
+    padding:4px !important;
+    border-radius:13px !important;
+  }
+  #view-schedule .schedule-ref-week-switch button{
+    min-height:44px !important;
+    font-size:13px !important;
+    border-radius:10px !important;
+  }
+
+  #view-schedule .schedule-ref-datebar{
+    grid-template-columns:44px minmax(0,1fr) 44px !important;
+    gap:7px !important;
+    margin-bottom:11px !important;
+  }
+  #view-schedule .schedule-ref-date-arrow{
+    width:44px !important;
+    height:44px !important;
+    font-size:15px !important;
+  }
+  #view-schedule .schedule-ref-date-copy{
+    min-height:46px !important;
+    padding:7px 8px !important;
+  }
+  #view-schedule .schedule-ref-date-copy i{
+    font-size:14px !important;
+  }
+  #view-schedule .schedule-ref-date-copy strong{
+    font-size:12px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-ref-date-copy>span{
+    margin-top:4px !important;
+    font-size:10px !important;
+  }
+
+  #view-schedule .schedule-ref-days{
+    gap:6px !important;
+    margin-bottom:12px !important;
+  }
+  #view-schedule .schedule-ref-days button{
+    min-height:64px !important;
+    padding:8px 3px !important;
+    border-radius:12px !important;
+  }
+  #view-schedule .schedule-ref-days button strong{
+    font-size:13px !important;
+  }
+  #view-schedule .schedule-ref-days button span{
+    margin-top:5px !important;
+    font-size:10.5px !important;
+  }
+
+  /* "Сегодня" — крупно, как в референсе. */
+  #view-schedule #schedule-live-summary{
+    margin-bottom:13px !important;
+  }
+  #view-schedule .schedule-live-card{
+    padding:13px !important;
+    border-radius:15px !important;
+  }
+  #view-schedule .schedule-live-head{
+    gap:8px !important;
+  }
+  #view-schedule .schedule-live-today{
+    grid-template-columns:38px minmax(0,1fr) !important;
+    gap:9px !important;
+  }
+  #view-schedule .schedule-live-icon{
+    width:38px !important;
+    height:38px !important;
+    border-radius:10px !important;
+    font-size:18px !important;
+  }
+  #view-schedule .schedule-live-today strong{
+    font-size:15px !important;
+    line-height:1.15 !important;
+  }
+  #view-schedule .schedule-live-today span:not(.schedule-live-icon){
+    margin-top:4px !important;
+    font-size:10.5px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-live-state{
+    min-width:104px !important;
+  }
+  #view-schedule .schedule-live-state strong{
+    font-size:13.5px !important;
+    line-height:1.15 !important;
+    white-space:nowrap !important;
+  }
+  #view-schedule .schedule-live-state span{
+    margin-top:5px !important;
+    font-size:10.5px !important;
+  }
+  #view-schedule .schedule-live-progress{
+    height:9px !important;
+    margin:12px 0 9px !important;
+  }
+  #view-schedule .schedule-live-card p{
+    font-size:12px !important;
+    line-height:1.3 !important;
+    font-weight:600 !important;
+  }
+  #view-schedule .schedule-live-card.break{
+    border-color:#f5d6ad !important;
+    background:linear-gradient(135deg,#fff5e7 0%,#fffaf3 100%) !important;
+  }
+  #view-schedule .schedule-live-card.break .schedule-live-state strong{
+    color:#df6500 !important;
+  }
+  #view-schedule .schedule-live-card.break .schedule-live-state span{
+    color:#b85d0d !important;
+  }
+  #view-schedule .schedule-live-card.break p{
+    color:#a8570e !important;
+  }
+
+  #view-schedule .schedule-ref-day-heading{
+    margin:16px 4px 10px !important;
+    font-size:17px !important;
+    line-height:1.2 !important;
+  }
+
+  /* Весь список пар увеличен, но остаётся компактным. */
+  #view-schedule .schedule-ref-timeline{
+    border-radius:14px !important;
+  }
+  #view-schedule .schedule-ref-row,
+  #view-schedule .schedule-ref-break{
+    grid-template-columns:58px minmax(0,1fr) !important;
+  }
+  #view-schedule .schedule-ref-number{
+    width:36px !important;
+    height:36px !important;
+    margin-top:11px !important;
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-ref-rail>i{
+    top:38px !important;
+    width:2.5px !important;
+  }
+  #view-schedule .schedule-ref-card{
+    min-height:94px !important;
+    padding:11px 10px 11px 0 !important;
+  }
+  #view-schedule .schedule-ref-card-head{
+    min-height:24px !important;
+  }
+  #view-schedule .schedule-ref-card-head time{
+    font-size:13.5px !important;
+    font-weight:700 !important;
+  }
+  #view-schedule .schedule-ref-state{
+    padding:6px 9px !important;
+    font-size:10.5px !important;
+  }
+  #view-schedule .schedule-ref-subject{
+    margin-top:3px !important;
+    font-size:16px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-ref-meta{
+    gap:6px 12px !important;
+    margin-top:7px !important;
+  }
+  #view-schedule .schedule-ref-meta span{
+    gap:6px !important;
+    font-size:11px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-ref-meta i{
+    width:13px !important;
+    font-size:11px !important;
+  }
+  #view-schedule .schedule-ref-change{
+    margin-top:8px !important;
+    padding:8px 9px !important;
+    font-size:10px !important;
+  }
+
+  #view-schedule .schedule-ref-row.current .schedule-ref-card{
+    margin:4px 7px 4px 0 !important;
+    min-height:90px !important;
+    padding:10px 11px !important;
+    border-radius:12px !important;
+    background:linear-gradient(100deg,#effff5 0%,#e7f9ee 100%) !important;
+  }
+  #view-schedule .schedule-ref-row.current .schedule-ref-number{
+    box-shadow:0 0 0 6px rgba(75,199,126,.12) !important;
+  }
+
+  /* Перемена: кружка с чашкой выступает прямо на вертикальной шкале. */
+  #view-schedule .schedule-ref-break-rail{
+    min-height:58px !important;
+  }
+  #view-schedule .schedule-ref-break-rail::before{
+    width:2.5px !important;
+  }
+  #view-schedule .schedule-ref-break-rail span{
+    width:32px !important;
+    height:32px !important;
+    margin-top:13px !important;
+    border:4px solid #fff !important;
+    background:#e9eef6 !important;
+    color:#7485a1 !important;
+    box-shadow:0 2px 8px rgba(31,48,78,.08) !important;
+    transform:translateX(2px) !important;
+  }
+  #view-schedule .schedule-ref-break-rail span i{
+    display:block !important;
+    font-size:12px !important;
+  }
+  #view-schedule .schedule-ref-break.current .schedule-ref-break-rail span{
+    background:#f57b08 !important;
+    color:#fff !important;
+    box-shadow:0 0 0 5px rgba(245,123,8,.11),0 4px 10px rgba(212,104,0,.16) !important;
+  }
+  #view-schedule .schedule-ref-break.current .schedule-ref-break-rail::before{
+    background:#f1a24f !important;
+  }
+  #view-schedule .schedule-ref-break-card{
+    min-height:50px !important;
+    margin:4px 7px 4px 0 !important;
+    padding:10px 11px !important;
+    border-radius:11px !important;
+    gap:5px 8px !important;
+  }
+  #view-schedule .schedule-ref-break-card>div{
+    gap:8px !important;
+  }
+  #view-schedule .schedule-ref-break-card>div i{
+    font-size:13px !important;
+  }
+  #view-schedule .schedule-ref-break-card strong{
+    font-size:11.5px !important;
+    line-height:1.25 !important;
+  }
+  #view-schedule .schedule-ref-break-card time{
+    gap:6px !important;
+    font-size:10.5px !important;
+  }
+  #view-schedule .schedule-ref-break-card>b{
+    padding:5px 8px !important;
+    font-size:9.5px !important;
+  }
+
+  #view-schedule .schedule-ref-admin-hint{
+    margin:9px 9px 8px !important;
+    padding:10px 11px !important;
+    font-size:10.5px !important;
+  }
+  #view-schedule .schedule-ref-empty strong{
+    font-size:15px !important;
+  }
+  #view-schedule .schedule-ref-empty span{
+    font-size:11px !important;
+  }
+}
+
+@media(max-width:365px){
+  #view-schedule .schedule-ref-title h1{font-size:21px !important}
+  #view-schedule .schedule-ref-days{gap:4px !important}
+  #view-schedule .schedule-ref-days button strong{font-size:12px !important}
+  #view-schedule .schedule-ref-days button span{font-size:9.8px !important}
+  #view-schedule .schedule-live-today strong{font-size:14px !important}
+  #view-schedule .schedule-live-today span:not(.schedule-live-icon){font-size:10px !important}
+  #view-schedule .schedule-live-state strong{font-size:12.5px !important}
+  #view-schedule .schedule-live-state span{font-size:10px !important}
+  #view-schedule .schedule-ref-subject{font-size:15px !important}
+  #view-schedule .schedule-ref-meta span{font-size:10.5px !important}
+}
