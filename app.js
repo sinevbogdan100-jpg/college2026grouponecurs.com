@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-home-ref1-2026-10-03';
+window.__SITE_BUILD__ = 'step18.3-pages-ref1-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -1842,27 +1842,39 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function renderRosterList() {
-            const container = document.getElementById('roster-container');
-            if (!container) return;
-            container.innerHTML = '';
-            const info = getGroupInfo();
-            const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
-            if(rc) rc.textContent=info.curator||'—'; if(rh) rh.textContent=info.headman||'—'; if(rd) rd.textContent=info.deputy||'—';
-            students.forEach((name, index) => {
-                const item = document.createElement('div');
-                item.className = 'roster-person-card';
-                item.innerHTML = `
-                    <div class="roster-person-main">
-                        <div class="roster-avatar"><i class="fa-regular fa-user"></i></div>
-                        <div class="roster-person-text"><strong>${index+1}. ${name}</strong><span>Студент группы</span></div>
-                    </div>
-                    <div class="roster-admin-actions roster-person-actions">
-                        <button onclick="renameStudent(${index})" title="Изменить"><i class="fa-regular fa-pen-to-square"></i></button>
-                        <button class="danger" onclick="removeStudent(${index})" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
-                    </div>`;
-                container.appendChild(item);
-            });
-        }
+    const container = document.getElementById('roster-container');
+    if (!container) return;
+    container.innerHTML = '';
+    const info = getGroupInfo();
+    const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
+    if(rc) rc.textContent=info.curator||'—';
+    if(rh) rh.textContent=info.headman||'—';
+    if(rd) rd.textContent=info.deputy||'—';
+    const copy=document.getElementById('roster-student-count-copy'); if(copy) copy.textContent=students.length;
+    const trigger=document.getElementById('roster-add-trigger'); if(trigger) trigger.classList.toggle('hidden',!canManageStudents());
+
+    students.forEach((name,index)=>{
+        const item=document.createElement('div');
+        item.className='roster-ref-row';
+        item.innerHTML=`
+            <span class="roster-ref-index">${index+1}</span>
+            <span class="roster-ref-avatar"><i class="fa-regular fa-user"></i></span>
+            <strong>${name}</strong>
+            ${canManageStudents()?`<div class="roster-ref-actions">
+                <button onclick="toggleRosterRowMenu(${index})" aria-label="Действия"><i class="fa-solid fa-ellipsis"></i></button>
+                <div id="roster-row-menu-${index}" class="roster-row-menu hidden">
+                    <button onclick="renameStudent(${index});toggleRosterRowMenu(${index})"><i class="fa-regular fa-pen-to-square"></i> Изменить</button>
+                    <button class="danger" onclick="removeStudent(${index})"><i class="fa-regular fa-trash-can"></i> Удалить</button>
+                </div>
+            </div>`:'<i class="fa-solid fa-chevron-right roster-ref-chevron"></i>'}
+        `;
+        container.appendChild(item);
+    });
+}
+window.toggleRosterRowMenu=function(index){
+    document.querySelectorAll('.roster-row-menu').forEach((el)=>{if(el.id!==`roster-row-menu-${index}`)el.classList.add('hidden');});
+    document.getElementById(`roster-row-menu-${index}`)?.classList.toggle('hidden');
+};
 
         window.renameStudent = async function(index) {
             if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
@@ -2026,54 +2038,75 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function renderApp() {
-            const container = document.getElementById('students-container');
-            const searchVal = (document.getElementById('search-input').value || '').toLowerCase();
-            container.innerHTML = '';
+    const container = document.getElementById('students-container');
+    if (!container) return;
+    const searchInput = document.getElementById('search-input');
+    const searchVal = String(searchInput?.value || '').toLowerCase();
+    container.innerHTML = '';
 
-            let counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
+    const counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
+    const selectedDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
+    const journalStudents = getStudentsForDate(selectedDate);
+    const editable = canEditJournal();
 
-            const selectedDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
-            const journalStudents = getStudentsForDate(selectedDate);
-            journalStudents.forEach((name, index) => {
-                if (searchVal && !name.toLowerCase().includes(searchVal)) return;
+    const statusDefs = [
+        ['present','П','Присутствует'],
+        ['sick','Б','Болеет'],
+        ['excused','У','Уважительная причина'],
+        ['unexcused','Н','Неуважительная причина'],
+        ['late','О','Опоздание']
+    ];
 
-                const currentStatus = attendanceState[name] || null;
-                if (currentStatus && counts[currentStatus] !== undefined) counts[currentStatus]++;
+    journalStudents.forEach((name, index) => {
+        if (searchVal && !name.toLowerCase().includes(searchVal)) return;
+        const currentStatus = attendanceState[name] || null;
+        if (currentStatus && counts[currentStatus] !== undefined) counts[currentStatus]++;
 
-                const card = document.createElement('div');
-                card.className = "journal-student-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
+        const row = document.createElement('div');
+        row.className = 'journal-ref-row';
+        const safeName = name.replace(/'/g,"\\'");
+        const buttons = statusDefs.map(([status,label,title]) => {
+            const selected = currentStatus === status ? ' selected' : '';
+            const action = editable ? `onclick="setAttendance('${safeName}','${status}')"` : 'disabled';
+            return `<button ${action} class="journal-status-btn ${status}${selected}" title="${title}">${label}</button>`;
+        }).join('');
+        const note = attendanceNotes[name] || '';
+        row.innerHTML = `
+            <div class="journal-ref-index">${index + 1}</div>
+            <div class="journal-ref-person">
+                <span class="journal-ref-avatar"><i class="fa-solid fa-user"></i></span>
+                <strong>${name}</strong>
+            </div>
+            <div class="journal-ref-statuses">${buttons}</div>
+            <button class="journal-ref-note ${note?'has-note':''}" ${editable?`onclick="openAttendanceNote('${safeName}')"`:'disabled'} title="${note || 'Добавить примечание'}">
+                <i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span>
+            </button>`;
+        container.appendChild(row);
+    });
 
-                let buttonsHtml = canEditJournal() ? `
-                    <div class="journal-status-grid grid grid-cols-5 gap-1">
-                        <button onclick="setAttendance('${name}', 'present')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Присутствует">П</button>
-                        <button onclick="setAttendance('${name}', 'late')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'late' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Опаздывает">О</button>
-                        <button onclick="setAttendance('${name}', 'sick')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'sick' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Болеет">Б</button>
-                        <button onclick="setAttendance('${name}', 'excused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'excused' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Уважительная причина">У</button>
-                        <button onclick="setAttendance('${name}', 'unexcused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'unexcused' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Неуважительная причина">Н</button>
-                    </div>
-                ` : '';
+    const marked = counts.present + counts.late + counts.sick + counts.excused + counts.unexcused;
+    const attending = counts.present + counts.late;
+    const pct = marked ? Math.round(attending / marked * 100) : 0;
 
-                card.innerHTML = `
-                    <div class="journal-student-head flex items-center justify-between">
-                        <div class="journal-student-ident flex items-center space-x-2.5">
-                            <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
-                            <span class="font-bold text-sm text-slate-900">${name}</span>
-                        </div>
-                        <span class="journal-status-badge text-[10px] font-medium px-2 py-0.5 rounded-md ${currentStatus ? getStatusBadgeClass(currentStatus) : 'bg-slate-100 text-slate-500'}">${currentStatus ? getStatusName(currentStatus) : 'Не отмечено'}</span>
-                    </div>
-                    ${buttonsHtml}
-                    <button onclick="openAttendanceNote('${name.replace("'", "\'")}')" class="journal-note-btn"><i class="fa-regular fa-note-sticky"></i><span>${attendanceNotes[name] ? attendanceNotes[name] : 'Добавить примечание'}</span></button>
-                `;
-                container.appendChild(card);
-            });
+    const setText=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=String(val);};
+    setText('stat-present', counts.present);
+    setText('stat-late', counts.late);
+    setText('stat-sick', counts.sick);
+    setText('stat-excused', counts.excused);
+    setText('stat-unexcused', counts.unexcused);
+    setText('journal-stat-total', journalStudents.length);
+    setText('journal-group-percent', pct + '%');
+    setText('journal-group-marked', marked + ' из ' + journalStudents.length);
+    const groupBar=document.getElementById('journal-group-progress'); if(groupBar)groupBar.style.width=pct+'%';
 
-            document.getElementById('stat-present').innerText = counts.present;
-            document.getElementById('stat-late').innerText = counts.late;
-            document.getElementById('stat-sick').innerText = counts.sick;
-            document.getElementById('stat-excused').innerText = counts.excused;
-            document.getElementById('stat-unexcused').innerText = counts.unexcused;
-            if (activeJournalTab === 'stats') renderAttendanceAnalytics();
-        }
+    const scoreName = journalStudents[0] || '—';
+    const score = scoreName !== '—' ? getStudentAttendanceStats(scoreName) : {attendancePercent:0};
+    setText('journal-score-name', scoreName);
+    setText('journal-score-pct', (score.attendancePercent || 0) + '%');
+    const scoreBar=document.getElementById('journal-score-progress'); if(scoreBar)scoreBar.style.width=(score.attendancePercent || 0)+'%';
+
+    if (activeJournalTab === 'stats') renderAttendanceAnalytics();
+}
 
         async function saveCurrentDateState() {
             if (!canEditJournal()) return false;
@@ -2515,10 +2548,90 @@ function renderHomeLatestNotification(){
         <span class="home-ref-notification-time">${time}</span>
     </button>`;
 }
-function renderNotifications(){renderHomeLatestNotification();const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
+let notificationFilter='all';
+function getNotificationCategory(n){
+    const text=(String(n?.title||'')+' '+String(n?.text||'')).toLowerCase();
+    if(text.includes('поддерж')) return 'support';
+    if(text.includes('журнал')||text.includes('посещ')) return 'journal';
+    if(text.includes('распис')||text.includes('пара')||text.includes('кабинет')) return 'schedule';
+    return 'all';
+}
+function notificationIconClass(n){
+    const cat=getNotificationCategory(n);
+    if(cat==='schedule')return 'fa-calendar-days';
+    if(cat==='journal')return 'fa-file-lines';
+    if(cat==='support')return 'fa-comments';
+    return 'fa-bullhorn';
+}
+function notificationGroupLabel(value){
+    if(!value)return 'Ранее';
+    const d=new Date(value); if(Number.isNaN(d.getTime()))return 'Ранее';
+    const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const day=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const diff=Math.round((today-day)/86400000);
+    if(diff===0)return 'Сегодня'; if(diff===1)return 'Вчера';
+    return d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+}
+window.setNotificationFilter=function(filter){
+    notificationFilter=['all','schedule','journal','support'].includes(filter)?filter:'all';
+    document.querySelectorAll('[data-notification-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.notificationFilter===notificationFilter));
+    renderNotifications();
+};
+window.openNotificationDetail=function(id){
+    const n=notificationsCache.find(x=>x.id===id); if(!n)return;
+    const detail=document.getElementById('notification-detail'), list=document.getElementById('notifications-list');
+    if(!detail||!list)return;
+    list.classList.add('hidden');
+    document.querySelector('.notification-ref-tabs')?.classList.add('hidden');
+    document.getElementById('notification-admin-composer')?.classList.add('hidden');
+    detail.classList.remove('hidden');
+    detail.innerHTML=`<button class="notification-detail-back" onclick="closeNotificationDetail()"><i class="fa-solid fa-chevron-left"></i> Назад</button>
+      <div class="notification-detail-card">
+        <div class="notification-detail-icon"><i class="fa-solid ${notificationIconClass(n)}"></i></div>
+        <h3>${escapeNotificationText(n.title||'Уведомление')}</h3>
+        <span>${n.createdAt?new Date(n.createdAt).toLocaleString('ru-RU'):''}</span>
+        <p>${escapeNotificationText(n.text||'')}</p>
+        ${getNotificationCategory(n)==='schedule'?'<button class="notification-detail-action" onclick="closeNotifications();switchView(\'schedule\')"><i class="fa-regular fa-calendar"></i> Открыть расписание</button>':''}
+      </div>`;
+};
+window.closeNotificationDetail=function(){
+    document.getElementById('notification-detail')?.classList.add('hidden');
+    document.getElementById('notifications-list')?.classList.remove('hidden');
+    document.querySelector('.notification-ref-tabs')?.classList.remove('hidden');
+    document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());
+};
+function renderNotifications(){
+    renderHomeLatestNotification();
+    const box=document.getElementById('notifications-list'); if(!box)return;
+    const read=getReadNotificationIds();
+    const list=notificationsCache.filter(n=>notificationFilter==='all'||getNotificationCategory(n)===notificationFilter);
+    if(!list.length){box.innerHTML='<div class="notification-ref-empty">Уведомлений в этой категории пока нет.</div>';return;}
+    let lastGroup='';
+    box.innerHTML=list.map(n=>{
+      const group=notificationGroupLabel(n.createdAt); const groupHead=group!==lastGroup?`<div class="notification-ref-group-label">${group}</div>`:'';
+      lastGroup=group;
+      const unread=!read.has(n.id);
+      return groupHead+`<button class="notification-ref-item ${unread?'unread':''}" onclick="openNotificationDetail('${n.id}')">
+        <span class="notification-ref-icon"><i class="fa-solid ${notificationIconClass(n)}"></i></span>
+        <span class="notification-ref-copy"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${escapeNotificationText(n.text||'')}</span></span>
+        <time>${notificationTimeLabel(n.createdAt)}</time>
+      </button>`;
+    }).join('');
+    applyKzTranslations(box);
+}
 function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
 function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();renderHomeLatestNotification();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
-window.openNotifications=function(){document.getElementById('notifications-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());renderNotifications();setTimeout(markNotificationsRead,250);};
+window.openNotifications=function(){
+    document.getElementById('notifications-modal')?.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    notificationFilter='all';
+    document.querySelectorAll('[data-notification-filter]').forEach(btn=>btn.classList.toggle('active',btn.dataset.notificationFilter==='all'));
+    document.getElementById('notification-detail')?.classList.add('hidden');
+    document.getElementById('notifications-list')?.classList.remove('hidden');
+    document.querySelector('.notification-ref-tabs')?.classList.remove('hidden');
+    document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());
+    renderNotifications(); setTimeout(markNotificationsRead,250);
+};
 window.closeNotifications=function(){document.getElementById('notifications-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
 window.publishNotification=async function(){if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}const title=document.getElementById('notification-title')?.value.trim()||'';const text=document.getElementById('notification-text')?.value.trim()||'';if(!title&&!text){showToast('Введите заголовок или текст');return;}const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;try{await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccessLogin||'Владелец',type:'announcement'});const t=document.getElementById('notification-title'),b=document.getElementById('notification-text');if(t)t.value='';if(b)b.value='';showToast('Уведомление опубликовано');}catch(e){console.warn('publish notification',e);showToast('Не удалось опубликовать уведомление');}};
 let activeSupportThreadId='';
