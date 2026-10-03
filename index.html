@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-nav-icons-slate1">
+    <link rel="stylesheet" href="style.css?v=20261003-pages-ref1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -265,203 +265,140 @@
         </main>
     </div>
 
-    <div id="view-tracker" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-            <div class="max-w-2xl mx-auto px-4 py-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                            <i class="fa-solid fa-house text-xs"></i>
-                        </button>
-                        <div>
-                            <div class="flex items-center gap-1.5">
-                                <h1 class="font-bold text-lg text-slate-900" data-i18n="journal">Журнал</h1>
-                                
-                            </div>
-                            <p class="text-[11px] text-slate-500" data-i18n="attendance_students">Посещаемость студентов</p>
-                        <span id="tracker-group-name" class="hidden">ТОЭ-26-9-1</span><span id="tracker-curator" class="hidden">Негманова Г.Б.</span></div>
-                    </div>
+    <div id="view-tracker" class="hidden ref-page journal-ref-page min-h-screen">
+        <div class="ref-page-topbar">
+            <button class="ref-top-btn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="ref-page-heading"><h1>Журнал</h1><span>Посещаемость студентов</span></div>
+            <button class="ref-top-btn" onclick="openNotifications()" aria-label="Уведомления"><i class="fa-regular fa-bell"></i></button>
+        </div>
+        <span id="tracker-group-name" class="hidden">ТОЭ-26-9-1</span><span id="tracker-curator" class="hidden">Негманова Г.Б.</span>
 
-                    <!-- Date Selection & History Button -->
-                    <div class="flex items-center space-x-2">
-                        <div class="relative">
-                            <input type="date" id="date-picker" onchange="onDateChanged()" class="sr-only" aria-hidden="true" tabindex="-1">
-                            <button type="button" id="calendar-trigger" onclick="toggleMiniCalendar()" class="calendar-trigger">
-                                <i class="fa-regular fa-calendar calendar-trigger-icon"></i>
-                                <span id="calendar-trigger-text">Сегодня</span>
-                                <i class="fa-solid fa-chevron-down calendar-trigger-arrow"></i>
-                            </button>
-                            <div id="mini-calendar" class="mini-calendar is-hidden">
-                                <div class="mini-calendar-head">
-                                    <button type="button" onclick="changeMiniCalendarMonth(-1)" class="mini-calendar-nav" aria-label="Предыдущий месяц"><i class="fa-solid fa-chevron-left"></i></button>
-                                    <div id="mini-calendar-title" class="mini-calendar-title"></div>
-                                    <button type="button" onclick="changeMiniCalendarMonth(1)" class="mini-calendar-nav" aria-label="Следующий месяц"><i class="fa-solid fa-chevron-right"></i></button>
-                                </div>
-                                <div class="mini-calendar-week">
-                                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-                                </div>
-                                <div id="mini-calendar-days" class="mini-calendar-days"></div>
-                                <button type="button" onclick="selectMiniCalendarDate(formatLocalDate(new Date()))" class="mini-calendar-today">Сегодня</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Counters -->
-                <div class="grid grid-cols-5 gap-1 mt-3 pt-3 border-t border-slate-100 text-center">
-                    <div class="bg-emerald-50/60 border border-emerald-100 rounded-lg p-1.5">
-                        <div class="text-[9px] font-medium text-emerald-700">Присутствуют</div>
-                        <div id="stat-present" class="text-xs font-bold text-emerald-800 mt-0.5">0</div>
-                    </div>
-                    <div class="bg-amber-50/60 border border-amber-100 rounded-lg p-1.5">
-                        <div class="text-[9px] font-medium text-amber-700">Опаздывают</div>
-                        <div id="stat-late" class="text-xs font-bold text-amber-800 mt-0.5">0</div>
-                    </div>
-                    <div class="bg-teal-50/60 border border-teal-100 rounded-lg p-1.5">
-                        <div class="text-[9px] font-medium text-teal-700">Болеет</div>
-                        <div id="stat-sick" class="text-xs font-bold text-teal-800 mt-0.5">0</div>
-                    </div>
-                    <div class="bg-indigo-50/60 border border-indigo-100 rounded-lg p-1.5">
-                        <div class="text-[9px] font-medium text-indigo-700">Уважит.</div>
-                        <div id="stat-excused" class="text-xs font-bold text-indigo-800 mt-0.5">0</div>
-                    </div>
-                    <div class="bg-rose-50/60 border border-rose-100 rounded-lg p-1.5">
-                        <div class="text-[9px] font-medium text-rose-700">Неуваж.</div>
-                        <div id="stat-unexcused" class="text-xs font-bold text-rose-800 mt-0.5">0</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <div id="save-status" class="save-status shrink-0"><span class="dot"></span><span id="save-status-text">Сохранено</span></div>
-                        <span id="selected-date-label" class="text-[10px] font-semibold text-slate-500 truncate">Сегодня</span>
-                    </div>
-                </div>
-                <div class="date-nav mt-2">
-                    <button type="button" onclick="changeJournalDate(-1)"><i class="fa-solid fa-chevron-left mr-1"></i>Предыдущий день</button>
-                    <button type="button" class="today-btn" onclick="goToToday()">Сегодня</button>
-                    <button type="button" onclick="changeJournalDate(1)">Следующий день<i class="fa-solid fa-chevron-right ml-1"></i></button>
-                </div>
-
-            </div>
-        </header>
-
-        <main class="p-3.5 space-y-3 max-w-2xl mx-auto pb-40 w-full flex-1 min-h-screen">
-            <div id="journal-admin-hint" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3 py-2 text-[11px] font-medium flex items-center gap-2">
-                <i class="fa-solid fa-lock"></i> Изменение журнала доступно только администратору
-            </div>
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" id="search-input" oninput="renderApp()" placeholder="Поиск по фамилии..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400">
-                </div>
-
-                <div id="journal-edit-tools" class="flex items-center justify-between gap-2">
-                    <button onclick="markAll('present')" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95">
-                        <i class="fa-solid fa-check text-emerald-600"></i>
-                        <span>Все «Присутствуют»</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="students-container" class="space-y-2">
-                <!-- Dynamically populated -->
-            </div>
-        </main>
-
-        <div id="journal-report-actions" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-3 z-40 shadow-md">
-            <div class="max-w-md mx-auto grid grid-cols-2 gap-2">
-                <button onclick="openReportPreview('absent')" class="py-2.5 px-3 bg-rose-600 active:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95">
-                    <i class="fa-solid fa-copy text-xs"></i>
-                    <span>Отсутствующие</span>
+        <div class="journal-ref-datebar">
+            <button type="button" onclick="changeJournalDate(-1)" aria-label="Предыдущий день"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="relative journal-ref-calendar-wrap">
+                <input type="date" id="date-picker" onchange="onDateChanged()" class="sr-only" aria-hidden="true" tabindex="-1">
+                <button type="button" id="calendar-trigger" onclick="toggleMiniCalendar()" class="journal-ref-date-trigger">
+                    <i class="fa-regular fa-calendar"></i><span id="calendar-trigger-text">Сегодня</span>
                 </button>
-                <button onclick="openReportPreview('full')" class="py-2.5 px-3 bg-slate-900 active:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95">
-                    <i class="fa-solid fa-clipboard-list text-xs"></i>
-                    <span>Полный отчёт</span>
-                </button>
+                <div id="mini-calendar" class="mini-calendar is-hidden">
+                    <div class="mini-calendar-head">
+                        <button type="button" onclick="changeMiniCalendarMonth(-1)" class="mini-calendar-nav"><i class="fa-solid fa-chevron-left"></i></button>
+                        <div id="mini-calendar-title" class="mini-calendar-title"></div>
+                        <button type="button" onclick="changeMiniCalendarMonth(1)" class="mini-calendar-nav"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="mini-calendar-week"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+                    <div id="mini-calendar-days" class="mini-calendar-days"></div>
+                    <button type="button" onclick="selectMiniCalendarDate(formatLocalDate(new Date()))" class="mini-calendar-today">Сегодня</button>
+                </div>
             </div>
+            <button type="button" onclick="changeJournalDate(1)" aria-label="Следующий день"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="journal-today-btn" onclick="goToToday()">Сегодня</button>
+        </div>
+
+        <div class="journal-ref-layout">
+            <main id="journal-editor-main" class="journal-ref-editor">
+                <div id="journal-admin-hint" class="journal-ref-admin-hint"><i class="fa-solid fa-lock"></i> Изменение журнала доступно только администратору</div>
+                <div class="journal-ref-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" oninput="renderApp()" placeholder="Поиск по фамилии...">
+                    <div id="save-status" class="save-status"><span class="dot"></span><span id="save-status-text">Сохранено</span></div>
+                    <span id="selected-date-label" class="hidden">Сегодня</span>
+                </div>
+                <div id="journal-edit-tools" class="journal-ref-tools">
+                    <button onclick="markAll('present')"><i class="fa-solid fa-check"></i> Отметить всех присутствующими</button>
+                </div>
+                <div class="journal-ref-table-head"><span>№</span><span>ФИО</span><span class="st p">П</span><span class="st b">Б</span><span class="st u">У</span><span class="st n">Н</span><span class="st o">О</span><span>Примечание</span></div>
+                <div id="students-container" class="journal-ref-students"></div>
+            </main>
+
+            <aside class="journal-ref-side">
+                <section class="journal-score-card">
+                    <h2>Оценка посещаемости</h2>
+                    <div class="journal-score-person">
+                        <div class="journal-score-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div><strong id="journal-score-name">—</strong><span>Общая посещаемость</span></div>
+                        <b id="journal-score-pct">0%</b>
+                    </div>
+                    <div class="journal-score-progress"><i id="journal-score-progress" style="width:0%"></i></div>
+                    <div class="journal-score-grid">
+                        <div class="present"><span>Присутствует</span><strong id="stat-present">0</strong></div>
+                        <div class="sick"><span>Болел</span><strong id="stat-sick">0</strong></div>
+                        <div class="excused"><span>Уважительная</span><strong id="stat-excused">0</strong></div>
+                        <div class="unexcused"><span>Неуважительная</span><strong id="stat-unexcused">0</strong></div>
+                        <div class="late"><span>Опоздания</span><strong id="stat-late">0</strong></div>
+                        <div class="total"><span>Всего</span><strong id="journal-stat-total">0</strong></div>
+                    </div>
+                </section>
+                <section class="journal-group-stats">
+                    <h2>Статистика группы</h2>
+                    <span>За выбранную дату</span>
+                    <div class="journal-group-progress"><i id="journal-group-progress" style="width:0%"></i></div>
+                    <div class="journal-group-progress-meta"><span id="journal-group-percent">0%</span><span id="journal-group-marked">0 из 0</span></div>
+                </section>
+                <section id="journal-report-actions" class="journal-ref-actions">
+                    <h2>Быстрые действия</h2>
+                    <button onclick="openReportPreview('absent')"><i class="fa-regular fa-file-lines"></i> Отчёт за день</button>
+                    <button onclick="openReportPreview('full')"><i class="fa-regular fa-calendar"></i> Полный отчёт</button>
+                </section>
+            </aside>
         </div>
     </div>
 
-    <div id="view-schedule" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
-        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-            <div class="flex items-center space-x-3">
-                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                    <i class="fa-solid fa-house text-xs"></i>
-                </button>
-                <h1 class="font-bold text-sm text-slate-900">Расписание <span id="schedule-group-name">ТОЭ-26-9-1</span></h1>
-            </div>
-            
-            <!-- Week Type Indicator: numerator on top, denominator below -->
-            <div class="flex flex-col items-center gap-0.5 bg-slate-100 p-1 rounded-xl border border-slate-200 min-w-[94px]">
-                <button onclick="setScheduleWeekType('numerator')" id="sched-btn-num" title="Числитель — верхняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900">
-                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-up text-[9px]"></i> Числитель</span>
-                </button>
-                <div class="w-10 h-px bg-slate-300"></div>
-                <button onclick="setScheduleWeekType('denominator')" id="sched-btn-den" title="Знаменатель — нижняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]">
-                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-down text-[9px]"></i> Знаменатель</span>
-                </button>
-            </div>
-            <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="hidden ml-2 px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold whitespace-nowrap">+ Пара</button>
+    <div id="view-schedule" class="hidden ref-page schedule-ref-page min-h-screen">
+        <div class="ref-page-topbar">
+            <button class="ref-top-btn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="ref-page-heading single"><h1>Расписание</h1></div>
+            <button class="ref-top-btn" onclick="openNotifications()" aria-label="Уведомления"><i class="fa-regular fa-bell"></i></button>
         </div>
+        <span id="schedule-group-name" class="hidden">ТОЭ-26-9-1</span>
 
-        <div class="bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">Текущая неделя</div>
-                                    <div id="home-week-banner-text" class="text-xs font-bold text-indigo-900">Знаменатель</div>
-                                </div>
-                            </div>
-                            <span id="home-week-dates" class="text-[10px] font-medium text-indigo-700 bg-white px-2 py-1 rounded-lg border border-indigo-200">21 сен — 25 сен</span>
-                        </div>
-
-        <!-- Days Tabs -->
-        <div class="grid grid-cols-5 gap-1 mb-4 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
-            <button onclick="setScheduleDay('mon')" id="tab-mon" class="py-2 text-xs font-semibold rounded-lg transition bg-slate-900 text-white">Пн</button>
-            <button onclick="setScheduleDay('tue')" id="tab-tue" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Вт</button>
-            <button onclick="setScheduleDay('wed')" id="tab-wed" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Ср</button>
-            <button onclick="setScheduleDay('thu')" id="tab-thu" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Чт</button>
-            <button onclick="setScheduleDay('fri')" id="tab-fri" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Пт</button>
+        <div class="schedule-ref-switch">
+            <button onclick="setScheduleWeekType('numerator')" id="sched-btn-num">Числитель</button>
+            <button onclick="setScheduleWeekType('denominator')" id="sched-btn-den">Знаменатель</button>
         </div>
-
-        <div id="schedule-container" class="space-y-2.5">
-            <!-- Dynamically populated -->
+        <div class="schedule-ref-datebar">
+            <button type="button" onclick="shiftScheduleReferenceDate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <div><i class="fa-regular fa-calendar"></i><span id="schedule-reference-date">Сегодня</span></div>
+            <button type="button" onclick="shiftScheduleReferenceDate(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
+        <div class="schedule-ref-days">
+            <button onclick="setScheduleDay('mon')" id="tab-mon"><strong>Пн</strong><span id="date-mon">—</span></button>
+            <button onclick="setScheduleDay('tue')" id="tab-tue"><strong>Вт</strong><span id="date-tue">—</span></button>
+            <button onclick="setScheduleDay('wed')" id="tab-wed"><strong>Ср</strong><span id="date-wed">—</span></button>
+            <button onclick="setScheduleDay('thu')" id="tab-thu"><strong>Чт</strong><span id="date-thu">—</span></button>
+            <button onclick="setScheduleDay('fri')" id="tab-fri"><strong>Пт</strong><span id="date-fri">—</span></button>
+        </div>
+        <div id="home-week-banner-text" class="hidden">—</div><span id="home-week-dates" class="hidden">—</span>
+        <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="schedule-ref-add hidden"><i class="fa-solid fa-plus"></i> Добавить пару</button>
+        <div id="schedule-container" class="schedule-ref-timeline"></div>
     </div>
 
-    <div id="view-roster" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
-        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-            <div class="flex items-center space-x-3">
-                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                    <i class="fa-solid fa-house text-xs"></i>
-                </button>
-                <h1 class="font-bold text-lg text-slate-900">Группа <span id="roster-group-name" class="hidden">ТОЭ-26-9-1</span></h1>
-            </div>
-            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md"><span id="roster-student-count">19</span> студентов</span>
+    <div id="view-roster" class="hidden ref-page roster-ref-page min-h-screen">
+        <div class="ref-page-topbar">
+            <button class="ref-top-btn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="ref-page-heading single"><h1>Группа</h1></div>
+            <button class="ref-top-btn" onclick="openNotifications()" aria-label="Уведомления"><i class="fa-regular fa-bell"></i></button>
         </div>
-
-        <div class="group-leadership-grid">
+        <section class="roster-ref-group-card">
+            <div class="roster-ref-group-icon"><i class="fa-solid fa-user-group"></i></div>
+            <div><strong id="roster-group-name">ТОЭ-26-9-1</strong><span><b id="roster-student-count">19</b> студентов</span></div>
+        </section>
+        <div class="group-leadership-grid roster-ref-leaders">
             <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
             <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
-            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
+            <div class="leadership-card"><i class="fa-solid fa-user-group"></i><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
-
-        <div id="roster-admin-tools" class="hidden bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs mb-3">
-            <div class="font-bold text-sm text-slate-900">Управление составом</div>
-            <div class="text-[10px] text-slate-500 mt-0.5">Добавление и удаление синхронизируется между всеми устройствами.</div>
-            <div class="flex gap-2 mt-3">
-                <input id="new-student-name" maxlength="80" class="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400" placeholder="Фамилия Имя" onkeydown="if(event.key==='Enter'){event.preventDefault();addStudent();}">
-                <button onclick="addStudent()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Добавить</button>
-            </div>
-            <div class="text-[9px] text-slate-400 mt-2">При удалении студент исчезает из группы, журнала и статистики. Старые архивные записи сохраняются.</div>
+        <div class="roster-ref-list-head">
+            <div><i class="fa-solid fa-user-group"></i><strong>Состав группы</strong></div>
+            <span><b id="roster-student-count-copy">19</b> студентов</span>
+            <button id="roster-add-trigger" class="hidden" onclick="document.getElementById('new-student-name')?.focus()"><i class="fa-solid fa-plus"></i> Добавить</button>
         </div>
-
-        <div id="roster-container" class="space-y-2">
-            <!-- Populated via JS -->
+        <div id="roster-admin-tools" class="hidden roster-ref-admin-tools">
+            <input id="new-student-name" maxlength="80" placeholder="Фамилия Имя" onkeydown="if(event.key==='Enter'){event.preventDefault();addStudent();}">
+            <button onclick="addStudent()"><i class="fa-solid fa-user-plus"></i> Добавить студента</button>
+            <small>Новый студент автоматически появится в журнале с даты добавления.</small>
         </div>
+        <div id="roster-container" class="roster-ref-list"></div>
     </div>
 
     <div id="schedule-editor-modal" onclick="if(event.target===this) closeScheduleEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
@@ -513,15 +450,26 @@
         </aside>
     </div>
 
-    <div id="notifications-modal" class="app-overlay hidden" onclick="if(event.target===this) closeNotifications()">
-        <section class="sheet-panel notification-panel">
-            <div class="sheet-head"><div><span class="eyebrow">Центр событий</span><h2>Уведомления</h2></div><button onclick="closeNotifications()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div id="notifications-modal" class="app-overlay hidden notification-ref-overlay" onclick="if(event.target===this) closeNotifications()">
+        <section class="notification-ref-page">
+            <div class="notification-ref-topbar">
+                <button onclick="closeNotifications()"><i class="fa-solid fa-chevron-left"></i></button>
+                <h2>Уведомления</h2>
+                <button class="notification-ref-more"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            </div>
+            <div class="notification-ref-tabs">
+                <button class="active" data-notification-filter="all" onclick="setNotificationFilter('all')">Все</button>
+                <button data-notification-filter="schedule" onclick="setNotificationFilter('schedule')">Расписание</button>
+                <button data-notification-filter="journal" onclick="setNotificationFilter('journal')">Журнал</button>
+                <button data-notification-filter="support" onclick="setNotificationFilter('support')">Поддержка</button>
+            </div>
             <div id="notification-admin-composer" class="hidden notification-composer">
                 <input id="notification-title" placeholder="Заголовок, например: Изменение расписания">
                 <textarea id="notification-text" rows="3" placeholder="Текст объявления"></textarea>
                 <button onclick="publishNotification()"><i class="fa-solid fa-paper-plane"></i> Опубликовать для всех</button>
             </div>
-            <div id="notifications-list" class="notification-list"></div>
+            <div id="notifications-list" class="notification-ref-list"></div>
+            <div id="notification-detail" class="notification-ref-detail hidden"></div>
         </section>
     </div>
 
@@ -546,7 +494,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261003-step18-3-home-ref1"></script>
+    <script type="module" src="app.js?v=20261003-pages-ref1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
