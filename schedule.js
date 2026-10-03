@@ -124,57 +124,70 @@ export function restoreScheduleSelection(savedDay, savedWeek) {
     if (savedDay && ['mon','tue','wed','thu','fri'].includes(savedDay)) currentScheduleDay = savedDay;
 }
 
-
-const REF_SCHEDULE_DAYS=['mon','tue','wed','thu','fri'];
-function refParseRange(text){
-    const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
-    return m?{start:+m[1]*60+(+m[2]),end:+m[3]*60+(+m[4])}:null;
-}
-function refDayIndex(day){return Math.max(0,REF_SCHEDULE_DAYS.indexOf(day));}
-function refSelectedDate(day=currentScheduleDay){
-    const now=new Date(); const dow=now.getDay()===0?7:now.getDay();
-    const monday=new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate()-(dow-1));
-    const d=new Date(monday); d.setDate(monday.getDate()+refDayIndex(day)); return d;
-}
-function refFloor(room){const m=String(room||'').match(/\b([1-9])\d{2}\b/);return m?m[1]:'';}
-function updateReferenceScheduleControls(){
-    document.getElementById('sched-btn-num')?.classList.toggle('active',currentScheduleWeekType==='numerator');
-    document.getElementById('sched-btn-den')?.classList.toggle('active',currentScheduleWeekType==='denominator');
-    REF_SCHEDULE_DAYS.forEach(day=>document.getElementById('tab-'+day)?.classList.toggle('active',day===currentScheduleDay));
-    const labels=['date-mon','date-tue','date-wed','date-thu','date-fri'];
-    REF_SCHEDULE_DAYS.forEach((day,i)=>{
-      const d=refSelectedDate(day),el=document.getElementById(labels[i]);
-      if(el)el.textContent=d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}).replace('.','');
-    });
-    const d=refSelectedDate();
-    const dateEl=document.getElementById('schedule-reference-date');
-    if(dateEl)dateEl.textContent=d.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).replace(/^./,x=>x.toUpperCase());
-}
-window.shiftScheduleReferenceDate=function(delta){
-    const i=refDayIndex(currentScheduleDay),next=Math.max(0,Math.min(4,i+(delta<0?-1:1)));
-    window.setScheduleDay(REF_SCHEDULE_DAYS[next]);
-};
-
 export function syncScheduleToToday() {
-    const now=new Date(), dayKeys={1:'mon',2:'tue',3:'wed',4:'thu',5:'fri'};
-    currentScheduleDay=dayKeys[now.getDay()]||'fri';
-    currentScheduleWeekType=getWeekTypeForDate(now);
-    try{localStorage.setItem('toe_current_schedule_day',currentScheduleDay);localStorage.setItem('toe_schedule_week_type',currentScheduleWeekType);}catch(e){}
-    updateReferenceScheduleControls();
+    const now = new Date();
+    const day = now.getDay();
+    const dayKeys = {1:'mon', 2:'tue', 3:'wed', 4:'thu', 5:'fri'};
+    // В выходные расписание автоматически остаётся на пятнице.
+    currentScheduleDay = dayKeys[day] || 'fri';
+    currentScheduleWeekType = getWeekTypeForDate(now);
+    try {
+        localStorage.setItem('toe_current_schedule_day', currentScheduleDay);
+        localStorage.setItem('toe_schedule_week_type', currentScheduleWeekType);
+    } catch(e) {}
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+        const btn = document.getElementById(`tab-${d}`);
+        if (btn) {
+            if (d === currentScheduleDay) {
+                btn.className = "py-2 text-xs font-semibold rounded-lg transition bg-slate-900 text-white";
+            } else {
+                btn.className = "py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100";
+            }
+        }
+    });
+    const btnNum = document.getElementById('sched-btn-num');
+    const btnDen = document.getElementById('sched-btn-den');
+    if (btnNum && btnDen) {
+        if (currentScheduleWeekType === 'numerator') {
+            btnNum.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]";
+            btnDen.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900";
+        } else {
+            btnNum.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900";
+            btnDen.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]";
+        }
+    }
 }
 
 window.setScheduleWeekType = function(type) {
-    currentScheduleWeekType=type==='numerator'?'numerator':'denominator';
-    try{localStorage.setItem('toe_schedule_week_type',currentScheduleWeekType);}catch(e){}
-    updateReferenceScheduleControls();
+    currentScheduleWeekType = type;
+    try { localStorage.setItem('toe_schedule_week_type', type); } catch(e) {}
+    const btnNum = document.getElementById('sched-btn-num');
+    const btnDen = document.getElementById('sched-btn-den');
+    if (btnNum && btnDen) {
+        if (type === 'numerator') {
+            btnNum.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]";
+            btnDen.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900";
+        } else {
+            btnNum.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900";
+            btnDen.className = "w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]";
+        }
+    }
     renderSchedule(currentScheduleDay);
 };
 
 window.setScheduleDay = function(day) {
-    if(!REF_SCHEDULE_DAYS.includes(day))return;
-    currentScheduleDay=day;
-    try{localStorage.setItem('toe_current_schedule_day',day);}catch(e){}
-    updateReferenceScheduleControls();
+    currentScheduleDay = day;
+    try { localStorage.setItem('toe_current_schedule_day', day); } catch(e) {}
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+        const btn = document.getElementById(`tab-${d}`);
+        if (btn) {
+            if (d === day) {
+                btn.className = "py-2 text-xs font-semibold rounded-lg transition bg-slate-900 text-white";
+            } else {
+                btn.className = "py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100";
+            }
+        }
+    });
     renderSchedule(day);
 };
 
@@ -380,73 +393,44 @@ window.onScheduleChangeTypeChanged = function() {
 };
 
 export function renderSchedule(dayKey = currentScheduleDay) {
-    const container=document.getElementById('schedule-container'); if(!container)return;
-    container.innerHTML=''; updateReferenceScheduleControls();
-    const source=currentScheduleWeekType==='numerator'?scheduleDataNumerator:scheduleDataDenominator;
-    const list=source[dayKey]||[];
-    const now=new Date(), mins=now.getHours()*60+now.getMinutes();
-    const selectedDate=refSelectedDate(dayKey);
-    const todayKey=({1:'mon',2:'tue',3:'wed',4:'thu',5:'fri'})[now.getDay()]||'';
-    const isToday=dayKey===todayKey && currentScheduleWeekType===getWeekTypeForDate(now);
-
-    let lessonNo=0;
-    const lessonEntries=list.map((item,index)=>{
-      const no=item.isClassHour?null:++lessonNo;
-      return {item,index,no,r:refParseRange(item.time)};
-    });
-
-    let currentLesson=null,currentBreak=null;
-    if(isToday){
-      currentLesson=lessonEntries.find(x=>x.r&&mins>=x.r.start&&mins<x.r.end&&!x.item.cancelled)||null;
-      if(!currentLesson){
-        for(let i=0;i<lessonEntries.length-1;i++){
-          const a=lessonEntries[i],b=lessonEntries[i+1];
-          if(a.r&&b.r&&b.r.start>a.r.end&&mins>=a.r.end&&mins<b.r.start){currentBreak={start:a.r.end,end:b.r.start};break;}
+    const container = document.getElementById('schedule-container');
+    if (!container) return;
+    container.innerHTML = '';
+    const source = currentScheduleWeekType === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator;
+    const list = source[dayKey] || [];
+    let lessonCounter = 1;
+    if (sessionStorage.getItem('toe_can_schedule') === '1') {
+        const hint = document.createElement('div');
+        hint.className = 'bg-indigo-50 border border-indigo-100 text-indigo-800 rounded-xl p-2.5 text-[11px]';
+        hint.innerHTML = '<i class="fa-solid fa-pen-to-square mr-1"></i> Режим администратора: можно изменять, удалять и добавлять пары.';
+        container.appendChild(hint);
+    }
+    list.forEach((item, index) => {
+        const card = document.createElement('div');
+        const cancelled = !!item.cancelled;
+        card.className = 'schedule-timeline-card ' + (cancelled ? 'cancelled' : '');
+        const badgeText = item.isClassHour ? `Классный час (${item.time})` : `Пара ${lessonCounter++} (${item.time})`;
+        const badgeColor = cancelled ? 'text-rose-700 bg-rose-50 border-rose-200' : (item.isClassHour ? 'text-amber-700 bg-amber-50 border-amber-100' : 'text-indigo-600 bg-indigo-50 border-indigo-100');
+        const changeNote = String(item.changeNote || '').trim();
+        const changeBox = changeNote ? `<div class="mt-2 rounded-lg ${cancelled ? 'bg-rose-100/80 text-rose-800 border-rose-200' : 'bg-amber-50 text-amber-800 border-amber-100'} border px-2.5 py-2 text-[10px] font-medium"><i class="fa-solid ${cancelled ? 'fa-ban' : 'fa-triangle-exclamation'} mr-1"></i>${changeNote}</div>` : '';
+        card.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold ${badgeColor} px-2 py-0.5 rounded-md border">${badgeText}${cancelled ? ' · ОТМЕНЕНА' : ''}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-400">${item.breakDuration || ''}</span>
+                    <div class="schedule-admin-actions">
+                        <button onclick="moveScheduleLesson(${index}, -1)" class="w-7 h-7 rounded-md bg-slate-50 text-slate-600 text-[10px] border border-slate-200" title="Поднять выше" ${index === 0 ? 'disabled style="opacity:.35"' : ''}>↑</button>
+                        <button onclick="moveScheduleLesson(${index}, 1)" class="w-7 h-7 rounded-md bg-slate-50 text-slate-600 text-[10px] border border-slate-200" title="Опустить ниже" ${index === list.length - 1 ? 'disabled style="opacity:.35"' : ''}>↓</button>
+                        <button onclick="openScheduleEditor(${index})" class="px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-semibold border border-indigo-100">Изменить</button>
+                    </div>
+                </div>
+            </div>
+            <div class="${cancelled ? 'opacity-60' : ''}"><h3 class="font-bold text-sm text-slate-900">${item.subject}</h3><div class="flex items-center gap-3 mt-1 text-xs text-slate-500"><span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i>${item.room}</span>${item.teacher ? `<span><i class="fa-solid fa-chalkboard-user text-indigo-500 mr-1"></i>${item.teacher}</span>` : ''}</div></div>
+            ${changeBox}`;
+        container.appendChild(card);
+        if (item.breakDuration && index < list.length - 1) {
+            const br=document.createElement('div'); br.className='schedule-break-row'; br.innerHTML=`<span></span><div><i class="fa-regular fa-clock"></i>${item.breakDuration}</div>`; container.appendChild(br);
         }
-      }
-    }
-
-    const summary=document.createElement('section'); summary.className='schedule-live-summary';
-    let summaryTitle='Сегодня',summaryState='Расписание',summaryTime='',summaryProgress=0,summaryClass='';
-    if(currentLesson){
-      summaryState=`${currentLesson.no||''} пара (идёт)`.trim(); summaryTime=currentLesson.item.time;
-      summaryProgress=Math.max(1,Math.min(100,((mins-currentLesson.r.start)/(currentLesson.r.end-currentLesson.r.start))*100)); summaryClass='lesson';
-    }else if(currentBreak){
-      summaryState='Перемена'; summaryTime=`${String(Math.floor(currentBreak.start/60)).padStart(2,'0')}:${String(currentBreak.start%60).padStart(2,'0')} – ${String(Math.floor(currentBreak.end/60)).padStart(2,'0')}:${String(currentBreak.end%60).padStart(2,'0')}`;
-      summaryProgress=Math.max(1,Math.min(100,((mins-currentBreak.start)/(currentBreak.end-currentBreak.start))*100)); summaryClass='break';
-    }else if(!isToday){summaryTitle=selectedDate.toLocaleDateString('ru-RU',{weekday:'long'}).replace(/^./,x=>x.toUpperCase());summaryState='Расписание дня';}
-    else {summaryState='Занятия';}
-    summary.innerHTML=`<div class="schedule-live-head"><div><i class="fa-solid fa-book-open"></i><strong>${summaryTitle}</strong><span>${selectedDate.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></div><div class="${summaryClass}"><strong>${summaryState}</strong><span>${summaryTime}</span></div></div>
-      <div class="schedule-live-progress"><i class="${summaryClass}" style="width:${summaryProgress}%"></i></div>
-      ${currentLesson?`<p>До конца пары: ${Math.max(0,currentLesson.r.end-mins)} минут</p>`:currentBreak?`<p>До следующей пары: ${Math.max(0,currentBreak.end-mins)} минут</p>`:''}`;
-    container.appendChild(summary);
-
-    if(sessionStorage.getItem('toe_can_schedule')==='1'){
-      const hint=document.createElement('div');hint.className='schedule-ref-admin-hint';hint.innerHTML='<i class="fa-solid fa-pen-to-square"></i> Режим администратора: расписание можно редактировать.';container.appendChild(hint);
-    }
-
-    lessonEntries.forEach((entry,pos)=>{
-      const {item,index,no,r}=entry; const past=isToday&&r&&mins>=r.end; const current=currentLesson===entry;
-      const row=document.createElement('article');
-      row.className=`schedule-ref-row ${current?'current ':''}${past?'past ':''}${item.cancelled?'cancelled':''}`;
-      const status=current?'<span class="schedule-ref-state current"><i class="fa-solid fa-circle"></i> Идёт</span>':past?'<span class="schedule-ref-state done"><i class="fa-solid fa-circle-check"></i> Завершена</span>':'';
-      row.innerHTML=`<div class="schedule-ref-rail"><span class="schedule-ref-number">${no||'<i class="fa-solid fa-star"></i>'}</span><i></i></div>
-        <div class="schedule-ref-content">
-          <div class="schedule-ref-row-head"><span>${item.time||''}</span>${status}</div>
-          <strong>${item.subject||'Занятие'}${item.cancelled?' · отменена':''}</strong>
-          <div class="schedule-ref-meta"><span><i class="fa-regular fa-square"></i> ${item.room||'—'}${refFloor(item.room)?' · '+refFloor(item.room)+' этаж':''}</span>${item.teacher?`<span><i class="fa-regular fa-user"></i> ${item.teacher}</span>`:''}</div>
-          ${item.changeNote?`<div class="schedule-ref-change">${item.changeNote}</div>`:''}
-          <div class="schedule-admin-actions"><button onclick="moveScheduleLesson(${index},-1)">↑</button><button onclick="moveScheduleLesson(${index},1)">↓</button><button onclick="openScheduleEditor(${index})">Изменить</button></div>
-        </div>`;
-      container.appendChild(row);
-
-      const next=lessonEntries[pos+1];
-      if(next&&r&&next.r&&next.r.start>r.end){
-        const start=r.end,end=next.r.start,active=isToday&&mins>=start&&mins<end,done=isToday&&mins>=end;
-        const br=document.createElement('div'); br.className=`schedule-ref-break ${active?'current ':''}${done?'past':''}`;
-        br.innerHTML=`<div class="schedule-ref-break-rail"><span></span></div><div class="schedule-ref-break-card"><span><i class="fa-solid fa-mug-hot"></i> Перемена — ${end-start} минут</span><time>${String(Math.floor(start/60)).padStart(2,'0')}:${String(start%60).padStart(2,'0')} – ${String(Math.floor(end/60)).padStart(2,'0')}:${String(end%60).padStart(2,'0')}</time>${active?'<b>Идёт</b>':done?'<b>Завершена</b>':''}</div>`;
-        container.appendChild(br);
-      }
     });
 }
 
