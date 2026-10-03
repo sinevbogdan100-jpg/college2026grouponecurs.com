@@ -1,6 +1,6 @@
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step10-root";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step10-root";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step10-root";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step11-root";
+import { getWeekTypeForDate } from "./utils.js?v=20261003-step11-root";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step11-root";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
@@ -279,7 +279,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     const source = currentScheduleWeekType === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator;
     const list = source[dayKey] || [];
     let lessonCounter = 1;
-    if (sessionStorage.getItem('toe_admin') === '1') {
+    if (sessionStorage.getItem('toe_can_schedule') === '1') {
         const hint = document.createElement('div');
         hint.className = 'bg-indigo-50 border border-indigo-100 text-indigo-800 rounded-xl p-2.5 text-[11px]';
         hint.innerHTML = '<i class="fa-solid fa-pen-to-square mr-1"></i> Режим администратора: можно изменять, удалять и добавлять пары.';
@@ -312,7 +312,7 @@ function getCurrentScheduleList() {
 }
 
 window.openScheduleEditor = function(index) {
-    if (sessionStorage.getItem('toe_admin') !== '1') { showToast('Редактирование расписания доступно только администратору'); return; }
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') { showToast('Нет права на редактирование расписания'); return; }
     editingScheduleIndex = index;
     fillScheduleEditorDatalists();
     const item = index >= 0 ? getCurrentScheduleList()[index] : {time:'',breakDuration:'',subject:'',room:'',teacher:'',isClassHour:false};
@@ -336,7 +336,7 @@ window.closeScheduleEditor = function() {
 };
 
 window.saveScheduleLesson = async function() {
-    if (sessionStorage.getItem('toe_admin') !== '1') return;
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list=getCurrentScheduleList();
     if (!list) { showToast('Не удалось определить день расписания'); return; }
     const item={time:document.getElementById('edit-time').value.trim(),breakDuration:document.getElementById('edit-break').value.trim(),subject:document.getElementById('edit-subject').value.trim(),room:document.getElementById('edit-room').value.trim(),teacher:document.getElementById('edit-teacher').value.trim(),isClassHour:document.getElementById('edit-class-hour').checked};
@@ -359,7 +359,7 @@ window.saveScheduleLesson = async function() {
 };
 
 window.moveScheduleLesson = async function(index, delta) {
-    if (sessionStorage.getItem('toe_admin') !== '1') return;
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list = getCurrentScheduleList();
     if (!list || !Number.isInteger(index) || !Number.isInteger(delta)) return;
     const target = index + delta;
@@ -378,7 +378,7 @@ window.moveScheduleLesson = async function(index, delta) {
 };
 
 window.deleteScheduleLesson = async function() {
-    if (sessionStorage.getItem('toe_admin') !== '1') return;
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list=getCurrentScheduleList();
     if(editingScheduleIndex<0 || !list)return;
     if(!confirm('Удалить эту пару из расписания?'))return;

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step6-2026-10-03">
-    <link rel="icon" type="image/png" href="icon.png?v=20261003-step6">
+    <meta name="app-build" content="step11-2026-10-03">
+    <link rel="icon" type="image/png" href="icon.png?v=20261003-step11">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step10-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step11-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -89,6 +89,38 @@
             <div id="admin-panel" class="hidden space-y-3">
                 <div id="admin-role-banner" class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">Редактор включён.</div>
                 <div id="admin-role-description" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600"></div>
+                <div id="owner-permissions-section" class="hidden pt-2 border-t border-slate-100 space-y-3">
+                    <div>
+                        <div class="text-[11px] font-semibold text-slate-700">Права администраторов</div>
+                        <p class="text-[9px] text-slate-400 mt-0.5">Владелец может отдельно разрешать журнал и расписание. Если снять оба права, администратор останется только в режиме просмотра.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                            <div class="text-xs font-bold text-slate-800">Администратор 1 <span class="font-normal text-slate-400">(admin1)</span></div>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Редактирование журнала</span>
+                                <input id="perm-admin1-journal" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Редактирование расписания</span>
+                                <input id="perm-admin1-schedule" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                            <div class="text-xs font-bold text-slate-800">Администратор 2 <span class="font-normal text-slate-400">(admin2)</span></div>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Редактирование журнала</span>
+                                <input id="perm-admin2-journal" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Редактирование расписания</span>
+                                <input id="perm-admin2-schedule" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                        </div>
+                    </div>
+                    <button id="save-admin-permissions-btn" onclick="saveAdminPermissions()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Сохранить права</button>
+                    <div id="admin-permissions-status" class="text-[9px] text-slate-400 text-center">Права синхронизируются через Firebase.</div>
+                </div>
                 <div id="owner-backup-section" class="hidden pt-2 border-t border-slate-100 space-y-2">
                     <div class="text-[11px] font-semibold text-slate-600">Резервная копия сайта</div>
                     <div id="backup-status" class="text-[10px] text-slate-400">Резервная копия ещё не создана</div>
@@ -269,7 +301,7 @@
                     <input type="text" id="search-input" oninput="renderApp()" placeholder="Поиск по фамилии..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400">
                 </div>
 
-                <div class="flex items-center justify-between gap-2">
+                <div id="journal-edit-tools" class="flex items-center justify-between gap-2">
                     <button onclick="markAll('present')" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95">
                         <i class="fa-solid fa-check text-emerald-600"></i>
                         <span>Все «Присутствуют»</span>
@@ -407,7 +439,7 @@
 
 
 
-    <script type="module" src="app.js?v=20261003-step10-root"></script>
+    <script type="module" src="app.js?v=20261003-step11-root"></script>
 
     <div id="report-preview-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -437,7 +469,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step10-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step11-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -459,7 +491,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step10-root"></script>
+<script src="realtime-debug.js?v=20261003-step11-root"></script>
 
 </body>
 </html>

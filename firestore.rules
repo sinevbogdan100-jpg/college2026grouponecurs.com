@@ -10,34 +10,76 @@ service cloud.firestore {
         && request.auth.token.email == 'owner.toe2691@example.com';
     }
 
-    function isAdmin() {
+    function isAdmin1() {
       return signedIn()
-        && request.auth.token.email in [
-          'admin1.toe2691@example.com',
-          'admin2.toe2691@example.com'
-        ];
+        && request.auth.token.email == 'admin1.toe2691@example.com';
     }
 
-    function isEditor() {
-      return isOwner() || isAdmin();
+    function isAdmin2() {
+      return signedIn()
+        && request.auth.token.email == 'admin2.toe2691@example.com';
+    }
+
+    function permissionsExist() {
+      return exists(/databases/$(database)/documents/toe_group/shared/access/admin_permissions);
+    }
+
+    function admin1CanEditJournal() {
+      return isAdmin1()
+        && (!permissionsExist()
+          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1.journal == true);
+    }
+
+    function admin2CanEditJournal() {
+      return isAdmin2()
+        && (!permissionsExist()
+          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2.journal == true);
+    }
+
+    function admin1CanEditSchedule() {
+      return isAdmin1()
+        && (!permissionsExist()
+          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1.schedule == true);
+    }
+
+    function admin2CanEditSchedule() {
+      return isAdmin2()
+        && (!permissionsExist()
+          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2.schedule == true);
+    }
+
+    function canEditJournal() {
+      return isOwner() || admin1CanEditJournal() || admin2CanEditJournal();
+    }
+
+    function canEditSchedule() {
+      return isOwner() || admin1CanEditSchedule() || admin2CanEditSchedule();
+    }
+
+    match /toe_group/shared/access/admin_permissions {
+      // Права не содержат паролей или секретов. Они нужны сайту, чтобы сразу
+      // скрывать недоступные элементы редактирования на каждом устройстве.
+      allow read: if signedIn();
+      allow write: if isOwner();
     }
 
     match /toe_group/shared/attendance_records/{docId} {
-      // Все посетители сайта входят анонимно и могут читать данные.
       allow read: if signedIn();
 
-      // Данные главной страницы и состав группы меняет только владелец.
+      // Главную информацию и состав группы может менять только владелец.
       allow write: if isOwner()
         && (docId == 'group_info_shared' || docId == 'students_shared');
 
-      // Журнал и его производную статистику могут менять владелец и два администратора.
-      allow write: if isEditor()
+      // Журнал и его общую статистику можно менять только при включённом
+      // владельцем праве "Журнал".
+      allow write: if canEditJournal()
         && (docId == 'roster_stats_shared' || docId.matches('^\\d{4}-\\d{2}-\\d{2}$'));
     }
 
     match /toe_group/shared/schedule/{docId} {
       allow read: if signedIn();
-      allow write: if isEditor() && docId == 'main';
+      // Расписание можно менять только при включённом владельцем праве "Расписание".
+      allow write: if canEditSchedule() && docId == 'main';
     }
   }
 }

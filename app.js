@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step10-root";
+} from "./firebase.js?v=20261003-step11-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step10-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step10-root";
+} from "./utils.js?v=20261003-step11-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step11-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step10-root";
+} from "./schedule.js?v=20261003-step11-root";
 
         
-window.__SITE_BUILD__ = 'step10-2026-10-03';
+window.__SITE_BUILD__ = 'step11-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -100,8 +100,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 firebaseDiag.read = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
                 diagLog('Firestore READ ERROR', firebaseDiag.read.detail);
             }
-            if (!isEditorRole()) {
-                firebaseDiag.write = {ok:null, detail:'Режим просмотра: проверка записи выполняется только после входа владельца/администратора.'};
+            if (!canEditJournal()) {
+                firebaseDiag.write = {ok:null, detail:'Для текущей учётной записи запись в журнал отключена или недоступна.'};
                 diagLog('Firestore WRITE SKIPPED: viewer mode');
             } else {
                 try {
@@ -167,6 +167,18 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         const GROUP_INFO_DOC_ID = 'group_info_shared';
         const ROSTER_STATS_DOC_ID = 'roster_stats_shared';
         const STUDENTS_DOC_ID = 'students_shared';
+        const ADMIN_PERMISSIONS_DOC_ID = 'admin_permissions';
+        const DEFAULT_ADMIN_PERMISSIONS = Object.freeze({
+            admin1: Object.freeze({ journal: true, schedule: true }),
+            admin2: Object.freeze({ journal: true, schedule: true })
+        });
+        let adminPermissions = {
+            admin1: { journal: true, schedule: true },
+            admin2: { journal: true, schedule: true }
+        };
+        let adminPermissionsUnsubscribe = null;
+        let adminPermissionsPollTimer = null;
+        let lastAdminPermissionsUpdatedAt = '';
 
         // Три фиксированные учётные записи редакторов. Пароли никогда не хранятся в коде.
         // В интерфейсе используются короткие логины, а Firebase Authentication работает с внутренними email.
@@ -178,6 +190,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         let currentAccessRole = 'viewer';
         let currentAccountLogin = '';
         let authStateUnsubscribe = null;
+        try {
+            const cachedAdminPermissions = JSON.parse(localStorage.getItem('toe_admin_permissions') || 'null');
+            if (cachedAdminPermissions) adminPermissions = normalizeAdminPermissions(cachedAdminPermissions);
+        } catch (_) {}
 
         function getAccountByUser(user) {
             const email = String(user?.email || '').trim().toLowerCase();
@@ -193,15 +209,51 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             return currentAccessRole === 'owner';
         }
 
-        function applyAccessRoleFromUser(user) {
-            const found = getAccountByUser(user);
-            currentAccountLogin = found?.[0] || '';
-            currentAccessRole = found?.[1]?.role || 'viewer';
+        function normalizeAdminPermissions(data = {}) {
+            const out = {};
+            ['admin1', 'admin2'].forEach(login => {
+                const incoming = data?.[login];
+                out[login] = {
+                    journal: typeof incoming?.journal === 'boolean' ? incoming.journal : DEFAULT_ADMIN_PERMISSIONS[login].journal,
+                    schedule: typeof incoming?.schedule === 'boolean' ? incoming.schedule : DEFAULT_ADMIN_PERMISSIONS[login].schedule
+                };
+            });
+            return out;
+        }
+
+        function getPermissionsForLogin(login = currentAccountLogin) {
+            if (isOwnerRole()) return { journal: true, schedule: true };
+            if (currentAccessRole !== 'admin' || !adminPermissions[login]) return { journal: false, schedule: false };
+            return { ...adminPermissions[login] };
+        }
+
+        function canEditJournal() {
+            return !!getPermissionsForLogin().journal;
+        }
+
+        function canEditSchedule() {
+            return !!getPermissionsForLogin().schedule;
+        }
+
+        function syncSessionPermissionFlags() {
             sessionStorage.setItem('toe_role', currentAccessRole);
             if (isEditorRole()) sessionStorage.setItem('toe_admin', '1');
             else sessionStorage.removeItem('toe_admin');
             if (isOwnerRole()) sessionStorage.setItem('toe_owner', '1');
             else sessionStorage.removeItem('toe_owner');
+            if (canEditJournal()) sessionStorage.setItem('toe_can_journal', '1');
+            else sessionStorage.removeItem('toe_can_journal');
+            if (canEditSchedule()) sessionStorage.setItem('toe_can_schedule', '1');
+            else sessionStorage.removeItem('toe_can_schedule');
+            window.__toeCanJournal = canEditJournal();
+            window.__toeCanSchedule = canEditSchedule();
+        }
+
+        function applyAccessRoleFromUser(user) {
+            const found = getAccountByUser(user);
+            currentAccountLogin = found?.[0] || '';
+            currentAccessRole = found?.[1]?.role || 'viewer';
+            syncSessionPermissionFlags();
             window.__toeRole = currentAccessRole;
             window.__toeLogin = currentAccountLogin;
             updateAdminUI();
@@ -597,6 +649,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     subscribeToStudents();
                     subscribeToRosterStats();
                     subscribeToGroupInfo();
+                    subscribeToAdminPermissions();
+                    if (isOwnerRole()) await ensureAdminPermissionsDocument();
                     subscribeToSchedule();
                     startSchedulePolling();
                     diagLog('Облачные обработчики журнала, данных группы и расписания запущены');
@@ -1180,6 +1234,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 const credential = await signInWithEmailAndPassword(auth, account.email, password);
                 applyAccessRoleFromUser(credential.user);
                 if (currentAccessRole === 'viewer') throw new Error('У этой учётной записи нет прав редактора');
+                if (isOwnerRole()) await ensureAdminPermissionsDocument();
                 if (loginInput) loginInput.value = '';
                 if (passwordInput) passwordInput.value = '';
                 document.getElementById('admin-login-box')?.classList.add('hidden');
@@ -1196,13 +1251,150 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
         };
 
+        function renderOwnerPermissionControls() {
+            const section = document.getElementById('owner-permissions-section');
+            if (section) section.classList.toggle('hidden', !isOwnerRole());
+            ['admin1', 'admin2'].forEach(login => {
+                const perms = adminPermissions[login] || DEFAULT_ADMIN_PERMISSIONS[login];
+                const journal = document.getElementById(`perm-${login}-journal`);
+                const schedule = document.getElementById(`perm-${login}-schedule`);
+                if (journal) journal.checked = !!perms.journal;
+                if (schedule) schedule.checked = !!perms.schedule;
+            });
+        }
+
+        function applyAdminPermissionsPayload(data = {}) {
+            const next = normalizeAdminPermissions(data);
+            adminPermissions = next;
+            const updatedAt = String(data.updatedAt || '');
+            if (updatedAt) lastAdminPermissionsUpdatedAt = updatedAt;
+            try { localStorage.setItem('toe_admin_permissions', JSON.stringify(next)); } catch (_) {}
+            syncSessionPermissionFlags();
+            renderOwnerPermissionControls();
+            updateAdminUI();
+            renderApp();
+            renderSchedule(getCurrentScheduleDay());
+        }
+
+        async function persistAdminPermissionsToCloud(nextPermissions) {
+            if (!isOwnerRole() || !db || !auth?.currentUser) return false;
+            const normalized = normalizeAdminPermissions(nextPermissions);
+            const payload = {
+                ...normalized,
+                updatedAt: new Date().toISOString(),
+                updatedBy: currentAccountLogin || 'owner',
+                build: window.__SITE_BUILD__
+            };
+            await setDoc(doc(db, ...CLOUD_ROOT, 'access', ADMIN_PERMISSIONS_DOC_ID), payload, { merge: false });
+            applyAdminPermissionsPayload(payload);
+            return true;
+        }
+
+        async function ensureAdminPermissionsDocument() {
+            if (!isOwnerRole() || !db || !auth?.currentUser) return false;
+            try {
+                const ref = doc(db, ...CLOUD_ROOT, 'access', ADMIN_PERMISSIONS_DOC_ID);
+                const snap = await getDoc(ref);
+                if (snap.exists()) {
+                    applyAdminPermissionsPayload(snap.data() || {});
+                    return true;
+                }
+                return persistAdminPermissionsToCloud(adminPermissions);
+            } catch (e) {
+                console.warn('Admin permissions initialization error', e);
+                return false;
+            }
+        }
+
+        async function pollAdminPermissionsOnce() {
+            if (!isCloudConnected || !db || !auth?.currentUser) return;
+            try {
+                const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'access', ADMIN_PERMISSIONS_DOC_ID), { source: 'server' });
+                if (snap.exists()) {
+                    const data = snap.data() || {};
+                    const updatedAt = String(data.updatedAt || '');
+                    if (!updatedAt || updatedAt !== lastAdminPermissionsUpdatedAt) applyAdminPermissionsPayload(data);
+                }
+            } catch (e) {
+                console.warn('Admin permissions polling error', e);
+            }
+        }
+
+        function startAdminPermissionsPolling() {
+            if (adminPermissionsPollTimer) clearInterval(adminPermissionsPollTimer);
+            adminPermissionsPollTimer = setInterval(() => { void pollAdminPermissionsOnce(); }, 5000);
+        }
+
+        function subscribeToAdminPermissions() {
+            if (!isCloudConnected || !db || !auth?.currentUser) return false;
+            if (adminPermissionsUnsubscribe) {
+                try { adminPermissionsUnsubscribe(); } catch (_) {}
+                adminPermissionsUnsubscribe = null;
+            }
+            const ref = doc(db, ...CLOUD_ROOT, 'access', ADMIN_PERMISSIONS_DOC_ID);
+            try {
+                adminPermissionsUnsubscribe = onSnapshot(ref, snap => {
+                    if (snap.exists()) applyAdminPermissionsPayload(snap.data() || {});
+                }, err => {
+                    console.warn('Realtime admin permissions error', err);
+                });
+                startAdminPermissionsPolling();
+                return true;
+            } catch (e) {
+                console.warn('Admin permissions listener registration error', e);
+                startAdminPermissionsPolling();
+                return false;
+            }
+        }
+
+        window.saveAdminPermissions = async function() {
+            if (!isOwnerRole()) { showToast('Менять права может только владелец'); return; }
+            const button = document.getElementById('save-admin-permissions-btn');
+            const status = document.getElementById('admin-permissions-status');
+            const next = {
+                admin1: {
+                    journal: !!document.getElementById('perm-admin1-journal')?.checked,
+                    schedule: !!document.getElementById('perm-admin1-schedule')?.checked
+                },
+                admin2: {
+                    journal: !!document.getElementById('perm-admin2-journal')?.checked,
+                    schedule: !!document.getElementById('perm-admin2-schedule')?.checked
+                }
+            };
+            if (button) { button.disabled = true; button.textContent = 'Сохранение…'; }
+            if (status) status.textContent = 'Сохраняем права в Firebase…';
+            try {
+                await persistAdminPermissionsToCloud(next);
+                if (status) status.textContent = 'Права сохранены и применяются на всех устройствах.';
+                showToast('Права администраторов сохранены');
+            } catch (e) {
+                console.error('Admin permissions save error', e);
+                if (status) status.textContent = 'Не удалось сохранить права. Проверьте Firebase Rules.';
+                showToast('Не удалось сохранить права');
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Сохранить права'; }
+            }
+        };
+
         function updateAdminUI() {
             const editor = isEditorRole();
             const owner = isOwnerRole();
+            const journalAllowed = canEditJournal();
+            const scheduleAllowed = canEditSchedule();
             document.body.classList.toggle('admin-mode', editor);
             document.body.classList.toggle('owner-mode', owner);
+            document.body.classList.toggle('journal-edit-mode', journalAllowed);
+            document.body.classList.toggle('schedule-edit-mode', scheduleAllowed);
             const hint = document.getElementById('journal-admin-hint');
-            if (hint) hint.classList.toggle('hidden', editor);
+            if (hint) {
+                hint.classList.toggle('hidden', journalAllowed);
+                if (!journalAllowed && currentAccessRole === 'admin') hint.innerHTML = '<i class="fa-solid fa-lock"></i> Владелец отключил для этого администратора редактирование журнала';
+                else if (!journalAllowed) hint.innerHTML = '<i class="fa-solid fa-lock"></i> Изменение журнала доступно только после входа с соответствующими правами';
+            }
+            const journalTools = document.getElementById('journal-edit-tools');
+            if (journalTools) journalTools.classList.toggle('hidden', !journalAllowed);
+            const manualSave = document.getElementById('manual-save-journal-btn');
+            if (manualSave) manualSave.classList.toggle('hidden', !journalAllowed);
             const rosterTools = document.getElementById('roster-admin-tools');
             if (rosterTools) rosterTools.classList.toggle('hidden', !owner);
             const loginBox = document.getElementById('admin-login-box');
@@ -1213,12 +1405,23 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             if (backup) backup.classList.toggle('hidden', !owner);
             const banner = document.getElementById('admin-role-banner');
             const description = document.getElementById('admin-role-description');
-            if (banner) banner.textContent = owner ? 'Владелец: полный доступ включён.' : (editor ? `${AUTH_ACCOUNTS[currentAccountLogin]?.label || 'Администратор'}: режим редактирования включён.` : '');
-            if (description) description.textContent = owner
-                ? 'Доступно всё: главная страница, состав группы, журнал, расписание и резервные копии.'
-                : 'Доступно только редактирование журнала и расписания. Главная страница и состав группы доступны только для просмотра.';
+            if (banner) banner.textContent = owner ? 'Владелец: полный доступ включён.' : (editor ? `${AUTH_ACCOUNTS[currentAccountLogin]?.label || 'Администратор'}: вход выполнен.` : '');
+            if (description) {
+                if (owner) {
+                    description.textContent = 'Доступно всё: главная страница, состав группы, журнал, расписание, управление правами и резервные копии.';
+                } else if (editor) {
+                    const allowed = [journalAllowed ? 'журнал' : '', scheduleAllowed ? 'расписание' : ''].filter(Boolean);
+                    description.textContent = allowed.length
+                        ? `Разрешено владельцем: ${allowed.join(' и ')}. Главная страница и состав группы доступны только для просмотра.`
+                        : 'Владелец отключил права редактирования. Сейчас доступен только просмотр сайта.';
+                } else {
+                    description.textContent = '';
+                }
+            }
+            renderOwnerPermissionControls();
             setupInlineGroupEditing();
             renderRosterList();
+            try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
         }
 
         window.adminLogout = async function() {
@@ -1448,7 +1651,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function rebuildRosterStatsFromCloud() {
-            if (!isEditorRole()) return false;
+            if (!canEditJournal()) return false;
             if (!isCloudConnected || !db || !auth?.currentUser) return false;
             if (rosterStatsRebuildInFlight) {
                 rosterStatsRebuildPending = true;
@@ -1484,7 +1687,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function scheduleRosterStatsRebuild(delay = 700) {
-            if (!isEditorRole()) return;
+            if (!canEditJournal()) return;
             if (rosterStatsRebuildTimer) clearTimeout(rosterStatsRebuildTimer);
             rosterStatsRebuildTimer = setTimeout(() => { void rebuildRosterStatsFromCloud(); }, delay);
         }
@@ -1603,8 +1806,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 showToast('В субботу и воскресенье журнал недоступен');
                 return;
             }
-            if (!isEditorRole()) {
-                showToast('Изменение журнала доступно только владельцу или администратору');
+            if (!canEditJournal()) {
+                showToast(currentAccessRole === 'admin' ? 'Владелец отключил вам редактирование журнала' : 'Нет прав на изменение журнала');
                 return;
             }
             attendanceState[studentName] = status;
@@ -1619,8 +1822,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 showToast('В субботу и воскресенье журнал недоступен');
                 return;
             }
-            if (!isEditorRole()) {
-                showToast('Изменение журнала доступно только владельцу или администратору');
+            if (!canEditJournal()) {
+                showToast(currentAccessRole === 'admin' ? 'Владелец отключил вам редактирование журнала' : 'Нет прав на изменение журнала');
                 return;
             }
             const selectedStudents = getStudentsForDate(selectedDate);
@@ -1697,7 +1900,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 const card = document.createElement('div');
                 card.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
 
-                let buttonsHtml = `
+                let buttonsHtml = canEditJournal() ? `
                     <div class="grid grid-cols-5 gap-1">
                         <button onclick="setAttendance('${name}', 'present')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Присутствует">П</button>
                         <button onclick="setAttendance('${name}', 'late')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'late' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Опаздывает">О</button>
@@ -1705,7 +1908,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                         <button onclick="setAttendance('${name}', 'excused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'excused' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Уважительная причина">У</button>
                         <button onclick="setAttendance('${name}', 'unexcused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'unexcused' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Неуважительная причина">Н</button>
                     </div>
-                `;
+                ` : '';
 
                 card.innerHTML = `
                     <div class="flex items-center justify-between">
@@ -1728,7 +1931,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function saveCurrentDateState() {
-            if (!isEditorRole()) return false;
+            if (!canEditJournal()) return false;
             setSaveStatus('Сохранение…', true);
             const dateVal = document.getElementById('date-picker').value || getCurrentDateStr();
             const dataToSave = {
@@ -1822,9 +2025,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             // Кнопка всегда доступна. Если пользователь ещё не вошёл как администратор,
             // открываем окно входа вместо того, чтобы делать кнопку визуально/логически
             // неактивной. Само изменение статусов по-прежнему доступно только админу.
-            if (!isEditorRole()) {
+            if (!canEditJournal()) {
                 openAdminSettings();
-                showToast('Сначала войдите как администратор');
+                showToast(currentAccessRole === 'admin' ? 'Владелец отключил вам редактирование журнала' : 'Сначала войдите с правом редактирования журнала');
                 return;
             }
             const btn = document.getElementById('manual-save-journal-btn');
