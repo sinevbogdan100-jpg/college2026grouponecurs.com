@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru" class="min-h-screen bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBP GROUP</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+
+
+
+
+
+
+</head>
+<body class="min-h-screen text-slate-800 antialiased font-sans bg-slate-50">
+
+<!-- Диагностика Firebase: временный диагностический режим -->
+<div id="firebase-diagnostic-panel" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-auto p-5">
+    <div class="flex items-center justify-between mb-3">
+      <div><div class="font-bold text-slate-900">Диагностика Firebase</div><div class="text-[11px] text-slate-500">Показывает реальную причину ошибки синхронизации</div></div>
+      <button onclick="closeFirebaseDiagnostic()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500">✕</button>
+    </div>
+    <div id="firebase-diagnostic-status" class="space-y-2 text-xs"></div>
+    <button onclick="runFirebaseDiagnostic()" class="mt-4 w-full py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm">Проверить Firebase ещё раз</button>
+    <pre id="firebase-diagnostic-log" class="mt-3 p-3 rounded-xl bg-slate-950 text-slate-100 text-[10px] whitespace-pre-wrap overflow-auto max-h-64"></pre>
+  </div>
+</div>
+<button onclick="openFirebaseDiagnostic()" title="Диагностика Firebase" class="fixed left-3 bottom-3 z-[90] w-9 h-9 rounded-full bg-slate-800 text-white text-sm shadow-lg opacity-80 hover:opacity-100">☁</button>
+
+
+    <!-- Настройки теперь открываются из нижней навигации -->
+
+    <div id="admin-settings-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[60] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-base text-slate-900">Настройки</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Внешний вид и настройки редактора</p>
+                </div>
+                <button onclick="closeAdminSettings()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <div class="text-[11px] font-semibold text-slate-600">Версия сайта</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="device-phone" onclick="setDeviceMode('phone')" class="device-mode-btn py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-200" title="Версия для телефона" aria-label="Версия для телефона">
+                        <i class="fa-solid fa-mobile-screen-button"></i><span>Телефон</span>
+                    </button>
+                    <button id="device-pc" onclick="setDeviceMode('pc')" class="device-mode-btn py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-200" title="Версия для компьютера" aria-label="Версия для компьютера">
+                        <i class="fa-solid fa-desktop"></i><span>Компьютер</span>
+                    </button>
+                </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100"></div>
+            <div id="admin-login-box" class="space-y-3">
+                <input id="admin-password" type="password" inputmode="numeric" maxlength="4" placeholder="Пароль администратора" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400">
+                <button onclick="adminLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Войти</button>
+            </div>
+            <div id="admin-panel" class="hidden space-y-3">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">Режим администратора включён.</div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">Данные группы теперь редактируются прямо на главной странице: нажмите на нужное значение рядом с «Куратор», «Староста», «Зам. старосты» или «Студентов».</div>
+                <div class="pt-2 border-t border-slate-100 space-y-2">
+                    <div class="text-[11px] font-semibold text-slate-600">Резервная копия журнала</div>
+                    <div id="backup-status" class="text-[10px] text-slate-400">Резервная копия ещё не создана</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="createManualBackup()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Создать копию</button>
+                        <button onclick="restoreLatestBackup()" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 text-xs font-semibold">Восстановить данные</button>
+                    </div>
+                    <p class="text-[9px] text-slate-400">Копия обновляется автоматически при изменении журнала и расписания.</p>
+                </div>
+                <button onclick="adminLogout()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Выйти из редактора</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 w-[90%] max-w-sm pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-3 border border-slate-800">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+            <span id="toast-message" class="text-xs font-medium">Скопировано в буфер обмена</span>
+        </div>
+    </div>
+
+    <div id="view-home" class="max-w-md mx-auto p-4 min-h-screen flex flex-col pb-16">
+        <div class="pt-5">
+            <!-- Главная информация группы -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 text-center">
+                <div class="text-sm font-semibold text-indigo-700">Машиностроительный колледж</div>
+                <h1 class="text-2xl font-bold text-slate-900 mt-1">ТОЭ-26-9-1</h1>
+
+                <div class="mt-5 pt-4 border-t border-slate-100 grid grid-cols-4 gap-2 text-center">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Куратор</div>
+                        <div id="group-curator" class="text-xs font-semibold text-slate-800 mt-1 admin-inline-edit" data-group-field="curator" tabindex="0">Негманова Г.Б.</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Староста</div>
+                        <div id="group-headman" class="text-xs font-semibold text-slate-800 mt-1 admin-inline-edit" data-group-field="headman" tabindex="0">Синёв Б.П.</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Зам. старосты</div>
+                        <div id="group-deputy" class="text-xs font-semibold text-slate-800 mt-1 admin-inline-edit" data-group-field="deputy" tabindex="0">—</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Студентов</div>
+                        <div id="group-student-count" class="text-xs font-semibold text-slate-800 mt-1 admin-inline-edit" data-group-field="studentCount" tabindex="0">19</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация о сегодняшнем дне -->
+            <div id="home-today-card" class="mt-4 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 text-left">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-calendar-day"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Сегодня</div>
+                            <div id="home-today-date" class="text-base font-bold text-slate-900 mt-0.5">Загрузка...</div>
+                        </div>
+                    </div>
+                    <div id="home-today-week" class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-bold">—</div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100">
+                    <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Ближайшее занятие</div>
+                    <div id="home-next-lesson" class="mt-1 text-sm font-semibold text-slate-800">Загрузка расписания...</div>
+                </div>
+            </div>
+
+            <!-- Центральная часть теперь свободна от дублирующих кнопок -->
+            <div class="mt-8 flex-1 flex items-center justify-center min-h-[300px]">
+                <div class="text-center px-6">
+                    <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-compass text-xl"></i>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-700">Выберите нужный раздел</div>
+                    <div class="text-xs text-slate-400 mt-1">Все основные разделы находятся в нижней панели</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center text-[11px] text-slate-400 pt-4">
+            ТОЭ-26-9-1 • Автоматическое сохранение
+        </div>
+    </div>
+
+    <div id="view-tracker" class="hidden min-h-screen flex flex-col">
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+            <div class="max-w-2xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+                            <i class="fa-solid fa-house text-xs"></i>
+                        </button>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <h1 class="font-bold text-base text-slate-900">ТОЭ-26-9-1</h1>
+                                
+                            </div>
+                            <p class="text-[11px] text-slate-500">Куратор: <span id="tracker-curator" class="text-slate-800 font-medium">Негманова Г.Б.</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Date Selection & History Button -->
+                    <div class="flex items-center space-x-2">
+                        <div class="relative">
+                            <input type="date" id="date-picker" onchange="onDateChanged()" class="sr-only" aria-hidden="true" tabindex="-1">
+                            <button type="button" id="calendar-trigger" onclick="toggleMiniCalendar()" class="calendar-trigger">
+                                <i class="fa-regular fa-calendar calendar-trigger-icon"></i>
+                                <span id="calendar-trigger-text">Сегодня</span>
+                                <i class="fa-solid fa-chevron-down calendar-trigger-arrow"></i>
+                            </button>
+                            <div id="mini-calendar" class="mini-calendar is-hidden">
+                                <div class="mini-calendar-head">
+                                    <button type="button" onclick="changeMiniCalendarMonth(-1)" class="mini-calendar-nav" aria-label="Предыдущий месяц"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <div id="mini-calendar-title" class="mini-calendar-title"></div>
+                                    <button type="button" onclick="changeMiniCalendarMonth(1)" class="mini-calendar-nav" aria-label="Следующий месяц"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                                <div class="mini-calendar-week">
+                                    <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                                </div>
+                                <div id="mini-calendar-days" class="mini-calendar-days"></div>
+                                <button type="button" onclick="selectMiniCalendarDate(formatLocalDate(new Date()))" class="mini-calendar-today">Сегодня</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Counters -->
+                <div class="grid grid-cols-5 gap-1 mt-3 pt-3 border-t border-slate-100 text-center">
+                    <div class="bg-emerald-50/60 border border-emerald-100 rounded-lg p-1.5">
+                        <div class="text-[9px] font-medium text-emerald-700">Присутствуют</div>
+                        <div id="stat-present" class="text-xs font-bold text-emerald-800 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-amber-50/60 border border-amber-100 rounded-lg p-1.5">
+                        <div class="text-[9px] font-medium text-amber-700">Опаздывают</div>
+                        <div id="stat-late" class="text-xs font-bold text-amber-800 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-teal-50/60 border border-teal-100 rounded-lg p-1.5">
+                        <div class="text-[9px] font-medium text-teal-700">Болеет</div>
+                        <div id="stat-sick" class="text-xs font-bold text-teal-800 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-indigo-50/60 border border-indigo-100 rounded-lg p-1.5">
+                        <div class="text-[9px] font-medium text-indigo-700">Уважит.</div>
+                        <div id="stat-excused" class="text-xs font-bold text-indigo-800 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-rose-50/60 border border-rose-100 rounded-lg p-1.5">
+                        <div class="text-[9px] font-medium text-rose-700">Неуваж.</div>
+                        <div id="stat-unexcused" class="text-xs font-bold text-rose-800 mt-0.5">0</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div id="save-status" class="save-status shrink-0"><span class="dot"></span><span id="save-status-text">Сохранено</span></div>
+                        <span id="selected-date-label" class="text-[10px] font-semibold text-slate-500 truncate">Сегодня</span>
+                    </div>
+                    <button type="button" id="manual-save-journal-btn" onclick="saveJournalManually()" class="shrink-0 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-[11px] font-semibold shadow-sm transition disabled:opacity-60 disabled:cursor-not-allowed" title="Сохранить журнал сейчас">
+                        <i class="fa-solid fa-floppy-disk"></i><span>Сохранить</span>
+                    </button>
+                </div>
+                <div class="date-nav mt-2">
+                    <button type="button" onclick="changeJournalDate(-1)"><i class="fa-solid fa-chevron-left mr-1"></i>Предыдущий день</button>
+                    <button type="button" class="today-btn" onclick="goToToday()">Сегодня</button>
+                    <button type="button" onclick="changeJournalDate(1)">Следующий день<i class="fa-solid fa-chevron-right ml-1"></i></button>
+                </div>
+
+            </div>
+        </header>
+
+        <main class="p-3.5 space-y-3 max-w-2xl mx-auto pb-40 w-full flex-1 min-h-screen">
+            <div id="journal-admin-hint" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-3 py-2 text-[11px] font-medium flex items-center gap-2">
+                <i class="fa-solid fa-lock"></i> Изменение журнала доступно только администратору
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-input" oninput="renderApp()" placeholder="Поиск по фамилии..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400">
+                </div>
+
+                <div class="flex items-center justify-between gap-2">
+                    <button onclick="markAll('present')" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <i class="fa-solid fa-check text-emerald-600"></i>
+                        <span>Все «Присутствуют»</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="students-container" class="space-y-2">
+                <!-- Dynamically populated -->
+            </div>
+        </main>
+
+        <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-3 z-40 shadow-md">
+            <div class="max-w-md mx-auto grid grid-cols-2 gap-2">
+                <button onclick="openReportPreview('absent')" class="py-2.5 px-3 bg-rose-600 active:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95">
+                    <i class="fa-solid fa-copy text-xs"></i>
+                    <span>Отсутствующие</span>
+                </button>
+                <button onclick="openReportPreview('full')" class="py-2.5 px-3 bg-slate-900 active:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95">
+                    <i class="fa-solid fa-clipboard-list text-xs"></i>
+                    <span>Полный отчёт</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-schedule" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
+        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div class="flex items-center space-x-3">
+                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </button>
+                <h1 class="font-bold text-sm text-slate-900">Расписание ТОЭ-26-9-1</h1>
+            </div>
+            
+            <!-- Week Type Indicator: numerator on top, denominator below -->
+            <div class="flex flex-col items-center gap-0.5 bg-slate-100 p-1 rounded-xl border border-slate-200 min-w-[94px]">
+                <button onclick="setScheduleWeekType('numerator')" id="sched-btn-num" title="Числитель — верхняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900">
+                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-up text-[9px]"></i> Числитель</span>
+                </button>
+                <div class="w-10 h-px bg-slate-300"></div>
+                <button onclick="setScheduleWeekType('denominator')" id="sched-btn-den" title="Знаменатель — нижняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]">
+                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-down text-[9px]"></i> Знаменатель</span>
+                </button>
+            </div>
+            <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="hidden ml-2 px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold whitespace-nowrap">+ Пара</button>
+        </div>
+
+        <div class="bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">Текущая неделя</div>
+                                    <div id="home-week-banner-text" class="text-xs font-bold text-indigo-900">Знаменатель</div>
+                                </div>
+                            </div>
+                            <span id="home-week-dates" class="text-[10px] font-medium text-indigo-700 bg-white px-2 py-1 rounded-lg border border-indigo-200">21 сен — 25 сен</span>
+                        </div>
+
+        <!-- Days Tabs -->
+        <div class="grid grid-cols-5 gap-1 mb-4 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
+            <button onclick="setScheduleDay('mon')" id="tab-mon" class="py-2 text-xs font-semibold rounded-lg transition bg-slate-900 text-white">Пн</button>
+            <button onclick="setScheduleDay('tue')" id="tab-tue" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Вт</button>
+            <button onclick="setScheduleDay('wed')" id="tab-wed" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Ср</button>
+            <button onclick="setScheduleDay('thu')" id="tab-thu" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Чт</button>
+            <button onclick="setScheduleDay('fri')" id="tab-fri" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Пт</button>
+        </div>
+
+        <div id="schedule-container" class="space-y-2.5">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+
+    <div id="view-roster" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
+        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div class="flex items-center space-x-3">
+                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </button>
+                <h1 class="font-bold text-sm text-slate-900">Список группы ТОЭ-26-9-1</h1>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md"><span id="roster-student-count">19</span> студентов</span>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs mb-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-sm text-slate-900">Успеваемость и посещаемость</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Считается автоматически по данным журнала</div>
+                </div>
+                <i class="fa-solid fa-chart-column text-indigo-500"></i>
+            </div>
+        </div>
+
+        <div id="roster-container" class="space-y-2">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <div id="schedule-editor-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <div><h2 id="schedule-editor-title" class="font-bold text-base text-slate-900">Редактирование пары</h2><p class="text-[11px] text-slate-500 mt-0.5">Только для администратора</p></div>
+                <button onclick="closeScheduleEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="text-[11px] text-slate-600">Время<input id="edit-time" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="08:00 - 09:30"></label>
+                <label class="text-[11px] text-slate-600">Перемена<input id="edit-break" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Перемена: 10 мин"></label>
+            </div>
+            <label class="block text-[11px] text-slate-600">Предмет<input id="edit-subject" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="block text-[11px] text-slate-600">Кабинет / место<input id="edit-room" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="block text-[11px] text-slate-600">Преподаватель<input id="edit-teacher" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="flex items-center gap-2 text-xs text-slate-600"><input id="edit-class-hour" type="checkbox" class="w-4 h-4"> Классный час</label>
+            <div class="flex gap-2"><button id="schedule-delete-btn" onclick="deleteScheduleLesson()" class="hidden flex-1 py-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-100 text-sm font-semibold">Удалить</button><button onclick="saveScheduleLesson()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Сохранить</button></div>
+        </div>
+    </div>
+
+
+
+    <script type="module" src="js/app.js"></script>
+
+    <div id="report-preview-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+                <div>
+                    <div class="font-bold text-sm text-slate-900" id="report-preview-title">Отчёт</div>
+                    <div class="text-[10px] text-slate-400" id="report-preview-date"></div>
+                </div>
+                <button onclick="closeReportPreview()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <pre id="report-preview-content" class="m-0 p-4 max-h-[55vh] overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-700 bg-slate-50"></pre>
+            <div class="grid grid-cols-2 gap-2 p-3 border-t border-slate-200">
+                <button onclick="copyPreviewReport()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Скопировать</button>
+                <button onclick="downloadPreviewReport()" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Скачать</button>
+            </div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav" class="bottom-nav" aria-label="Навигация">
+        <button data-nav="home" onclick="switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
+        <button data-nav="tracker" onclick="switchView('tracker')"><i class="fa-solid fa-clipboard-user"></i><span>Журнал</span></button>
+        <button data-nav="schedule" onclick="switchView('schedule')"><i class="fa-solid fa-calendar-week"></i><span>Расписание</span></button>
+        <button data-nav="roster" onclick="switchView('roster')"><i class="fa-solid fa-users"></i><span>Группа</span></button>
+        <button data-nav="settings" onclick="openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
+    </nav>
+
+<!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
+<link rel="stylesheet" href="css/realtime-debug.css">
+<button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
+<div id="realtime-debug-panel">
+  <div class="rtd-title">Синхронизация в реальном времени</div>
+  <div class="rtd-sub">Показывает, получает ли этот браузер изменения из Firestore.</div>
+  <div class="rtd-grid">
+    <div class="rtd-card"><div class="rtd-label">Firebase</div><div id="rtd-firebase" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Anonymous Auth</div><div id="rtd-auth" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Realtime listener</div><div id="rtd-listener" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Проверка Firestore</div><div id="rtd-read" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Последний cloud update</div><div id="rtd-update" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Документ</div><div id="rtd-doc" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">UID этого браузера</div><div id="rtd-uid" class="rtd-value">—</div></div>
+    <div class="rtd-card"><div class="rtd-label">Источник последнего изменения</div><div id="rtd-source" class="rtd-value">—</div></div>
+  </div>
+  <div class="rtd-actions">
+    <button class="rtd-btn" id="rtd-check">Проверить сейчас</button>
+    <button class="rtd-btn secondary" id="rtd-rebind">Переподключить</button>
+    <button class="rtd-btn secondary" id="rtd-copy">Скопировать лог</button>
+  </div>
+  <div id="rtd-log" class="rtd-log">Запуск режима…</div>
+</div>
+<script src="js/realtime-debug.js"></script>
+
+</body>
+</html>
