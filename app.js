@@ -1007,7 +1007,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             el.innerHTML = safeAvatar
                 ? `<img src="${safeAvatar}" alt="">`
                 : '<i class="fa-regular fa-user"></i>';
-            el.setAttribute('aria-disabled', canEditGroupInfo() ? 'false' : 'true');
+            const editable = canEditGroupInfo();
+            el.disabled = !editable;
+            el.setAttribute('aria-disabled', editable ? 'false' : 'true');
         }
 
         function renderLeaderAvatars(info) {
@@ -1710,6 +1712,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
             renderOwnerPermissionControls();
             setupInlineGroupEditing();
+            renderLeaderAvatars(getGroupInfo());
             renderRosterList();
             try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
             // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
@@ -2065,6 +2068,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             if(rc) rc.textContent=info.curator||'—';
             if(rh) rh.textContent=info.headman||'—';
             if(rd) rd.textContent=info.deputy||'—';
+            const editable = canManageStudents();
 
             studentRecords.forEach((record, index) => {
                 const item = document.createElement('div');
@@ -2074,10 +2078,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                         ${studentAvatarMarkup(record, 'roster-profile-avatar')}
                         <div class="roster-person-text"><strong>${index+1}. ${escapeStudentText(record.name)}</strong><span>Студент группы</span></div>
                     </div>
-                    <div class="roster-admin-actions roster-person-actions">
-                        <button onclick="openStudentProfileEditor(${index})" title="Профиль"><i class="fa-regular fa-pen-to-square"></i></button>
-                        <button class="danger" onclick="removeStudent(${index})" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
-                    </div>`;
+                    ${editable ? `<div class="roster-admin-actions roster-person-actions">
+                        <button type="button" onclick="openStudentProfileEditor(${index})" title="Редактировать профиль" aria-label="Редактировать профиль ${escapeStudentText(record.name)}"><i class="fa-regular fa-pen-to-square"></i></button>
+                        <button type="button" class="danger" onclick="removeStudent(${index})" title="Удалить" aria-label="Удалить ${escapeStudentText(record.name)}"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>` : ''}`;
                 container.appendChild(item);
             });
         }

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.3-mobile-ui-polish2-2026-10-04">
+    <meta name="app-build" content="step18.4-mobile-group-readability-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-mobile-ui-polish2">
+    <link rel="stylesheet" href="style.css?v=20261004-mobile-group-readability">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -229,15 +229,15 @@
 
             <section class="home-ref-roles">
                 <article class="home-ref-role-card">
-                    <button type="button" id="leader-avatar-curator-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button>
+                    <button type="button" id="leader-avatar-curator-home" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button>
                     <div><span>Куратор</span><strong id="group-curator" class="admin-inline-edit" data-group-field="curator" tabindex="0">Негманова Г.Б.</strong></div>
                 </article>
                 <article class="home-ref-role-card">
-                    <button type="button" id="leader-avatar-headman-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button>
+                    <button type="button" id="leader-avatar-headman-home" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button>
                     <div><span>Староста</span><strong id="group-headman" class="admin-inline-edit" data-group-field="headman" tabindex="0">Синёв Б.П.</strong></div>
                 </article>
                 <article class="home-ref-role-card">
-                    <button type="button" id="leader-avatar-deputy-home" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button>
+                    <button type="button" id="leader-avatar-deputy-home" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button>
                     <div><span>Зам. старосты</span><strong id="group-deputy" class="admin-inline-edit" data-group-field="deputy" tabindex="0">—</strong></div>
                 </article>
             </section>
@@ -446,9 +446,9 @@
         </div>
 
         <div class="group-leadership-grid">
-            <div class="leadership-card"><button type="button" id="leader-avatar-curator-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
-            <div class="leadership-card"><button type="button" id="leader-avatar-headman-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
-            <div class="leadership-card"><button type="button" id="leader-avatar-deputy-roster" class="leader-profile-avatar" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-curator-roster" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('curator')" aria-label="Фото куратора"><i class="fa-regular fa-user"></i></button><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-headman-roster" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('headman')" aria-label="Фото старосты"><i class="fa-regular fa-user"></i></button><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
+            <div class="leadership-card"><button type="button" id="leader-avatar-deputy-roster" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
 
         <div id="roster-admin-tools" class="hidden roster-profile-tools">
@@ -615,7 +615,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-mobile-ui-polish2"></script>
+    <script type="module" src="app.js?v=20261004-mobile-group-readability"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -671,3 +671,4 @@
 
 </body>
 </html>
+

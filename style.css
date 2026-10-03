@@ -3765,3 +3765,103 @@ body.schedule-edit-mode #view-schedule .schedule-admin-actions{display:flex}
 
 /* Search is intentionally removed from the Journal. */
 #view-tracker .journal-ref-search{display:none !important}
+
+/* ===== MOBILE GROUP READABILITY + PERMISSION VISIBILITY — 2026-10-04 ===== */
+/* Keep permission rules stronger than the shared row layout, on every device. */
+body:not(.students-edit-mode) .roster-admin-actions,
+body:not(.students-edit-mode) #roster-admin-tools,
+body:not(.schedule-edit-mode) .schedule-admin-actions{
+  display:none !important;
+}
+
+@media(max-width:767px){
+  #view-roster>div:first-child h1{font-size:20px !important}
+  #view-roster>div:first-child>.text-xs{font-size:13px !important}
+  #view-roster>div:first-child button{width:40px;height:40px}
+  #view-roster>div:first-child button i{font-size:16px !important}
+  #view-roster .group-leadership-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  #view-roster .leadership-card{
+    display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:auto auto;
+    column-gap:12px;row-gap:3px;padding:13px 14px;text-align:left;min-width:0;
+  }
+  #view-roster .leadership-card>.leader-profile-avatar{
+    grid-column:1;grid-row:1/3;align-self:center;
+    width:44px !important;height:44px !important;flex-basis:44px !important;font-size:18px !important;
+  }
+  #view-roster .leadership-card>.leader-profile-avatar i{
+    width:auto;height:auto;margin:0;background:transparent;font-size:18px !important;
+  }
+  #view-roster .leadership-card>span{grid-column:2;font-size:13px;line-height:1.35;color:#64748b}
+  #view-roster .leadership-card>strong{
+    grid-column:2;margin:0;font-size:14px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;
+  }
+  #view-roster .roster-profile-tools{gap:12px;align-items:stretch;flex-direction:column;padding:14px}
+  #view-roster .roster-profile-tools strong{font-size:15px;line-height:1.35}
+  #view-roster .roster-profile-tools span{font-size:13px;line-height:1.5;color:#64748b}
+  #view-roster .roster-profile-tools>button{width:100%;min-height:44px;justify-content:center;font-size:14px !important}
+  #view-roster .roster-person-card{min-height:72px;padding:12px;gap:10px}
+  #view-roster .roster-person-main{flex:1;gap:12px}
+  #view-roster .roster-profile-avatar{
+    width:44px !important;height:44px !important;flex-basis:44px !important;font-size:18px !important;
+  }
+  #view-roster .roster-person-text strong{font-size:14px;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+  #view-roster .roster-person-text span{display:block;margin-top:3px;font-size:12px;line-height:1.35;color:#64748b}
+  #view-roster .roster-person-actions{flex:0 0 auto;gap:6px}
+  #view-roster .roster-person-actions button{width:40px;height:40px;font-size:16px !important}
+
+  /* Small utility labels in settings, forms and dialogs. */
+  :is(#admin-settings-modal,.app-overlay,#schedule-editor-modal,#history-modal,#firebase-diagnostic-panel)
+  :is(.text-xs,[class~="text-[8px]"],[class~="text-[9px]"],[class~="text-[10px]"],[class~="text-[11px]"]){
+    font-size:13px !important;line-height:1.45 !important;
+  }
+  #admin-settings-modal .settings-label{font-size:14px;line-height:1.4}
+  #admin-settings-modal .settings-hint{font-size:12px;line-height:1.5;color:#64748b}
+  #admin-settings-modal .lang-toggle button{font-size:14px !important}
+  #admin-settings-modal .device-mode-btn{font-size:13px !important}
+  #admin-settings-modal .admin-permission-summary{white-space:normal}
+  .student-profile-modal-head span,.student-profile-preview-wrap span,.student-profile-field small{font-size:12px;line-height:1.5}
+  .student-profile-preview-wrap strong,.student-profile-field>span{font-size:14px;line-height:1.4}
+  .student-photo-upload,.student-photo-actions>button,.student-profile-modal-actions button,.student-gender-switch button{
+    min-height:44px;font-size:13px !important;
+  }
+  .student-profile-field>input,.notification-composer input,.notification-composer textarea,.support-input,.support-compose textarea,.note-panel textarea{
+    font-size:16px !important;
+  }
+
+  /* Bring the remaining small captions up without changing the main headings. */
+  .bottom-nav button span{font-size:12px !important;white-space:normal;line-height:1.2 !important}
+  #view-home .home-ref-role-card>div>span{font-size:12px !important}
+  #view-home .home-ref-lesson-meta span{font-size:12px !important;overflow-wrap:anywhere}
+  #view-home .home-ref-lesson-meta strong{font-size:12.5px !important;overflow-wrap:anywhere}
+  #view-home .home-ref-section-head button,#view-home .home-ref-notification-empty{font-size:12px !important}
+  #view-home .home-ref-notification-copy strong{font-size:13px !important}
+  #view-home .home-ref-notification-copy>span,#view-home .home-ref-notification-time{font-size:12px !important;line-height:1.4}
+  #view-home .home-ref-progress-labels span,#view-home .home-ref-progress-labels strong{font-size:12px !important}
+  #view-tracker .journal-ref-save{font-size:12px !important;white-space:normal;line-height:1.4}
+  #view-tracker .journal-ref-panel-head span,#view-tracker .assessment-detail-name span,
+  #view-tracker .assessment-history-date span,#view-tracker .assessment-history-row>b,
+  #view-tracker .assessment-empty,#view-tracker .assessment-back{font-size:12px !important;line-height:1.4}
+  #view-tracker .journal-assessment-view .journal-group-tiles span,
+  #view-tracker .assessment-detail-stats span{font-size:12px !important;line-height:1.3}
+  #view-tracker .journal-ref-admin-hint,#view-tracker .journal-assessment-view .journal-group-meta{font-size:12px !important;line-height:1.4}
+  #view-schedule .schedule-ref-days button span,#view-schedule .schedule-ref-meta span,
+  #view-schedule .schedule-live-today span:not(.schedule-live-icon),#view-schedule .schedule-live-state span,
+  #view-schedule .schedule-ref-empty span,#view-schedule .schedule-ref-admin-hint{font-size:12px !important;line-height:1.4}
+  #view-schedule .schedule-ref-change{font-size:12px !important;line-height:1.4}
+  #view-schedule .schedule-ref-state,#view-schedule .schedule-ref-break-card>b{font-size:12px !important;line-height:1.3}
+  .drawer-head span,.drawer-note,.support-intro,.support-msg span,.support-thread-btn span,
+  .support-active-thread,.notification-item span{font-size:12px !important;line-height:1.5}
+  .app-drawer>button,.support-msg,.support-msg strong,.support-thread-btn p,
+  .notification-item p,.note-presets button{font-size:13px !important;line-height:1.45}
+  .notification-item strong,.support-thread-btn strong,.support-inbox-title{font-size:14px !important;line-height:1.4}
+  .notification-composer button,.primary-wide{font-size:14px !important;min-height:44px}
+  .mini-calendar-title{font-size:14px !important}
+  .mini-calendar-week span{font-size:12px !important}
+  .mini-calendar-day,.mini-calendar-today{font-size:13px !important}
+}
+
+@media(max-width:365px){
+  #view-roster .roster-person-text strong{font-size:13px}
+  #view-roster .roster-person-main{gap:9px}
+  #view-roster .roster-profile-avatar{width:42px !important;height:42px !important;flex-basis:42px !important}
+}
