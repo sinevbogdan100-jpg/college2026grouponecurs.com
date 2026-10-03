@@ -1157,3 +1157,273 @@ body{background:linear-gradient(180deg,#fafaff 0,#f5f6fb 100%);color:var(--ink)}
     grid-column:1 / -1;
   }
 }
+
+
+/* ===== HOME REFERENCE MATCH — step18.3-home-ref1 ===== */
+#view-home.home-reference{
+  width:100% !important;
+  max-width:620px !important;
+  margin:0 auto !important;
+  padding:12px 12px calc(84px + env(safe-area-inset-bottom)) !important;
+  background:#f8faff !important;
+}
+#view-home.home-reference .home-ref-topbar{
+  height:58px !important;
+  display:grid !important;
+  grid-template-columns:46px 1fr 46px !important;
+  align-items:center !important;
+  gap:8px !important;
+  margin:0 0 10px !important;
+  padding:0 2px !important;
+}
+#view-home .home-ref-page-title{
+  text-align:center;
+  font-size:22px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:-.02em;
+  color:#0b1433;
+}
+#view-home .home-ref-topbtn{
+  width:44px !important;
+  height:44px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:0 !important;
+  border-radius:13px !important;
+  background:transparent !important;
+  color:#101a3b !important;
+  font-size:22px !important;
+  box-shadow:none !important;
+  position:relative;
+}
+#view-home .home-ref-topbtn .notification-badge{
+  top:-2px !important;
+  right:-3px !important;
+  min-width:19px !important;
+  height:19px !important;
+  border:2px solid #f8faff !important;
+}
+#view-home .home-ref-shell{display:grid;gap:10px;width:100%}
+#view-home .home-ref-group-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:15px 16px;
+  min-height:88px;
+  border:1px solid #edf0f7;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f0f5ff 0%,#f7f9ff 100%);
+}
+#view-home .home-ref-group-icon{
+  width:52px;height:52px;flex:0 0 52px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:13px;background:#eef0ff;color:#5135ff;font-size:23px;
+}
+#view-home .home-ref-group-copy{min-width:0}
+#view-home .home-ref-group-copy #group-name{
+  margin:0 !important;
+  color:#101936 !important;
+  font-size:24px !important;
+  line-height:1.05 !important;
+  font-weight:850 !important;
+  letter-spacing:-.025em;
+}
+#view-home .home-ref-student-line{margin-top:5px;color:#697693;font-size:13px}
+#view-home .home-ref-roles{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+#view-home .home-ref-role-card{
+  min-width:0;
+  min-height:91px;
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  gap:7px;
+  align-items:start;
+  padding:13px 10px;
+  border:1px solid #edf0f7;
+  border-radius:13px;
+  background:linear-gradient(135deg,#f2f6fd,#f7f9fe);
+}
+#view-home .home-ref-role-card>i{
+  width:29px;height:29px;display:flex;align-items:center;justify-content:center;
+  color:#57698f;font-size:16px;
+}
+#view-home .home-ref-role-card div{min-width:0}
+#view-home .home-ref-role-card span{
+  display:block;color:#263352;font-size:10px;line-height:1.2;margin-bottom:7px;
+}
+#view-home .home-ref-role-card strong{
+  display:block;color:#101936;font-size:11px;line-height:1.35;font-weight:750;
+  overflow-wrap:anywhere;
+}
+#view-home .home-ref-today{
+  overflow:hidden;
+  border:1px solid #e8edf6;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 7px 22px rgba(31,47,78,.035);
+}
+#view-home .home-ref-today-head{
+  min-height:74px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 14px 12px;
+}
+#view-home .home-ref-today-head h2{
+  margin:0;
+  color:#0f1834;
+  font-size:24px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:-.025em;
+}
+#view-home .home-ref-date{text-align:right;min-width:0}
+#view-home .home-ref-date strong{display:block;color:#101936;font-size:13px;line-height:1.2;font-weight:850}
+#view-home .home-ref-date span{display:block;margin-top:4px;color:#71809c;font-size:11px}
+#view-home .home-ref-schedule-list{display:grid;gap:0}
+#view-home .home-ref-lesson-card{
+  border-top:1px solid #e9edf5;
+  background:#fff;
+}
+#view-home .home-ref-lesson-card.current{
+  margin:0 2px;
+  border:1px solid #e6ddff;
+  border-radius:13px;
+  background:linear-gradient(100deg,#f6f1ff 0%,#efe8ff 100%);
+  overflow:hidden;
+}
+#view-home .home-ref-lesson-row{
+  min-height:75px;
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr) 132px;
+  gap:10px;
+  align-items:center;
+  padding:10px 13px;
+}
+#view-home .home-ref-lesson-number{
+  width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:13px;background:#f2f5fb;color:#0c1634;font-size:20px;font-weight:850;
+}
+#view-home .current .home-ref-lesson-number{background:rgba(255,255,255,.67)}
+#view-home .home-ref-lesson-main{min-width:0}
+#view-home .home-ref-lesson-main strong{
+  display:block;color:#111936;font-size:15px;line-height:1.2;font-weight:850;overflow-wrap:anywhere;
+}
+#view-home .home-ref-lesson-main span{display:block;margin-top:4px;color:#4f5f7e;font-size:12px}
+#view-home .home-ref-lesson-meta{
+  display:grid;grid-template-columns:1fr 55px;gap:9px;align-items:center;
+}
+#view-home .home-ref-lesson-meta div{min-width:0}
+#view-home .home-ref-lesson-meta span{display:block;color:#71809b;font-size:9px}
+#view-home .home-ref-lesson-meta strong{display:block;margin-top:3px;color:#101936;font-size:12px;font-weight:700}
+#view-home .home-ref-progress-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px 10px;
+  padding:7px 13px 12px;
+  border-top:1px solid rgba(108,75,255,.08);
+}
+#view-home .home-ref-progress-labels{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#view-home .home-ref-progress-labels strong{color:#4e2cff;font-size:11px}
+#view-home .home-ref-progress-labels span{color:#63708b;font-size:10px}
+#view-home .home-ref-progress{height:7px;border-radius:99px;background:#e5e9f2;overflow:hidden}
+#view-home .home-ref-progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#5c2bff,#5b3cff)}
+#view-home .home-ref-progress-percent{align-self:center;color:#50607e;font-size:10px}
+#view-home .home-ref-break-card{
+  min-height:63px;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  padding:8px 14px;
+  border-top:1px solid #e9edf5;
+  background:#fff;
+}
+#view-home .home-ref-break-card.current{background:#fff9ef}
+#view-home .home-ref-break-icon{
+  width:40px;height:40px;border-radius:12px;background:#f0f4fb;color:#5b6d8e;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+#view-home .home-ref-break-main strong{display:block;color:#111936;font-size:13px;font-weight:800}
+#view-home .home-ref-break-main span{display:block;margin-top:3px;color:#657491;font-size:10px}
+#view-home .home-ref-break-duration{color:#5d6d89;font-size:10px;white-space:nowrap}
+#view-home .home-ref-empty{padding:28px 16px;text-align:center;color:#8994aa;font-size:11px}
+#view-home .home-ref-notifications{padding-top:12px}
+#view-home .home-ref-section-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 9px;
+}
+#view-home .home-ref-section-head h2{
+  margin:0;color:#101936;font-size:17px;line-height:1.15;font-weight:850;letter-spacing:-.015em;
+}
+#view-home .home-ref-section-head button{
+  display:flex;align-items:center;gap:4px;color:#5833ff!important;background:transparent!important;
+  padding:5px 0!important;font-size:10px!important;font-weight:700!important;border:0!important;
+}
+#view-home .home-ref-notification-card{
+  width:100%;
+  display:grid;
+  grid-template-columns:45px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:start;
+  padding:12px 13px!important;
+  text-align:left;
+  border:1px solid #e8edf6!important;
+  border-radius:13px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+#view-home .home-ref-notification-icon{
+  width:40px;height:40px;border-radius:50%;background:#f0eaff;color:#5c2bff;
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+#view-home .home-ref-notification-copy{display:block;min-width:0}
+#view-home .home-ref-notification-copy strong{
+  display:block;color:#111936;font-size:11px;line-height:1.3;font-weight:850;
+}
+#view-home .home-ref-notification-copy>span{
+  display:block;margin-top:4px;color:#52617f;font-size:10px;line-height:1.35;
+  white-space:normal;overflow-wrap:anywhere;
+}
+#view-home .home-ref-notification-time{color:#60708c;font-size:9px;white-space:nowrap}
+#view-home .home-ref-notification-empty{
+  padding:17px 14px;border:1px solid #e8edf6;border-radius:13px;background:#fff;
+  color:#8b96aa;text-align:center;font-size:10px;
+}
+
+@media(max-width:420px){
+  #view-home.home-reference{padding-left:9px!important;padding-right:9px!important}
+  #view-home .home-ref-page-title{font-size:19px}
+  #view-home .home-ref-group-card{min-height:80px;padding:13px}
+  #view-home .home-ref-group-icon{width:46px;height:46px;flex-basis:46px;font-size:20px}
+  #view-home .home-ref-group-copy #group-name{font-size:21px!important}
+  #view-home .home-ref-student-line{font-size:11px}
+  #view-home .home-ref-role-card{min-height:86px;padding:11px 7px;grid-template-columns:25px minmax(0,1fr);gap:5px}
+  #view-home .home-ref-role-card>i{width:25px;height:25px;font-size:14px}
+  #view-home .home-ref-role-card span{font-size:9px;margin-bottom:6px}
+  #view-home .home-ref-role-card strong{font-size:9.5px}
+  #view-home .home-ref-today-head h2{font-size:22px}
+  #view-home .home-ref-lesson-row{grid-template-columns:48px minmax(0,1fr) 98px;gap:7px;padding:9px 9px}
+  #view-home .home-ref-lesson-number{width:42px;height:42px;font-size:18px}
+  #view-home .home-ref-lesson-main strong{font-size:13px}
+  #view-home .home-ref-lesson-main span{font-size:10px}
+  #view-home .home-ref-lesson-meta{grid-template-columns:1fr 38px;gap:5px}
+  #view-home .home-ref-lesson-meta span{font-size:7.5px}
+  #view-home .home-ref-lesson-meta strong{font-size:10px}
+}
+@media(max-width:350px){
+  #view-home .home-ref-roles{grid-template-columns:1fr}
+  #view-home .home-ref-role-card{min-height:62px;grid-template-columns:30px 1fr}
+  #view-home .home-ref-lesson-row{grid-template-columns:42px minmax(0,1fr) 82px}
+}
+@media(min-width:768px){
+  #view-home.home-reference{max-width:760px!important;padding:82px 18px 44px!important}
+  body.layout-pc #view-home.home-reference{max-width:760px!important;padding-left:18px!important;padding-right:18px!important}
+  #view-home .home-ref-topbar{display:none!important}
+}
