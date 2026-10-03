@@ -503,7 +503,6 @@ html, body {
 #view-home, #view-tracker, #view-schedule, #view-roster {
   background:transparent !important;
 }
-</style>
 /* Управление составом группы */
 .roster-admin-actions { display: none; }
 body.students-edit-mode .roster-admin-actions { display: flex; }

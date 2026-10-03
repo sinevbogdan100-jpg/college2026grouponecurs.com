@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step18-1-root";
+} from "./firebase.js?v=20261003-step18-2-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step18-1-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-1-root";
+} from "./utils.js?v=20261003-step18-2-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-2-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step18-1-root";
+} from "./schedule.js?v=20261003-step18-2-root";
 
         
-window.__SITE_BUILD__ = 'step18.1-2026-10-03';
+window.__SITE_BUILD__ = 'step18.2-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -742,6 +742,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             } catch(e) {
                 renderSchedule(getCurrentScheduleDay());
             }
+            ensureMainViewVisible();
             updateHomeWeekBanner();
             updateHomeTodayCard();
             setInterval(updateHomeTodayCard, 15000);
@@ -1413,6 +1414,25 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
         };
 
+
+        function ensureMainViewVisible() {
+            const viewIds = ['view-home','view-tracker','view-roster','view-schedule'];
+            const views = viewIds.map(id => document.getElementById(id)).filter(Boolean);
+            if (!views.length) return;
+            const hasVisibleView = views.some(el => !el.classList.contains('hidden'));
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) bottomNav.classList.remove('hidden');
+            if (!hasVisibleView) {
+                views.forEach(el => el.classList.add('hidden'));
+                const home = document.getElementById('view-home');
+                if (home) home.classList.remove('hidden');
+                try { localStorage.setItem('toe_current_view', 'home'); } catch (_) {}
+                document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn =>
+                    btn.classList.toggle('active', btn.dataset.nav === 'home')
+                );
+            }
+        }
+
         function updateAdminUI() {
             const editor = isEditorRole();
             const owner = isOwnerRole();
@@ -1480,6 +1500,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             setupInlineGroupEditing();
             renderRosterList();
             try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
+            // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
+            setTimeout(ensureMainViewVisible, 0);
         }
 
         window.adminLogout = async function() {
