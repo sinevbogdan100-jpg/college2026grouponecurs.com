@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-4-root";
 
         
-window.__SITE_BUILD__ = 'step18.4-2026-10-03';
+window.__SITE_BUILD__ = 'step18.5-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
