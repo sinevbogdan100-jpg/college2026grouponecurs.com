@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-journal-ref1-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-journal-ref2-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -858,7 +858,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         document.addEventListener('click', function(e) {
             const wrap = document.getElementById('calendar-trigger')?.parentElement;
             const popup = document.getElementById('mini-calendar');
-            if (popup && wrap && !wrap.contains(e.target)) popup.classList.add('is-hidden');
+            if (!popup || !wrap) return;
+            if (e.target.closest?.('[data-calendar-toggle]')) return;
+            if (!wrap.contains(e.target)) popup.classList.add('is-hidden');
         });
 
         let attendanceState = {};
@@ -2028,11 +2030,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function renderJournalScoreCard() {
             const select = document.getElementById('journal-score-select');
             if (!select) return;
-            const current = select.value && students.includes(select.value) ? select.value : (students[0] || '');
             const previous = select.value;
-            select.innerHTML = students.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${name === current ? 'selected' : ''}>${name}</option>`).join('');
-            if (previous && students.includes(previous)) select.value = previous;
-            const selected = select.value || current;
+            const selected = previous && students.includes(previous) ? previous : (students[0] || '');
+            select.innerHTML = students.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${name === selected ? 'selected' : ''}>${name}</option>`).join('');
+            if (selected) select.value = selected;
             const stats = selected ? getStudentAttendanceStats(selected) : emptyAttendanceStats();
             const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = String(value); };
             setText('journal-score-name', selected || '—');
@@ -2045,6 +2046,22 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             setText('journal-score-total', stats.total || 0);
             const progress = document.getElementById('journal-score-progress');
             if (progress) progress.style.width = Math.max(0, Math.min(100, stats.attendancePercent || 0)) + '%';
+
+            const history = document.getElementById('journal-score-history');
+            if (history) {
+                const rows = [];
+                Object.keys(attendanceArchive || {}).sort().reverse().forEach(date => {
+                    const saved = attendanceArchive[date];
+                    const status = saved?.state?.[selected];
+                    if (!status) return;
+                    const note = saved?.notes?.[selected] || '';
+                    rows.push(`<div class="journal-history-row">
+                        <div><strong>${new Date(date + 'T00:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'})}</strong><span>${note || 'Без примечания'}</span></div>
+                        <b class="${status}">${getStatusName(status)}</b>
+                    </div>`);
+                });
+                history.innerHTML = rows.length ? rows.join('') : '<div class="journal-history-empty">Пока нет сохранённых отметок по этому студенту.</div>';
+            }
         }
         window.renderJournalScoreCard = renderJournalScoreCard;
 
@@ -2080,6 +2097,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     return `<button ${action} class="journal-status-btn ${status}${selected}" title="${title}">${label}</button>`;
                 }).join('');
                 const note = attendanceNotes[name] || '';
+                const noteControl = currentStatus
+                    ? `<button class="journal-ref-note ${note ? 'has-note' : ''}" ${editable ? `onclick="openAttendanceNote('${safeName}')"` : 'disabled'} title="${note || 'Добавить примечание'}"><i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span></button>`
+                    : '<span class="journal-ref-note-placeholder" aria-hidden="true"></span>';
                 row.innerHTML = `
                     <span class="journal-ref-index">${index + 1}</span>
                     <div class="journal-ref-person">
@@ -2087,9 +2107,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                         <strong>${name}</strong>
                     </div>
                     ${buttons}
-                    <button class="journal-ref-note ${note ? 'has-note' : ''}" ${editable ? `onclick="openAttendanceNote('${safeName}')"` : 'disabled'} title="${note || 'Добавить примечание'}">
-                        <i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span>
-                    </button>`;
+                    ${noteControl}`;
                 container.appendChild(row);
             });
 
@@ -2108,7 +2126,6 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             if (groupProgress) groupProgress.style.width = groupPercent + '%';
 
             renderJournalScoreCard();
-            if (activeJournalTab === 'stats') renderAttendanceAnalytics();
         }
 
         async function saveCurrentDateState() {
@@ -2410,7 +2427,14 @@ window.addEventListener('DOMContentLoaded',()=>langObserver.observe(document.bod
 
 window.openAppMenu=function(){const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
 window.closeAppMenu=function(){document.getElementById('app-menu-drawer')?.classList.add('hidden');document.body.classList.remove('modal-open');};
-window.showJournalTab=function(tab){activeJournalTab=tab==='stats'?'stats':'editor';document.getElementById('journal-tab-editor')?.classList.toggle('active',activeJournalTab==='editor');document.getElementById('journal-tab-stats')?.classList.toggle('active',activeJournalTab==='stats');document.getElementById('journal-editor-main')?.classList.toggle('hidden',activeJournalTab==='stats');document.getElementById('journal-report-actions')?.classList.toggle('hidden',activeJournalTab==='stats');document.getElementById('attendance-analytics')?.classList.toggle('hidden',activeJournalTab!=='stats');if(activeJournalTab==='stats')renderAttendanceAnalytics();};
+window.showJournalTab=function(tab){
+    activeJournalTab=tab==='stats'?'stats':'editor';
+    document.getElementById('journal-tab-editor')?.classList.toggle('active',activeJournalTab==='editor');
+    document.getElementById('journal-tab-stats')?.classList.toggle('active',activeJournalTab==='stats');
+    document.getElementById('journal-editor-main')?.classList.toggle('hidden',activeJournalTab==='stats');
+    document.getElementById('attendance-analytics')?.classList.toggle('hidden',activeJournalTab!=='stats');
+    if(activeJournalTab==='stats') renderJournalScoreCard();
+};
 
 window.renderAttendanceAnalytics=function(){
  const summary=document.getElementById('analytics-summary'), select=document.getElementById('analytics-student-select'), hist=document.getElementById('analytics-history'), head=document.getElementById('analytics-student-head'); if(!summary||!select||!hist) return;
