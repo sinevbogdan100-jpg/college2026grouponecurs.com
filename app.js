@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-recovery1-2026-10-03';
+window.__SITE_BUILD__ = 'step18.3-home1-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -2002,7 +2002,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
             const { date, lesson, weekType } = result;
             const sameDay = formatLocalDate(date) === formatLocalDate(now);
-            if (captionEl) captionEl.textContent = sameDay ? 'Сегодня' : 'Следующий учебный день';
+            if (captionEl) captionEl.textContent = sameDay ? 'Следующая пара' : 'Следующий учебный день';
             dateEl.textContent = `${dayNames[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
             weekEl.textContent = weekType === 'numerator' ? 'Числитель' : 'Знаменатель';
 
@@ -2015,7 +2015,14 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 ? `<span class="text-slate-500">${locationParts.join(' · ')}</span>`
                 : '';
 
-            lessonEl.innerHTML = `<span class="text-indigo-600">${lesson.time}</span> · ${lesson.subject}${locationText ? `<br>${locationText}` : ''}`;
+            lessonEl.innerHTML = `
+                <div class="home-next-subject">${lesson.subject}</div>
+                <div class="home-next-time">${lesson.time}</div>
+                <div class="home-next-location">
+                    ${room ? `<span><i class="fa-solid fa-location-dot"></i>${room}</span>` : ''}
+                    ${floor ? `<span><i class="fa-solid fa-building"></i>${floor} этаж</span>` : ''}
+                </div>
+            `;
         }
 
         function renderApp() {
