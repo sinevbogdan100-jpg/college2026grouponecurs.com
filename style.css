@@ -507,3 +507,176 @@ html, body {
 /* Управление составом группы */
 .roster-admin-actions { display: none; }
 body.students-edit-mode .roster-admin-actions { display: flex; }
+
+/* STEP15 — практичный мобильный интерфейс без перекрытий */
+body.settings-open { overflow: hidden !important; }
+.admin-permission-summary {
+  list-style: none; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  cursor:pointer; min-height:34px; user-select:none;
+}
+.admin-permission-summary::-webkit-details-marker { display:none; }
+.admin-permission-summary i { transition: transform .18s ease; }
+.admin-permission-card[open] .admin-permission-summary i { transform:rotate(180deg); }
+
+@media (max-width: 767px) {
+  :root { --mobile-nav-h: 64px; }
+  html, body { width:100%; max-width:100%; overflow-x:hidden !important; }
+
+  /* Нижняя навигация всегда ниже контента и учитывает safe-area iPhone. */
+  .bottom-nav {
+    bottom:max(6px, env(safe-area-inset-bottom)) !important;
+    width:calc(100% - 10px) !important;
+    max-width:520px !important;
+    border-radius:15px !important;
+    padding:4px !important;
+  }
+  .bottom-nav button { min-height:48px !important; font-size:8px !important; }
+  #view-home, #view-schedule, #view-roster { padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important; }
+  #view-tracker > main { padding-bottom:12px !important; }
+
+  /* Отладочные плавающие кнопки не закрывают рабочий интерфейс на телефоне. */
+  #realtime-debug-toggle,
+  button[title="Диагностика Firebase"] { display:none !important; }
+
+  /* Настройки = мобильная панель. Крестик всегда остаётся сверху. */
+  #admin-settings-modal {
+    align-items:flex-end !important;
+    justify-content:center !important;
+    padding:0 !important;
+    overscroll-behavior:contain;
+  }
+  #admin-settings-modal > div {
+    width:100% !important;
+    max-width:520px !important;
+    max-height:calc(100dvh - 6px) !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    border-radius:22px 22px 0 0 !important;
+    padding:0 14px calc(18px + env(safe-area-inset-bottom)) !important;
+    margin:0 !important;
+    scrollbar-width:thin;
+  }
+  .settings-modal-header {
+    position:sticky; top:0; z-index:5;
+    margin:0 -14px 10px !important;
+    padding:14px 14px 12px !important;
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid #eef2f7;
+  }
+  .settings-modal-header::before {
+    content:""; position:absolute; top:6px; left:50%; transform:translateX(-50%);
+    width:38px; height:4px; border-radius:99px; background:#d7dde6;
+  }
+  .settings-modal-header > div:first-child { padding-top:5px; }
+  .settings-modal-header button { min-width:38px; min-height:38px !important; }
+  #admin-settings-modal .space-y-4 > :not(.settings-modal-header) { margin-top:10px !important; }
+  #admin-settings-modal input[type="text"],
+  #admin-settings-modal input[type="password"] { min-height:46px !important; font-size:16px !important; }
+  #admin-settings-modal button { min-height:42px; }
+  #owner-permissions-section { padding-top:10px !important; }
+  .admin-permission-card { padding:10px 12px !important; }
+  .admin-permission-options label {
+    min-height:40px; padding:5px 0; border-top:1px solid #eef2f7;
+    line-height:1.25;
+  }
+  .admin-permission-options input[type="checkbox"] { width:20px !important; height:20px !important; flex:0 0 auto; }
+  #save-admin-permissions-btn { box-shadow:0 5px 16px rgba(37,99,235,.14); }
+
+  /* Журнал: шапка уходит при прокрутке и не съедает половину экрана. */
+  #view-tracker { min-height:100dvh; padding:0 !important; }
+  #view-tracker > header {
+    position:static !important; top:auto !important; z-index:auto !important;
+    margin:0 !important; padding:0 !important;
+    border-radius:0 0 18px 18px;
+  }
+  #view-tracker > header > div { padding:10px 10px 9px !important; }
+  #view-tracker > header .grid.grid-cols-5 { margin-top:8px !important; padding-top:8px !important; gap:3px !important; }
+  #view-tracker > header .grid.grid-cols-5 > div { padding:5px 1px !important; min-width:0; }
+  #view-tracker > header .grid.grid-cols-5 .text-\[9px\] {
+    font-size:7px !important; line-height:1.05 !important; overflow-wrap:anywhere;
+  }
+  #view-tracker > header .grid.grid-cols-5 .text-xs { font-size:11px !important; }
+  #view-tracker .calendar-trigger { max-width:126px; }
+  #view-tracker .calendar-trigger span { max-width:86px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mini-calendar { position:fixed !important; left:50% !important; right:auto !important; top:82px !important; transform:translateX(-50%); width:min(330px, calc(100vw - 20px)) !important; }
+
+  .date-nav { grid-template-columns:1fr auto 1fr !important; gap:4px !important; }
+  .date-nav button { min-width:0; min-height:38px !important; padding:5px 4px !important; font-size:8px !important; line-height:1.15; }
+  .date-nav .today-btn { padding:5px 9px !important; }
+
+  #view-tracker > main {
+    width:100% !important; max-width:560px !important; padding:10px 10px 12px !important;
+    min-height:auto !important;
+  }
+  #journal-admin-hint { margin:0 !important; }
+  #students-container { display:flex; flex-direction:column; gap:8px; width:100%; }
+  .journal-student-card { margin:0 !important; padding:10px !important; width:100%; overflow:hidden; }
+  .journal-student-head { gap:8px; align-items:flex-start !important; }
+  .journal-student-ident { min-width:0; flex:1 1 auto; align-items:flex-start !important; }
+  .journal-student-ident > span:last-child {
+    min-width:0; font-size:13px !important; line-height:1.25; white-space:normal; overflow-wrap:anywhere;
+  }
+  .journal-status-badge { flex:0 0 auto; max-width:41%; text-align:center; white-space:normal; line-height:1.15; }
+  .journal-status-grid { gap:5px !important; }
+  .journal-status-grid button {
+    min-width:0 !important; min-height:38px !important; padding:5px 1px !important;
+    font-size:11px !important; border-radius:9px !important;
+  }
+
+  /* Отчёты больше не плавают поверх последних студентов. */
+  #journal-report-actions {
+    position:static !important; inset:auto !important; z-index:auto !important;
+    width:100%; margin:0 auto calc(76px + env(safe-area-inset-bottom)) !important;
+    padding:0 10px 8px !important; background:transparent !important; border:0 !important; box-shadow:none !important;
+    backdrop-filter:none !important;
+  }
+  #journal-report-actions > div { max-width:560px !important; }
+  #journal-report-actions button { min-height:44px !important; }
+
+  /* Расписание: верхняя панель переносится, ничего не уезжает за край. */
+  #view-schedule { padding:10px 10px calc(82px + env(safe-area-inset-bottom)) !important; }
+  #view-schedule > div:first-child { flex-wrap:wrap; gap:8px; padding:10px !important; margin-bottom:10px !important; }
+  #view-schedule > div:first-child > div:first-child { min-width:0; flex:1 1 170px; }
+  #view-schedule > div:first-child h1 { font-size:13px !important; line-height:1.25; overflow-wrap:anywhere; }
+  #view-schedule > div:first-child > div:nth-child(2) { margin-left:auto; min-width:110px; }
+  #schedule-add-btn { margin-left:0 !important; flex:1 1 100%; min-height:40px !important; }
+  #view-schedule > div:nth-child(2) { gap:8px; }
+  #home-week-dates { white-space:normal; text-align:right; line-height:1.15; }
+  #schedule-container { padding-bottom:6px; }
+
+  /* Состав группы: управление не вылезает за ширину. */
+  #view-roster { padding:10px 10px calc(82px + env(safe-area-inset-bottom)) !important; }
+  #view-roster > div:first-child { gap:8px; padding:10px !important; }
+  #view-roster > div:first-child > div { min-width:0; }
+  #view-roster > div:first-child h1 { font-size:13px !important; line-height:1.25; overflow-wrap:anywhere; }
+  #roster-admin-tools .flex.gap-2.mt-3 { flex-wrap:wrap; }
+  #new-student-name { flex:1 1 190px; min-height:44px !important; }
+  #roster-admin-tools button { flex:1 1 110px; min-height:44px !important; }
+
+  /* Редактор пары и отчёт на телефоне открываются как нижние панели. */
+  #schedule-editor-modal, #report-preview-modal { align-items:flex-end !important; padding:0 !important; }
+  .schedule-editor-sheet, .report-preview-sheet {
+    width:100% !important; max-width:520px !important; max-height:calc(100dvh - 6px) !important;
+    border-radius:22px 22px 0 0 !important; margin:0 auto !important;
+    overflow-y:auto !important; overscroll-behavior:contain;
+  }
+  .schedule-editor-sheet { padding:0 14px calc(18px + env(safe-area-inset-bottom)) !important; }
+  .modal-sticky-header {
+    position:sticky; top:0; z-index:5; background:rgba(255,255,255,.97);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  }
+  .schedule-editor-sheet > .modal-sticky-header { margin:0 -14px 10px; padding:14px; border-bottom:1px solid #eef2f7; }
+  .report-preview-sheet > .modal-sticky-header { z-index:3; }
+  #report-preview-content { max-height:calc(100dvh - 190px) !important; }
+}
+
+@media (max-width: 390px) {
+  /* На очень узких экранах важнее читаемость, чем 4 колонки в одну строку. */
+  #view-home .grid-cols-4 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px 6px !important; }
+  #view-home .grid-cols-4 .text-xs { font-size:11px !important; }
+  #view-home .grid-cols-4 .text-\[10px\] { font-size:8px !important; }
+  #journal-report-actions > div { grid-template-columns:1fr !important; }
+  .journal-status-badge { max-width:45%; font-size:9px !important; }
+}

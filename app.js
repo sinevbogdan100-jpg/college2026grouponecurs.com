@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step14-root";
+} from "./firebase.js?v=20261003-step15-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step14-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step14-root";
+} from "./utils.js?v=20261003-step15-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step15-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step14-root";
+} from "./schedule.js?v=20261003-step15-root";
 
         
-window.__SITE_BUILD__ = 'step14-2026-10-03';
+window.__SITE_BUILD__ = 'step15-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -1230,6 +1230,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const modal = document.getElementById('admin-settings-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            document.body.classList.add('settings-open');
             if (canEditGroupInfo()) loadGroupInfoToAdminForm();
             document.getElementById('admin-login-box')?.classList.toggle('hidden', isEditorRole());
             document.getElementById('admin-panel')?.classList.toggle('hidden', !isEditorRole());
@@ -1240,6 +1241,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const modal = document.getElementById('admin-settings-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.classList.remove('settings-open');
         };
 
         window.adminLogin = async function() {
@@ -2004,10 +2006,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (counts[currentStatus] !== undefined) counts[currentStatus]++;
 
                 const card = document.createElement('div');
-                card.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
+                card.className = "journal-student-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
 
                 let buttonsHtml = canEditJournal() ? `
-                    <div class="grid grid-cols-5 gap-1">
+                    <div class="journal-status-grid grid grid-cols-5 gap-1">
                         <button onclick="setAttendance('${name}', 'present')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Присутствует">П</button>
                         <button onclick="setAttendance('${name}', 'late')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'late' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Опаздывает">О</button>
                         <button onclick="setAttendance('${name}', 'sick')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'sick' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Болеет">Б</button>
@@ -2017,12 +2019,12 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 ` : '';
 
                 card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2.5">
+                    <div class="journal-student-head flex items-center justify-between">
+                        <div class="journal-student-ident flex items-center space-x-2.5">
                             <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
                             <span class="font-bold text-sm text-slate-900">${name}</span>
                         </div>
-                        <span class="text-[10px] font-medium px-2 py-0.5 rounded-md ${getStatusBadgeClass(currentStatus)}">${getStatusName(currentStatus)}</span>
+                        <span class="journal-status-badge text-[10px] font-medium px-2 py-0.5 rounded-md ${getStatusBadgeClass(currentStatus)}">${getStatusName(currentStatus)}</span>
                     </div>
                     ${buttonsHtml}
                 `;
