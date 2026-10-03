@@ -391,53 +391,51 @@
         </section>
     </div>
 
-    <div id="view-schedule" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
-        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-            <div class="flex items-center space-x-3">
-                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                    <i class="fa-solid fa-house text-xs"></i>
-                </button>
-                <h1 class="font-bold text-sm text-slate-900">Расписание <span id="schedule-group-name">ТОЭ-26-9-1</span></h1>
+    <div id="view-schedule" class="hidden schedule-reference-page min-h-screen">
+        <div class="schedule-ref-topbar">
+            <button class="schedule-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="schedule-ref-title"><h1>Расписание</h1><span id="schedule-group-name" class="hidden">ТОЭ-26-9-1</span></div>
+            <button class="schedule-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
+                <i class="fa-regular fa-bell"></i>
+            </button>
+        </div>
+
+        <div class="schedule-ref-week-switch" role="tablist" aria-label="Тип недели">
+            <button type="button" onclick="setScheduleWeekType('numerator')" id="sched-btn-num">Числитель</button>
+            <button type="button" onclick="setScheduleWeekType('denominator')" id="sched-btn-den">Знаменатель</button>
+        </div>
+
+        <div class="schedule-ref-datebar">
+            <button type="button" class="schedule-ref-date-arrow" onclick="shiftScheduleReferenceDate(-1)" aria-label="Предыдущий учебный день">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="schedule-ref-date-copy">
+                <div><i class="fa-regular fa-calendar-days"></i><strong id="schedule-reference-date">—</strong></div>
+                <span id="schedule-week-range">—</span>
             </div>
-            
-            <!-- Week Type Indicator: numerator on top, denominator below -->
-            <div class="flex flex-col items-center gap-0.5 bg-slate-100 p-1 rounded-xl border border-slate-200 min-w-[94px]">
-                <button onclick="setScheduleWeekType('numerator')" id="sched-btn-num" title="Числитель — верхняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] text-slate-500 hover:text-slate-900">
-                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-up text-[9px]"></i> Числитель</span>
-                </button>
-                <div class="w-10 h-px bg-slate-300"></div>
-                <button onclick="setScheduleWeekType('denominator')" id="sched-btn-den" title="Знаменатель — нижняя часть" class="w-full px-2 py-1 rounded-lg font-bold transition text-[10px] bg-indigo-600 text-white shadow-[0_0_12px_rgba(79,70,229,0.55)]">
-                    <span class="inline-flex items-center justify-center gap-1"><i class="fa-solid fa-arrow-down text-[9px]"></i> Знаменатель</span>
-                </button>
-            </div>
-            <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="hidden ml-2 px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold whitespace-nowrap">+ Пара</button>
+            <button type="button" class="schedule-ref-date-arrow" onclick="shiftScheduleReferenceDate(1)" aria-label="Следующий учебный день">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
 
-        <div class="bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">Текущая неделя</div>
-                                    <div id="home-week-banner-text" class="text-xs font-bold text-indigo-900">Знаменатель</div>
-                                </div>
-                            </div>
-                            <span id="home-week-dates" class="text-[10px] font-medium text-indigo-700 bg-white px-2 py-1 rounded-lg border border-indigo-200">21 сен — 25 сен</span>
-                        </div>
-
-        <!-- Days Tabs -->
-        <div class="grid grid-cols-5 gap-1 mb-4 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
-            <button onclick="setScheduleDay('mon')" id="tab-mon" class="py-2 text-xs font-semibold rounded-lg transition bg-slate-900 text-white">Пн</button>
-            <button onclick="setScheduleDay('tue')" id="tab-tue" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Вт</button>
-            <button onclick="setScheduleDay('wed')" id="tab-wed" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Ср</button>
-            <button onclick="setScheduleDay('thu')" id="tab-thu" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Чт</button>
-            <button onclick="setScheduleDay('fri')" id="tab-fri" class="py-2 text-xs font-semibold rounded-lg transition text-slate-600 hover:bg-slate-100">Пт</button>
+        <div class="schedule-ref-days">
+            <button type="button" onclick="setScheduleDay('mon')" id="tab-mon"><strong>Пн</strong><span id="date-mon">—</span></button>
+            <button type="button" onclick="setScheduleDay('tue')" id="tab-tue"><strong>Вт</strong><span id="date-tue">—</span></button>
+            <button type="button" onclick="setScheduleDay('wed')" id="tab-wed"><strong>Ср</strong><span id="date-wed">—</span></button>
+            <button type="button" onclick="setScheduleDay('thu')" id="tab-thu"><strong>Чт</strong><span id="date-thu">—</span></button>
+            <button type="button" onclick="setScheduleDay('fri')" id="tab-fri"><strong>Пт</strong><span id="date-fri">—</span></button>
         </div>
 
-        <div id="schedule-container" class="space-y-2.5">
-            <!-- Dynamically populated -->
-        </div>
+        <div id="home-week-banner-text" class="hidden">—</div>
+        <span id="home-week-dates" class="hidden">—</span>
+
+        <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="schedule-ref-add hidden">
+            <i class="fa-solid fa-plus"></i><span>Добавить пару</span>
+        </button>
+
+        <div id="schedule-live-summary"></div>
+        <div id="schedule-day-heading" class="schedule-ref-day-heading"></div>
+        <div id="schedule-container" class="schedule-ref-timeline"></div>
     </div>
 
     <div id="view-roster" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
