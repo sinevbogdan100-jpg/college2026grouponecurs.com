@@ -1429,11 +1429,11 @@ body{background:linear-gradient(180deg,#fafaff 0,#f5f6fb 100%);color:var(--ink)}
 }
 
 
-/* ===== GLOBAL NAV ICONS — reference black set ===== */
+/* ===== GLOBAL NAV ICONS — reference slate set ===== */
 .bottom-nav button i{
-  color:#000 !important;
+  color:#646B8A !important;
   opacity:1 !important;
 }
 .bottom-nav button.active i{
-  color:#000 !important;
+  color:#5B35FF !important;
 }
