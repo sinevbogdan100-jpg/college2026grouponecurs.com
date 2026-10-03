@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-profiles-stats1-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-roster-recovery1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -364,31 +364,84 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             return `<span class="${cls}"><i class="fa-solid fa-user"></i></span>`;
         }
 
+        let studentRosterFallbackActive = false;
+
         function readLocalStudentRecords() {
             try {
                 const raw = localStorage.getItem('toe_students_roster');
                 if (raw !== null) {
                     const saved = JSON.parse(raw);
-                    if (Array.isArray(saved)) return normalizeStudentRecords(saved);
+                    if (Array.isArray(saved)) {
+                        const normalized = normalizeStudentRecords(saved);
+                        const confirmedEmpty = localStorage.getItem('toe_students_empty_confirmed') === '1';
+                        if (normalized.length || confirmedEmpty) {
+                            studentRosterFallbackActive = false;
+                            return normalized;
+                        }
+                    }
                 }
             } catch (_) {}
+            studentRosterFallbackActive = true;
             return normalizeStudentRecords(DEFAULT_STUDENT_RECORDS);
         }
 
         let studentRecords = readLocalStudentRecords();
         let students = studentRecords.map(item => item.name);
 
-        function getStudentsForDate(dateStr) {
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return [...students];
-            return studentRecords
-                .filter(item => !item.joinedAt || item.joinedAt <= dateStr)
-                .map(item => item.name);
+        function recoverJournalStudentNames(dateStr) {
+            const names = new Set();
+            const addState = state => {
+                if (!state || typeof state !== 'object') return;
+                Object.keys(state).forEach(name => {
+                    const normalized = normalizeStudentName(name);
+                    if (normalized) names.add(normalized);
+                });
+            };
+
+            try {
+                const raw = localStorage.getItem(`toe_att_${dateStr}`);
+                if (raw) addState(JSON.parse(raw)?.state);
+            } catch (_) {}
+
+            addState(attendanceState);
+            addState(attendanceArchive?.[dateStr]?.state);
+
+            if (!names.size && attendanceArchive && typeof attendanceArchive === 'object') {
+                Object.values(attendanceArchive).forEach(saved => addState(saved?.state));
+            }
+
+            return [...names].sort((x,y) => x.localeCompare(y,'ru-RU',{sensitivity:'base'}));
         }
 
-        function storeStudentRecordsLocally(records) {
+        function getStudentsForDate(dateStr) {
+            const validDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''));
+            const filtered = validDate
+                ? studentRecords.filter(item => !item.joinedAt || item.joinedAt <= dateStr).map(item => item.name)
+                : [...students];
+
+            if (studentRosterFallbackActive) {
+                const recovered = recoverJournalStudentNames(dateStr);
+                if (recovered.length) return recovered;
+            }
+            if (filtered.length) return filtered;
+
+            // Защита от ошибочно будущей joinedAt: активный состав всё равно показываем.
+            if (students.length) return [...students];
+
+            const recovered = recoverJournalStudentNames(dateStr);
+            if (recovered.length) return recovered;
+
+            return normalizeStudentRecords(DEFAULT_STUDENT_RECORDS).map(item => item.name);
+        }
+
+        function storeStudentRecordsLocally(records, options = {}) {
             studentRecords = normalizeStudentRecords(records);
             students = studentRecords.map(item => item.name);
+            const confirmedEmpty = options.confirmedEmpty === true && studentRecords.length === 0;
+            studentRosterFallbackActive = false;
             localStorage.setItem('toe_students_roster', JSON.stringify(studentRecords));
+            if (confirmedEmpty) localStorage.setItem('toe_students_empty_confirmed', '1');
+            else localStorage.removeItem('toe_students_empty_confirmed');
         }
 
         function updateHomeWeekBanner() {
@@ -1083,10 +1136,23 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const updatedAt = String(data.updatedAt || '');
             if (updatedAt && updatedAt === lastStudentsUpdatedAt) return;
             if (!Array.isArray(data.students)) return;
+
             const incoming = normalizeStudentRecords(data.students);
-            if (!incoming.length && data.students.length > 0) return;
+            const confirmedEmpty = data.emptyRosterConfirmed === true;
+
+            if (!incoming.length) {
+                if (data.students.length > 0) return; // malformed records
+                if (!confirmedEmpty) {
+                    console.warn('Empty students_shared ignored to protect the roster from accidental wipe');
+                    if (updatedAt) lastStudentsUpdatedAt = updatedAt;
+                    renderStudentDependentViews();
+                    return;
+                }
+            }
+
             if (updatedAt) lastStudentsUpdatedAt = updatedAt;
-            storeStudentRecordsLocally(incoming);
+            studentRosterFallbackActive = false;
+            storeStudentRecordsLocally(incoming, { confirmedEmpty });
             syncStudentCountLocally();
             rosterStatsReady = false;
             renderStudentDependentViews();
@@ -1096,7 +1162,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         async function persistStudentsToCloud(records = studentRecords) {
             if (!canManageStudents()) return false;
             const normalized = normalizeStudentRecords(records);
-            storeStudentRecordsLocally(normalized);
+            const confirmedEmpty = normalized.length === 0;
+            storeStudentRecordsLocally(normalized, { confirmedEmpty });
             const approxBytes = new Blob([JSON.stringify(normalized)]).size;
             if (approxBytes > 800000) {
                 showToast('Профили стали слишком большими для облачной записи. Уменьшите или удалите часть фотографий.');
@@ -1110,6 +1177,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             if (!isCloudConnected || !db || !auth?.currentUser) return false;
             const payload = {
                 students: normalized,
+                emptyRosterConfirmed: confirmedEmpty,
                 updatedAt: new Date().toISOString(),
                 build: window.__SITE_BUILD__
             };
@@ -1846,6 +1914,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     attendanceArchive = nextArchive;
                     attendanceArchiveReady = true;
                     renderRosterList();
+                    renderApp();
                     renderMiniCalendar();
                     if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
                     if (!rosterStatsReady) scheduleRosterStatsRebuild(250);
