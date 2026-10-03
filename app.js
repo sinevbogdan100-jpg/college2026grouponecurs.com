@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-journal-ref2-2026-10-04';
+window.__SITE_BUILD__ = 'step18.3-profiles-stats1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -1846,6 +1846,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     attendanceArchiveReady = true;
                     renderRosterList();
                     renderMiniCalendar();
+                    if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
                     if (!rosterStatsReady) scheduleRosterStatsRebuild(250);
                 }, err => {
                     attendanceArchiveReady = false;
@@ -2186,41 +2187,70 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             `;
         }
 
-        function renderJournalScoreCard() {
-            const select = document.getElementById('journal-score-select');
-            if (!select) return;
-            const previous = select.value;
-            const selected = previous && students.includes(previous) ? previous : (students[0] || '');
-            select.innerHTML = students.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${name === selected ? 'selected' : ''}>${name}</option>`).join('');
-            if (selected) select.value = selected;
-            const stats = selected ? getStudentAttendanceStats(selected) : emptyAttendanceStats();
-            const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = String(value); };
-            setText('journal-score-name', selected || '—');
-            setText('journal-score-percent', (stats.attendancePercent || 0) + '%');
-            setText('journal-score-present', stats.present || 0);
-            setText('journal-score-sick', stats.sick || 0);
-            setText('journal-score-excused', stats.excused || 0);
-            setText('journal-score-unexcused', stats.unexcused || 0);
-            setText('journal-score-late', stats.late || 0);
-            setText('journal-score-total', stats.total || 0);
-            const progress = document.getElementById('journal-score-progress');
-            if (progress) progress.style.width = Math.max(0, Math.min(100, stats.attendancePercent || 0)) + '%';
+        function renderAttendanceAssessmentList() {
+            const list = document.getElementById('attendance-student-list');
+            if (!list) return;
+            list.innerHTML = studentRecords.map(record => {
+                const stats = getStudentAttendanceStats(record.name);
+                const encoded = encodeURIComponent(record.name);
+                return `<button class="assessment-student-row" onclick="openAttendanceStudentDetail(decodeURIComponent('${encoded}'))">
+                    <span class="assessment-student-main">${studentAvatarMarkup(record, 'assessment-student-avatar')}<strong>${escapeStudentText(record.name)}</strong></span>
+                    <b class="assessment-percent">${stats.attendancePercent || 0}%</b>
+                    <span>${stats.present || 0}</span>
+                    <span>${stats.sick || 0}</span>
+                    <span>${stats.excused || 0}</span>
+                    <span>${stats.unexcused || 0}</span>
+                    <span>${stats.late || 0}</span>
+                    <span>${stats.absent || 0}</span>
+                </button>`;
+            }).join('') || '<div class="assessment-empty">В группе пока нет учеников.</div>';
+            applyKzTranslations(list);
+        }
 
-            const history = document.getElementById('journal-score-history');
-            if (history) {
-                const rows = [];
-                Object.keys(attendanceArchive || {}).sort().reverse().forEach(date => {
-                    const saved = attendanceArchive[date];
-                    const status = saved?.state?.[selected];
-                    if (!status) return;
-                    const note = saved?.notes?.[selected] || '';
-                    rows.push(`<div class="journal-history-row">
-                        <div><strong>${new Date(date + 'T00:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'})}</strong><span>${note || 'Без примечания'}</span></div>
-                        <b class="${status}">${getStatusName(status)}</b>
-                    </div>`);
-                });
-                history.innerHTML = rows.length ? rows.join('') : '<div class="journal-history-empty">Пока нет сохранённых отметок по этому студенту.</div>';
-            }
+        function renderAttendanceStudentDetail(name) {
+            const record = getStudentRecordByName(name);
+            const stats = getStudentAttendanceStats(name);
+            const avatar = document.getElementById('assessment-detail-avatar');
+            if (avatar) avatar.innerHTML = studentAvatarMarkup(record, 'assessment-detail-avatar-inner');
+            const setText = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=String(value); };
+            setText('assessment-detail-name', name || '—');
+            setText('assessment-detail-percent', (stats.attendancePercent || 0) + '%');
+            setText('assessment-detail-present', stats.present || 0);
+            setText('assessment-detail-sick', stats.sick || 0);
+            setText('assessment-detail-excused', stats.excused || 0);
+            setText('assessment-detail-unexcused', stats.unexcused || 0);
+            setText('assessment-detail-late', stats.late || 0);
+            setText('assessment-detail-total', stats.total || 0);
+
+            const history = document.getElementById('assessment-detail-history');
+            if (!history) return;
+            const rows = [];
+            Object.keys(attendanceArchive || {}).sort().reverse().forEach(date => {
+                const saved = attendanceArchive[date];
+                const status = saved?.state?.[name];
+                if (!status) return;
+                const note = saved?.notes?.[name] || '';
+                rows.push(`<div class="assessment-history-row">
+                    <div class="assessment-history-date"><strong>${new Date(date+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'short',day:'2-digit',month:'long',year:'numeric'})}</strong><span>${note ? escapeStudentText(note) : 'Без примечания'}</span></div>
+                    <b class="${status}">${getStatusName(status)}</b>
+                </div>`);
+            });
+            history.innerHTML = rows.length ? rows.join('') : '<div class="assessment-empty">По этому ученику пока нет сохранённых отметок.</div>';
+        }
+
+        window.openAttendanceStudentDetail = function(name) {
+            document.getElementById('attendance-student-list-view')?.classList.add('hidden');
+            document.getElementById('attendance-student-detail')?.classList.remove('hidden');
+            renderAttendanceStudentDetail(name);
+        };
+
+        window.closeAttendanceStudentDetail = function() {
+            document.getElementById('attendance-student-detail')?.classList.add('hidden');
+            document.getElementById('attendance-student-list-view')?.classList.remove('hidden');
+        };
+
+        function renderJournalScoreCard() {
+            renderAttendanceAssessmentList();
         }
         window.renderJournalScoreCard = renderJournalScoreCard;
 
@@ -2256,14 +2286,17 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     return `<button ${action} class="journal-status-btn ${status}${selected}" title="${title}">${label}</button>`;
                 }).join('');
                 const note = attendanceNotes[name] || '';
-                const noteControl = currentStatus
-                    ? `<button class="journal-ref-note ${note ? 'has-note' : ''}" ${editable ? `onclick="openAttendanceNote('${safeName}')"` : 'disabled'} title="${note || 'Добавить примечание'}"><i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span></button>`
-                    : '<span class="journal-ref-note-placeholder" aria-hidden="true"></span>';
+                let noteControl = '<span class="journal-ref-note-placeholder" aria-hidden="true"></span>';
+                if (currentStatus && editable) {
+                    noteControl = `<button class="journal-ref-note ${note ? 'has-note' : ''}" onclick="openAttendanceNote('${safeName}')" title="${note || 'Добавить примечание'}"><i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span></button>`;
+                } else if (currentStatus && note) {
+                    noteControl = `<span class="journal-ref-note-view"><i class="fa-regular fa-note-sticky"></i><span>${escapeStudentText(note)}</span></span>`;
+                }
                 row.innerHTML = `
                     <span class="journal-ref-index">${index + 1}</span>
                     <div class="journal-ref-person">
-                        <span class="journal-ref-avatar"><i class="fa-solid fa-user"></i></span>
-                        <strong>${name}</strong>
+                        ${studentAvatarMarkup(name, 'journal-student-avatar')}
+                        <strong>${escapeStudentText(name)}</strong>
                     </div>
                     ${buttons}
                     ${noteControl}`;
@@ -2284,7 +2317,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const groupProgress = document.getElementById('journal-group-progress');
             if (groupProgress) groupProgress.style.width = groupPercent + '%';
 
-            renderJournalScoreCard();
+            if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
         }
 
         async function saveCurrentDateState() {
@@ -2592,7 +2625,10 @@ window.showJournalTab=function(tab){
     document.getElementById('journal-tab-stats')?.classList.toggle('active',activeJournalTab==='stats');
     document.getElementById('journal-editor-main')?.classList.toggle('hidden',activeJournalTab==='stats');
     document.getElementById('attendance-analytics')?.classList.toggle('hidden',activeJournalTab!=='stats');
-    if(activeJournalTab==='stats') renderJournalScoreCard();
+    if(activeJournalTab==='stats'){
+        closeAttendanceStudentDetail();
+        renderAttendanceAssessmentList();
+    }
 };
 
 window.renderAttendanceAnalytics=function(){
