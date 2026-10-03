@@ -183,9 +183,15 @@
       if(state==='ref-current') current={el:c,r,index:i};
       if(!next && mins<r.s) next={el:c,r,index:i};
     });
-    breaks.forEach(b => {
-      const r=parseRange(b.textContent);
+    breaks.forEach((b,i) => {
+      let r=parseRange(b.textContent);
+      if(!r){
+        const prev=cards[i] ? parseRange(cards[i].textContent) : null;
+        const nxt=cards[i+1] ? parseRange(cards[i+1].textContent) : null;
+        if(prev && nxt && nxt.s>prev.e) r={s:prev.e,e:nxt.s,label:`${String(Math.floor(prev.e/60)).padStart(2,'0')}:${String(prev.e%60).padStart(2,'0')} – ${String(Math.floor(nxt.s/60)).padStart(2,'0')}:${String(nxt.s%60).padStart(2,'0')}`};
+      }
       if (!r) return;
+      b.dataset.refRange=r.label;
       const state=mins>=r.e?'ref-past':mins>=r.s?'ref-current':'ref-future';
       b.classList.add(state);
       if(state==='ref-current'){current={el:b,r,index:-1};currentType='break';}
@@ -220,7 +226,7 @@
   function enhanceRoster() {
     const view=document.getElementById('view-roster'); if(!view)return;
     topbar('view-roster','Группа');
-    const oldHead=view.querySelector(':scope > div:first-of-type:not(.ref-topbar)');
+    const oldHead=[...view.children].find(el=>el.tagName==='DIV' && !el.classList.contains('ref-topbar'));
     if(oldHead) oldHead.classList.add('ref-roster-head');
     if(!view.querySelector('.ref-roster-title')){
       const title=document.createElement('div');
