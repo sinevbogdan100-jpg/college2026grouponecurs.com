@@ -2601,3 +2601,65 @@ body.group-info-edit-mode .leader-profile-avatar[aria-disabled="false"]:hover{
     font-size:10.5px !important;
   }
 }
+
+
+/* ===== MOBILE LEADERSHIP TEXT COMFORT — 2026-10-04 ===== */
+@media(max-width:767px){
+  #view-home .home-ref-role-card{
+    min-height:112px !important;
+    padding:12px 10px 14px !important;
+    grid-template-columns:42px minmax(0,1fr) !important;
+    grid-template-rows:auto auto !important;
+    column-gap:9px !important;
+    row-gap:8px !important;
+    align-items:start !important;
+  }
+  #view-home .home-ref-role-card>.leader-profile-avatar{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:42px !important;
+    height:42px !important;
+    flex-basis:42px !important;
+    align-self:start !important;
+  }
+  #view-home .home-ref-role-card>div{
+    display:contents !important;
+  }
+  #view-home .home-ref-role-card>div>span{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    align-self:center !important;
+    margin:0 !important;
+    font-size:10.5px !important;
+    line-height:1.2 !important;
+    font-weight:650 !important;
+  }
+  #view-home .home-ref-role-card>div>strong{
+    grid-column:1 / -1 !important;
+    grid-row:2 !important;
+    width:100% !important;
+    margin:1px 0 0 !important;
+    padding:0 !important;
+    font-size:12.5px !important;
+    line-height:1.3 !important;
+    font-weight:800 !important;
+    text-align:left !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    overflow-wrap:anywhere !important;
+  }
+}
+
+@media(max-width:365px){
+  #view-home .home-ref-role-card{
+    min-height:108px !important;
+    padding:11px 9px 13px !important;
+  }
+  #view-home .home-ref-role-card>div>span{
+    font-size:10px !important;
+  }
+  #view-home .home-ref-role-card>div>strong{
+    font-size:12px !important;
+  }
+}
