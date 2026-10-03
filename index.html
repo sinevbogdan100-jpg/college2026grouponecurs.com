@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step17-2026-10-03">
+    <meta name="app-build" content="step18-2026-10-03">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step17-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step18-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -73,6 +73,14 @@
                     </button>
                 </div>
             </div>
+            <div class="settings-block">
+                <div class="settings-label">Язык интерфейса</div>
+                <div class="lang-toggle" role="group" aria-label="Язык">
+                    <button id="lang-ru" type="button" onclick="setInterfaceLanguage('ru')">РУС</button>
+                    <button id="lang-kz" type="button" onclick="setInterfaceLanguage('kz')">ҚАЗ</button>
+                </div>
+                <div class="settings-hint">Имена студентов и преподавателей не переводятся.</div>
+            </div>
             <div class="pt-2 border-t border-slate-100"></div>
             <div id="admin-login-box" class="space-y-3">
                 <div>
@@ -125,6 +133,14 @@
                                 <span>Управление правами администраторов</span>
                                 <input id="perm-admin1-manageAdmins" type="checkbox" class="w-4 h-4 accent-indigo-600">
                             </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Публикация уведомлений</span>
+                                <input id="perm-admin1-notifications" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Ответы в поддержке</span>
+                                <input id="perm-admin1-support" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
                             </div>
                         </details>
                         <details class="admin-permission-card rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -157,6 +173,14 @@
                                 <span>Управление правами администраторов</span>
                                 <input id="perm-admin2-manageAdmins" type="checkbox" class="w-4 h-4 accent-indigo-600">
                             </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Публикация уведомлений</span>
+                                <input id="perm-admin2-notifications" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
+                            <label class="flex items-center justify-between gap-3 text-xs text-slate-700 cursor-pointer">
+                                <span>Ответы в поддержке</span>
+                                <input id="perm-admin2-support" type="checkbox" class="w-4 h-4 accent-indigo-600">
+                            </label>
                             </div>
                         </details>
                     </div>
@@ -184,8 +208,13 @@
         </div>
     </div>
 
-    <div id="view-home" class="max-w-md mx-auto p-4 min-h-screen flex flex-col pb-16">
-        <div class="pt-5">
+    <div id="view-home" class="max-w-md mx-auto p-4 min-h-screen flex flex-col pb-20">
+        <div class="app-mobile-topbar">
+            <button class="top-icon-btn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <div class="topbar-title"><span>Машиностроительный колледж</span><strong id="topbar-group-name">ТОЭ-26-9-1</strong></div>
+            <button class="top-icon-btn notification-bell" onclick="openNotifications()" aria-label="Уведомления"><i class="fa-regular fa-bell"></i><span id="notification-badge" class="notification-badge hidden">0</span></button>
+        </div>
+        <div class="pt-3">
             <!-- Главная информация группы -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 text-center">
                 <div class="text-sm font-semibold text-indigo-700">Машиностроительный колледж</div>
@@ -232,17 +261,10 @@
                 </div>
             </div>
 
-            <!-- Центральная часть теперь свободна от дублирующих кнопок -->
-            <div class="mt-8 flex-1 flex items-center justify-center min-h-[300px]">
-                <div class="text-center px-6">
-                    <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                        <i class="fa-solid fa-compass text-xl"></i>
-                    </div>
-                    <div class="text-sm font-semibold text-slate-700">Выберите нужный раздел</div>
-                    <div class="text-xs text-slate-400 mt-1">Все основные разделы находятся в нижней панели</div>
-                </div>
-            </div>
-        </div>
+            <section class="home-timeline-card">
+                <div class="home-section-head"><div><span class="eyebrow">Сегодня</span><h2>Расписание на сегодня</h2></div><button onclick="switchView('schedule')">Все расписание</button></div>
+                <div id="home-day-timeline" class="home-day-timeline"></div>
+            </section>
 
         <div class="text-center text-[11px] text-slate-400 pt-4">
             <span id="group-name-footer">ТОЭ-26-9-1</span> • Автоматическое сохранение
@@ -259,11 +281,11 @@
                         </button>
                         <div>
                             <div class="flex items-center gap-1.5">
-                                <h1 id="tracker-group-name" class="font-bold text-base text-slate-900">ТОЭ-26-9-1</h1>
+                                <h1 class="font-bold text-lg text-slate-900" data-i18n="journal">Журнал</h1>
                                 
                             </div>
-                            <p class="text-[11px] text-slate-500">Куратор: <span id="tracker-curator" class="text-slate-800 font-medium">Негманова Г.Б.</span></p>
-                        </div>
+                            <p class="text-[11px] text-slate-500" data-i18n="attendance_students">Посещаемость студентов</p>
+                        <span id="tracker-group-name" class="hidden">ТОЭ-26-9-1</span><span id="tracker-curator" class="hidden">Негманова Г.Б.</span></div>
                     </div>
 
                     <!-- Date Selection & History Button -->
@@ -422,19 +444,15 @@
                 <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
                     <i class="fa-solid fa-house text-xs"></i>
                 </button>
-                <h1 class="font-bold text-sm text-slate-900">Список группы <span id="roster-group-name">ТОЭ-26-9-1</span></h1>
+                <h1 class="font-bold text-lg text-slate-900">Группа <span id="roster-group-name" class="hidden">ТОЭ-26-9-1</span></h1>
             </div>
             <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md"><span id="roster-student-count">19</span> студентов</span>
         </div>
 
-        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs mb-3">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="font-bold text-sm text-slate-900">Успеваемость и посещаемость</div>
-                    <div class="text-[11px] text-slate-500 mt-0.5">Считается автоматически по данным журнала</div>
-                </div>
-                <i class="fa-solid fa-chart-column text-indigo-500"></i>
-            </div>
+        <div class="group-leadership-grid">
+            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Куратор</span><strong id="roster-curator">Негманова Г.Б.</strong></div>
+            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Староста</span><strong id="roster-headman">Синёв Б.П.</strong></div>
+            <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
 
         <div id="roster-admin-tools" class="hidden bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs mb-3">
@@ -442,7 +460,7 @@
             <div class="text-[10px] text-slate-500 mt-0.5">Добавление и удаление синхронизируется между всеми устройствами.</div>
             <div class="flex gap-2 mt-3">
                 <input id="new-student-name" maxlength="80" class="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400" placeholder="Фамилия Имя" onkeydown="if(event.key==='Enter'){event.preventDefault();addStudent();}">
-                <button onclick="addStudent()" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Добавить</button>
+                <button onclick="addStudent()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Добавить</button>
             </div>
             <div class="text-[9px] text-slate-400 mt-2">При удалении студент исчезает из группы, журнала и статистики. Старые архивные записи сохраняются.</div>
         </div>
@@ -491,9 +509,50 @@
         </div>
     </div>
 
+    <div id="app-menu-drawer" class="app-overlay hidden" onclick="if(event.target===this) closeAppMenu()">
+        <aside class="app-drawer">
+            <div class="drawer-head"><div><strong>ТОЭ-26-9-1</strong><span>Информация группы</span></div><button onclick="closeAppMenu()"><i class="fa-solid fa-xmark"></i></button></div>
+            <button onclick="closeAppMenu();switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
+            <button onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span></button>
+            <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
+            <div class="drawer-note">Сообщения поддержки и важные объявления доступны через колокольчик.</div>
+        </aside>
+    </div>
 
+    <div id="notifications-modal" class="app-overlay hidden" onclick="if(event.target===this) closeNotifications()">
+        <section class="sheet-panel notification-panel">
+            <div class="sheet-head"><div><span class="eyebrow">Центр событий</span><h2>Уведомления</h2></div><button onclick="closeNotifications()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="notification-admin-composer" class="hidden notification-composer">
+                <input id="notification-title" placeholder="Заголовок, например: Изменение расписания">
+                <textarea id="notification-text" rows="3" placeholder="Текст объявления"></textarea>
+                <button onclick="publishNotification()"><i class="fa-solid fa-paper-plane"></i> Опубликовать для всех</button>
+            </div>
+            <div id="notifications-list" class="notification-list"></div>
+        </section>
+    </div>
 
-    <script type="module" src="app.js?v=20261003-step17-root"></script>
+    <div id="support-modal" class="app-overlay hidden" onclick="if(event.target===this) closeSupport()">
+        <section class="sheet-panel support-panel">
+            <div class="sheet-head"><div><span class="eyebrow">Обратная связь</span><h2>Поддержка</h2></div><button onclick="closeSupport()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="support-intro">Можно сообщить о проблеме или предложить улучшение. Ответ владельца/администратора появится в этом диалоге и в уведомлениях.</div>
+            <input id="support-name" class="support-input" placeholder="Ваше имя (необязательно)">
+            <div id="support-staff-inbox" class="hidden support-staff-inbox"></div>
+            <div id="support-active-thread" class="hidden support-active-thread"></div>
+            <div id="support-messages" class="support-messages"></div>
+            <div class="support-compose"><textarea id="support-text" rows="2" placeholder="Напишите сообщение..."></textarea><button onclick="sendSupportMessage()"><i class="fa-solid fa-paper-plane"></i></button></div>
+        </section>
+    </div>
+
+    <div id="attendance-note-modal" class="app-overlay hidden" onclick="if(event.target===this) closeAttendanceNote()">
+        <section class="sheet-panel note-panel">
+            <div class="sheet-head"><div><span class="eyebrow">Примечание</span><h2 id="attendance-note-title">Студент</h2></div><button onclick="closeAttendanceNote()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="attendance-note-presets" class="note-presets"></div>
+            <textarea id="attendance-note-text" rows="4" placeholder="Например: опоздал на 10 минут"></textarea>
+            <button class="primary-wide" onclick="saveAttendanceNote()">Сохранить примечание</button>
+        </section>
+    </div>
+
+    <script type="module" src="app.js?v=20261003-step18-root"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -523,7 +582,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step17-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step18-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -545,7 +604,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step17-root"></script>
+<script src="realtime-debug.js?v=20261003-step18-root"></script>
 
 </body>
 </html>

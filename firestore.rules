@@ -76,5 +76,15 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if docId == 'main' && hasPermission('schedule');
     }
+
+    match /toe_group/shared/notifications/{notificationId} {
+      allow read: if signedIn();
+      allow write: if isOwner() || admin1Has('notifications') || admin2Has('notifications');
+    }
+
+    match /toe_group/shared/support/{threadId} {
+      allow read, write: if isOwner() || admin1Has('support') || admin2Has('support') || (signedIn() && threadId == request.auth.uid);
+    }
+
   }
 }

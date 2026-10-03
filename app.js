@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step17-root";
+} from "./firebase.js?v=20261003-step18-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step17-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step17-root";
+} from "./utils.js?v=20261003-step18-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step17-root";
+} from "./schedule.js?v=20261003-step18-root";
 
         
-window.__SITE_BUILD__ = 'step17-2026-10-03';
+window.__SITE_BUILD__ = 'step18-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -169,8 +169,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         const STUDENTS_DOC_ID = 'students_shared';
         const ADMIN_PERMISSIONS_DOC_ID = 'admin_permissions';
         const DEFAULT_ADMIN_PERMISSIONS = Object.freeze({
-            admin1: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false }),
-            admin2: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false })
+            admin1: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false, notifications: false, support: false }),
+            admin2: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false, notifications: false, support: false })
         });
         const FULL_ACCESS_PERMISSIONS = Object.freeze({
             journal: true,
@@ -178,7 +178,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             groupInfo: true,
             students: true,
             backups: true,
-            manageAdmins: true
+            manageAdmins: true,
+            notifications: true,
+            support: true
         });
         let adminPermissions = {
             admin1: { ...DEFAULT_ADMIN_PERMISSIONS.admin1 },
@@ -244,6 +246,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function canManageStudents() { return !!getPermissionsForLogin().students; }
         function canUseBackups() { return !!getPermissionsForLogin().backups; }
         function canManageAdminPermissions() { return !!getPermissionsForLogin().manageAdmins; }
+        function canPublishNotificationsPermission() { return !!getPermissionsForLogin().notifications; }
+        function canUseSupportStaff() { return !!getPermissionsForLogin().support; }
 
         function syncSessionPermissionFlags() {
             sessionStorage.setItem('toe_role', currentAccessRole);
@@ -336,7 +340,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     : '';
                 result.push({ name, joinedAt });
             });
-            return result;
+            return result.sort((a,b) => a.name.localeCompare(b.name, 'ru-RU', {sensitivity:'base'}));
         }
 
         function readLocalStudentRecords() {
@@ -413,12 +417,13 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 try {
                     const parsed = JSON.parse(saved);
                     attendanceState = parsed.state || {};
+                    attendanceNotes = parsed.notes || {};
                     if (parsed.weekType) currentWeekType = parsed.weekType;
                 } catch(e) {
-                    attendanceState = {};
+                    attendanceState = {}; attendanceNotes = {};
                 }
             } else {
-                attendanceState = {};
+                attendanceState = {}; attendanceNotes = {};
                 currentWeekType = getWeekTypeForDate(new Date(dateStr));
             }
 
@@ -433,6 +438,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     if (snap.exists()) {
                         const data = snap.data();
                         attendanceState = data.state || {};
+                        attendanceNotes = data.notes || {};
                         if (data.weekType) currentWeekType = data.weekType;
                         localStorage.setItem(`toe_att_${dateStr}`, JSON.stringify(data));
                         updateWeekTypeButtons(currentWeekType);
@@ -855,6 +861,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         });
 
         let attendanceState = {};
+        let attendanceNotes = {};
         let currentWeekType = 'denominator';
 
         window.setWeekType = function(type) {
@@ -1279,7 +1286,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function renderOwnerPermissionControls() {
             const section = document.getElementById('owner-permissions-section');
             if (section) section.classList.toggle('hidden', !canManageAdminPermissions());
-            const keys = ['journal', 'schedule', 'groupInfo', 'students', 'backups', 'manageAdmins'];
+            const keys = ['journal', 'schedule', 'groupInfo', 'students', 'backups', 'manageAdmins', 'notifications', 'support'];
             ['admin1', 'admin2'].forEach(login => {
                 const perms = adminPermissions[login] || DEFAULT_ADMIN_PERMISSIONS[login];
                 keys.forEach(key => {
@@ -1383,7 +1390,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 groupInfo: !!document.getElementById(`perm-${login}-groupInfo`)?.checked,
                 students: !!document.getElementById(`perm-${login}-students`)?.checked,
                 backups: !!document.getElementById(`perm-${login}-backups`)?.checked,
-                manageAdmins: !!document.getElementById(`perm-${login}-manageAdmins`)?.checked
+                manageAdmins: !!document.getElementById(`perm-${login}-manageAdmins`)?.checked,
+                notifications: !!document.getElementById(`perm-${login}-notifications`)?.checked,
+                support: !!document.getElementById(`perm-${login}-support`)?.checked
             });
             const next = {
                 admin1: readPermissions('admin1'),
@@ -1456,7 +1465,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                         [groupInfoAllowed, 'главная информация'],
                         [studentsAllowed, 'состав группы'],
                         [backupsAllowed, 'резервные копии'],
-                        [adminRightsAllowed, 'управление правами']
+                        [adminRightsAllowed, 'управление правами'],
+                        [canPublishNotificationsPermission(), 'уведомления'],
+                        [canUseSupportStaff(), 'поддержка']
                     ].filter(([allowed]) => allowed).map(([, label]) => label);
                     description.textContent = labels.length
                         ? `Разрешено владельцем: ${labels.join(', ')}.`
@@ -1810,42 +1821,37 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function renderRosterList() {
             const container = document.getElementById('roster-container');
+            if (!container) return;
             container.innerHTML = '';
+            const info = getGroupInfo();
+            const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
+            if(rc) rc.textContent=info.curator||'—'; if(rh) rh.textContent=info.headman||'—'; if(rd) rd.textContent=info.deputy||'—';
             students.forEach((name, index) => {
-                const stats = getStudentAttendanceStats(name);
                 const item = document.createElement('div');
-                item.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-xs";
+                item.className = 'roster-person-card';
                 item.innerHTML = `
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center space-x-3 min-w-0">
-                            <span class="w-6 h-6 shrink-0 rounded-lg bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
-                            <div class="min-w-0">
-                                <div class="font-bold text-slate-800 text-sm truncate">${name}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">Отмечено дней: ${stats.total}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <div class="text-right">
-                                <div class="text-sm font-bold text-indigo-600">${stats.attendancePercent}%</div>
-                                <div class="text-[9px] text-slate-400">посещаемость</div>
-                            </div>
-                            <div class="roster-admin-actions">
-                                <button onclick="removeStudent(${index})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center" title="Удалить студента">
-                                    <i class="fa-solid fa-trash-can text-[10px]"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="roster-person-main">
+                        <div class="roster-avatar"><i class="fa-regular fa-user"></i></div>
+                        <div class="roster-person-text"><strong>${index+1}. ${name}</strong><span>Студент группы</span></div>
                     </div>
-                    <div class="grid grid-cols-4 gap-1 mt-2.5 text-center">
-                        <div class="rounded-lg bg-emerald-50 px-1 py-1.5"><div class="text-[10px] font-bold text-emerald-700">${stats.present}</div><div class="text-[8px] text-emerald-600">присут.</div></div>
-                        <div class="rounded-lg bg-amber-50 px-1 py-1.5"><div class="text-[10px] font-bold text-amber-700">${stats.late}</div><div class="text-[8px] text-amber-600">опозд.</div></div>
-                        <div class="rounded-lg bg-rose-50 px-1 py-1.5"><div class="text-[10px] font-bold text-rose-700">${stats.absent}</div><div class="text-[8px] text-rose-600">пропусков</div></div>
-                        <div class="rounded-lg bg-slate-100 px-1 py-1.5"><div class="text-[10px] font-bold text-slate-700">${stats.sick}/${stats.excused}/${stats.unexcused}</div><div class="text-[8px] text-slate-500">бол./ув./неув.</div></div>
-                    </div>
-                `;
+                    <div class="roster-admin-actions roster-person-actions">
+                        <button onclick="renameStudent(${index})" title="Изменить"><i class="fa-regular fa-pen-to-square"></i></button>
+                        <button class="danger" onclick="removeStudent(${index})" title="Удалить"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>`;
                 container.appendChild(item);
             });
         }
+
+        window.renameStudent = async function(index) {
+            if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
+            const record=studentRecords[index]; if(!record) return;
+            const nextName=normalizeStudentName(prompt('Фамилия и имя студента', record.name));
+            if(!nextName || nextName===record.name) return;
+            if(students.some((n,i)=>i!==index && n.toLocaleLowerCase('ru-RU')===nextName.toLocaleLowerCase('ru-RU'))) { showToast('Такой студент уже есть'); return; }
+            const next=studentRecords.map((r,i)=>i===index?{...r,name:nextName}:r);
+            const ok=await persistStudentsToCloud(next);
+            showToast(ok?'Данные студента обновлены':'Изменено только на этом устройстве');
+        };
 
         window.setAttendance = function(studentName, status) {
             const selectedDate = document.getElementById('date-picker')?.value;
@@ -2002,8 +2008,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             journalStudents.forEach((name, index) => {
                 if (searchVal && !name.toLowerCase().includes(searchVal)) return;
 
-                const currentStatus = attendanceState[name] || 'present';
-                if (counts[currentStatus] !== undefined) counts[currentStatus]++;
+                const currentStatus = attendanceState[name] || null;
+                if (currentStatus && counts[currentStatus] !== undefined) counts[currentStatus]++;
 
                 const card = document.createElement('div');
                 card.className = "journal-student-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
@@ -2024,9 +2030,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                             <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
                             <span class="font-bold text-sm text-slate-900">${name}</span>
                         </div>
-                        <span class="journal-status-badge text-[10px] font-medium px-2 py-0.5 rounded-md ${getStatusBadgeClass(currentStatus)}">${getStatusName(currentStatus)}</span>
+                        <span class="journal-status-badge text-[10px] font-medium px-2 py-0.5 rounded-md ${currentStatus ? getStatusBadgeClass(currentStatus) : 'bg-slate-100 text-slate-500'}">${currentStatus ? getStatusName(currentStatus) : 'Не отмечено'}</span>
                     </div>
                     ${buttonsHtml}
+                    <button onclick="openAttendanceNote('${name.replace("'", "\'")}')" class="journal-note-btn"><i class="fa-regular fa-note-sticky"></i><span>${attendanceNotes[name] ? attendanceNotes[name] : 'Добавить примечание'}</span></button>
                 `;
                 container.appendChild(card);
             });
@@ -2036,6 +2043,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             document.getElementById('stat-sick').innerText = counts.sick;
             document.getElementById('stat-excused').innerText = counts.excused;
             document.getElementById('stat-unexcused').innerText = counts.unexcused;
+            if (activeJournalTab === 'stats') renderAttendanceAnalytics();
         }
 
         async function saveCurrentDateState() {
@@ -2044,6 +2052,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const dateVal = document.getElementById('date-picker').value || getCurrentDateStr();
             const dataToSave = {
                 state: { ...attendanceState },
+                notes: { ...attendanceNotes },
                 weekType: currentWeekType,
                 updatedAt: new Date().toISOString()
             };
@@ -2304,3 +2313,87 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const mode = saved || (window.innerWidth <= 767 ? 'phone' : 'pc');
             window.setDeviceMode(mode);
         })();
+
+
+// ===== STEP18: новый интерфейс, посещаемость, уведомления и поддержка =====
+const UI_LANG_KEY='toe_ui_language';
+let activeJournalTab='editor';
+let editingAttendanceNoteStudent='';
+let notificationsCache=[];
+let notificationsUnsubscribe=null;
+let supportUnsubscribe=null;
+const visitorSupportId=(()=>{let id=localStorage.getItem('toe_support_id'); if(!id){id='v_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('toe_support_id',id);}return id;})();
+
+const KZ_EXACT={
+ 'Главная':'Басты бет','Журнал':'Журнал','Расписание':'Кесте','Группа':'Топ','Настройки':'Баптаулар','Поддержка':'Қолдау',
+ 'Сегодня':'Бүгін','Следующий учебный день':'Келесі оқу күні','Ближайшее занятие':'Келесі сабақ','Расписание на сегодня':'Бүгінгі сабақтар',
+ 'Числитель':'Алым','Знаменатель':'Бөлім','Куратор':'Куратор','Староста':'Топ старостасы','Зам. старосты':'Староста орынбасары','Студентов':'Студенттер',
+ 'Посещаемость':'Қатысу','Посещаемость студентов':'Студенттердің қатысуы','Присутствуют':'Қатысқан','Опаздывают':'Кешіккен','Болеет':'Ауырған','Уважит.':'Себепті','Неуваж.':'Себепсіз',
+ 'Добавить':'Қосу','Уведомления':'Хабарландырулар','Все расписание':'Толық кесте','Подробная статистика':'Толық статистика',
+ 'История посещаемости':'Қатысу тарихы','Физика':'Физика','Математика':'Математика','Химия':'Химия','Биология':'Биология','География':'География',
+ 'Информатика':'Информатика','История Казахстана':'Қазақстан тарихы','Физическая культура':'Дене шынықтыру','Иностранный язык':'Шет тілі',
+ 'Русская литература':'Орыс әдебиеті','Русский язык и литература':'Орыс тілі мен әдебиеті','Казахский язык и литература':'Қазақ тілі мен әдебиеті',
+ 'Глобальные компетенции':'Жаһандық құзыреттер','Классный час':'Тәрбие сағаты','Перемена':'Үзіліс','Большая перемена':'Үлкен үзіліс','Конец занятий':'Сабақ аяқталды'
+};
+function currentLang(){return localStorage.getItem(UI_LANG_KEY)||'ru';}
+window.setInterfaceLanguage=function(lang){localStorage.setItem(UI_LANG_KEY,lang==='kz'?'kz':'ru'); updateLanguageButtons(); location.reload();};
+function updateLanguageButtons(){const lang=currentLang();document.getElementById('lang-ru')?.classList.toggle('active',lang==='ru');document.getElementById('lang-kz')?.classList.toggle('active',lang==='kz');}
+function applyKzTranslations(root=document.body){if(currentLang()!=='kz') return; const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(n=>{const t=n.nodeValue.trim(); if(KZ_EXACT[t]) n.nodeValue=n.nodeValue.replace(t,KZ_EXACT[t]);});}
+window.addEventListener('DOMContentLoaded',()=>{updateLanguageButtons();setTimeout(()=>applyKzTranslations(),120);});
+const langObserver=new MutationObserver(m=>{if(currentLang()==='kz')m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)applyKzTranslations(n);}));});
+window.addEventListener('DOMContentLoaded',()=>langObserver.observe(document.body,{childList:true,subtree:true}));
+
+window.openAppMenu=function(){const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
+window.closeAppMenu=function(){document.getElementById('app-menu-drawer')?.classList.add('hidden');document.body.classList.remove('modal-open');};
+window.showJournalTab=function(tab){activeJournalTab=tab==='stats'?'stats':'editor';document.getElementById('journal-tab-editor')?.classList.toggle('active',activeJournalTab==='editor');document.getElementById('journal-tab-stats')?.classList.toggle('active',activeJournalTab==='stats');document.getElementById('journal-editor-main')?.classList.toggle('hidden',activeJournalTab==='stats');document.getElementById('journal-report-actions')?.classList.toggle('hidden',activeJournalTab==='stats');document.getElementById('attendance-analytics')?.classList.toggle('hidden',activeJournalTab!=='stats');if(activeJournalTab==='stats')renderAttendanceAnalytics();};
+
+window.renderAttendanceAnalytics=function(){
+ const summary=document.getElementById('analytics-summary'), select=document.getElementById('analytics-student-select'), hist=document.getElementById('analytics-history'), head=document.getElementById('analytics-student-head'); if(!summary||!select||!hist) return;
+ let totals={present:0,late:0,sick:0,excused:0,unexcused:0,marked:0};
+ Object.values(attendanceArchive||{}).forEach(day=>Object.values(day?.state||{}).forEach(s=>{if(totals[s]!==undefined){totals[s]++;totals.marked++;}}));
+ const absent=totals.sick+totals.excused+totals.unexcused; const pct=totals.marked?Math.round(((totals.present+totals.late)/totals.marked)*100):0;
+ summary.innerHTML=`<div class="metric-card primary"><strong>${pct}%</strong><span>Общая посещаемость</span></div><div class="metric-card"><strong>${totals.present}</strong><span>Присутствий</span></div><div class="metric-card"><strong>${absent}</strong><span>Пропусков</span></div><div class="metric-card"><strong>${totals.late}</strong><span>Опозданий</span></div>`;
+ const selected=select.value&&students.includes(select.value)?select.value:students[0]; select.innerHTML=students.map(n=>`<option ${n===selected?'selected':''}>${n}</option>`).join('');
+ const stats=getStudentAttendanceStats(selected); if(head)head.innerHTML=`<div><strong>${selected||'—'}</strong><span>Посещаемость ${stats.attendancePercent}% · отмечено дней ${stats.total}</span></div><div class="analytics-chips"><span class="ok">П ${stats.present}</span><span class="late">О ${stats.late}</span><span class="bad">Пропуски ${stats.absent}</span></div>`;
+ const rows=[]; Object.keys(attendanceArchive||{}).sort().reverse().forEach(date=>{const d=attendanceArchive[date];const status=d?.state?.[selected];if(!status||status==='present')return;const note=d?.notes?.[selected]||'';rows.push(`<div class="history-row"><div class="history-date">${new Date(date+'T00:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'})}</div><div class="history-status ${status}">${getStatusName(status)}</div>${note?`<div class="history-note">${note}</div>`:''}</div>`);}); hist.innerHTML=rows.length?rows.join(''):'<div class="empty-state">Пропусков и опозданий пока нет.</div>';
+};
+
+window.openAttendanceNote=function(name){editingAttendanceNoteStudent=name;const m=document.getElementById('attendance-note-modal');document.getElementById('attendance-note-title').textContent=name;const status=attendanceState[name]||'';const presets=status==='late'?['Опоздал на 5 минут','Опоздал на 10 минут','Опоздал на 15 минут','Опоздал на 20 минут']:status==='sick'?['Больничный','По справке','На лечении']:status==='excused'?['По справке','Семейные обстоятельства','Разрешение куратора']:status==='unexcused'?['Причина не указана','Без уважительной причины']:['Без примечания'];document.getElementById('attendance-note-presets').innerHTML=presets.map(t=>`<button onclick="useAttendanceNotePreset('${t}')">${t}</button>`).join('');document.getElementById('attendance-note-text').value=attendanceNotes[name]||'';m?.classList.remove('hidden');};
+window.closeAttendanceNote=function(){document.getElementById('attendance-note-modal')?.classList.add('hidden');editingAttendanceNoteStudent='';};
+window.useAttendanceNotePreset=function(t){document.getElementById('attendance-note-text').value=t;};
+window.saveAttendanceNote=async function(){if(!editingAttendanceNoteStudent)return;attendanceNotes[editingAttendanceNoteStudent]=document.getElementById('attendance-note-text').value.trim();window.__journalDirty=true;await saveCurrentDateState();closeAttendanceNote();renderApp();};
+
+function parseMinutes(text){const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);return m?{start:+m[1]*60+(+m[2]),end:+m[3]*60+(+m[4])}:null;}
+function renderHomeDayTimeline(){const box=document.getElementById('home-day-timeline');if(!box)return;const now=new Date(),dayKey=getScheduleDayKey(now);if(!dayKey){box.innerHTML='<div class="empty-state">Сегодня учебных занятий нет.</div>';return;}const type=getWeekTypeForDate(now),source=getScheduleDataForWeek(type),list=(source[dayKey]||[]).filter(x=>!x.isClassHour);if(!list.length){box.innerHTML='<div class="empty-state">На сегодня занятий нет.</div>';return;}const mins=now.getHours()*60+now.getMinutes();box.innerHTML=list.map((it,i)=>{const r=parseMinutes(it.time);const state=r?(mins>=r.end?'past':mins>=r.start?'current':'future'):'future';let progress=state==='past'?100:state==='current'?Math.max(3,Math.min(100,((mins-r.start)/(r.end-r.start))*100)):0;const floor=getFloorFromRoom(it.room);return `<div class="home-lesson ${state}"><div class="timeline-rail"><span class="timeline-dot"></span>${i<list.length-1?'<span class="timeline-line"></span>':''}</div><div class="home-lesson-body"><div class="home-lesson-time">${it.time}</div><strong>${it.subject}</strong><span>${it.room||''}${floor?` · ${floor} этаж`:''}${it.teacher?` · ${it.teacher}`:''}</span>${state==='current'?`<div class="lesson-progress"><i style="width:${progress}%"></i></div>`:''}${it.breakDuration&&i<list.length-1?`<div class="break-label"><i class="fa-regular fa-clock"></i>${it.breakDuration}</div>`:''}</div></div>`;}).join('');applyKzTranslations(box);}
+setInterval(renderHomeDayTimeline,15000);setTimeout(renderHomeDayTimeline,700);
+
+function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
+let activeSupportThreadId='';
+function isSupportStaff(){return currentAccessRole==='owner'||(currentAccessRole==='admin'&&canUseSupportStaff());}
+function ownSupportThreadId(){return auth?.currentUser?.uid || visitorSupportId;}
+window.openSupport=async function(){
+    document.getElementById('support-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');
+    const inbox=document.getElementById('support-staff-inbox'), name=document.getElementById('support-name');
+    if(isSupportStaff()) { if(name) name.classList.add('hidden'); if(inbox) inbox.classList.remove('hidden'); await loadSupportInbox(); }
+    else { if(name) name.classList.remove('hidden'); if(inbox) inbox.classList.add('hidden'); activeSupportThreadId=ownSupportThreadId(); subscribeSupportThread(activeSupportThreadId); }
+};
+window.closeSupport=function(){document.getElementById('support-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
+async function loadSupportInbox(){
+    const inbox=document.getElementById('support-staff-inbox'); if(!inbox||!db)return;
+    try{const snap=await getDocs(collection(db,...CLOUD_ROOT,'support')); const threads=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+      inbox.innerHTML=threads.length?`<div class="support-inbox-title">Обращения</div>`+threads.map(t=>`<button class="support-thread-btn ${t.id===activeSupportThreadId?'active':''}" onclick="openSupportThread('${t.id}')"><strong>${t.displayName||'Пользователь'}</strong><span>${t.updatedAt?new Date(t.updatedAt).toLocaleString('ru-RU'):''}</span><p>${(t.messages?.at(-1)?.text||'').slice(0,80)}</p></button>`).join(''):'<div class="empty-state">Обращений пока нет.</div>';
+      if(threads.length&&!activeSupportThreadId) openSupportThread(threads[0].id);
+    }catch(e){console.warn('support inbox',e);inbox.innerHTML='<div class="empty-state">Не удалось загрузить обращения.</div>';}
+}
+window.openSupportThread=function(id){activeSupportThreadId=id;document.getElementById('support-active-thread')?.classList.remove('hidden');subscribeSupportThread(id);loadSupportInbox();};
+function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id)return;if(supportUnsubscribe)supportUnsubscribe();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{const data=snap.exists()?snap.data():{};const active=document.getElementById('support-active-thread');if(active&&isSupportStaff())active.textContent=`Диалог: ${data.displayName||'Пользователь'}`;renderSupportMessages(data.messages||[]);},e=>console.warn('support',e));}
+function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString('ru-RU'):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
+window.sendSupportMessage=async function(){
+    const text=document.getElementById('support-text').value.trim();if(!text)return;
+    const staff=isSupportStaff(); const id=staff?activeSupportThreadId:ownSupportThreadId(); if(!id){showToast('Выберите обращение');return;}
+    const ref=doc(db,...CLOUD_ROOT,'support',id);
+    try{const snap=await getDoc(ref),data=snap.exists()?snap.data():{},messages=Array.isArray(data.messages)?data.messages:[];const displayName=staff?(data.displayName||'Пользователь'):(document.getElementById('support-name').value.trim()||data.displayName||'Пользователь');messages.push({text,author:staff?(currentAccessLogin||'Поддержка'):displayName,role:staff?'staff':'visitor',at:new Date().toISOString()});await setDoc(ref,{messages,updatedAt:new Date().toISOString(),displayName,ownerUid:staff?(data.ownerUid||''):auth.currentUser.uid},{merge:true});document.getElementById('support-text').value='';if(staff)loadSupportInbox();}catch(e){console.warn(e);showToast('Не удалось отправить сообщение');}
+};
+
+// Запускаем новые realtime-модули после авторизации.
+setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();},1200);

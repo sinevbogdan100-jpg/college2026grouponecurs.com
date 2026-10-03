@@ -1,6 +1,6 @@
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step17-root";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step17-root";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step17-root";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step18-root";
+import { getWeekTypeForDate } from "./utils.js?v=20261003-step18-root";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step18-root";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
@@ -408,9 +408,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     list.forEach((item, index) => {
         const card = document.createElement('div');
         const cancelled = !!item.cancelled;
-        card.className = cancelled
-            ? 'bg-rose-50/70 p-3.5 rounded-xl border border-rose-200 shadow-xs space-y-1.5'
-            : 'bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-1.5';
+        card.className = 'schedule-timeline-card ' + (cancelled ? 'cancelled' : '');
         const badgeText = item.isClassHour ? `Классный час (${item.time})` : `Пара ${lessonCounter++} (${item.time})`;
         const badgeColor = cancelled ? 'text-rose-700 bg-rose-50 border-rose-200' : (item.isClassHour ? 'text-amber-700 bg-amber-50 border-amber-100' : 'text-indigo-600 bg-indigo-50 border-indigo-100');
         const changeNote = String(item.changeNote || '').trim();
@@ -430,6 +428,9 @@ export function renderSchedule(dayKey = currentScheduleDay) {
             <div class="${cancelled ? 'opacity-60' : ''}"><h3 class="font-bold text-sm text-slate-900">${item.subject}</h3><div class="flex items-center gap-3 mt-1 text-xs text-slate-500"><span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i>${item.room}</span>${item.teacher ? `<span><i class="fa-solid fa-chalkboard-user text-indigo-500 mr-1"></i>${item.teacher}</span>` : ''}</div></div>
             ${changeBox}`;
         container.appendChild(card);
+        if (item.breakDuration && index < list.length - 1) {
+            const br=document.createElement('div'); br.className='schedule-break-row'; br.innerHTML=`<span></span><div><i class="fa-regular fa-clock"></i>${item.breakDuration}</div>`; container.appendChild(br);
+        }
     });
 }
 
