@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step11-root";
+} from "./firebase.js?v=20261003-step14-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step11-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step11-root";
+} from "./utils.js?v=20261003-step14-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step14-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step11-root";
+} from "./schedule.js?v=20261003-step14-root";
 
         
-window.__SITE_BUILD__ = 'step11-2026-10-03';
+window.__SITE_BUILD__ = 'step14-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -169,12 +169,20 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         const STUDENTS_DOC_ID = 'students_shared';
         const ADMIN_PERMISSIONS_DOC_ID = 'admin_permissions';
         const DEFAULT_ADMIN_PERMISSIONS = Object.freeze({
-            admin1: Object.freeze({ journal: true, schedule: true }),
-            admin2: Object.freeze({ journal: true, schedule: true })
+            admin1: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false }),
+            admin2: Object.freeze({ journal: true, schedule: true, groupInfo: false, students: false, backups: false, manageAdmins: false })
+        });
+        const FULL_ACCESS_PERMISSIONS = Object.freeze({
+            journal: true,
+            schedule: true,
+            groupInfo: true,
+            students: true,
+            backups: true,
+            manageAdmins: true
         });
         let adminPermissions = {
-            admin1: { journal: true, schedule: true },
-            admin2: { journal: true, schedule: true }
+            admin1: { ...DEFAULT_ADMIN_PERMISSIONS.admin1 },
+            admin2: { ...DEFAULT_ADMIN_PERMISSIONS.admin2 }
         };
         let adminPermissionsUnsubscribe = null;
         let adminPermissionsPollTimer = null;
@@ -212,28 +220,30 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function normalizeAdminPermissions(data = {}) {
             const out = {};
             ['admin1', 'admin2'].forEach(login => {
-                const incoming = data?.[login];
-                out[login] = {
-                    journal: typeof incoming?.journal === 'boolean' ? incoming.journal : DEFAULT_ADMIN_PERMISSIONS[login].journal,
-                    schedule: typeof incoming?.schedule === 'boolean' ? incoming.schedule : DEFAULT_ADMIN_PERMISSIONS[login].schedule
-                };
+                const incoming = data?.[login] || {};
+                const defaults = DEFAULT_ADMIN_PERMISSIONS[login];
+                out[login] = {};
+                Object.keys(FULL_ACCESS_PERMISSIONS).forEach(key => {
+                    out[login][key] = typeof incoming?.[key] === 'boolean' ? incoming[key] : defaults[key];
+                });
             });
             return out;
         }
 
         function getPermissionsForLogin(login = currentAccountLogin) {
-            if (isOwnerRole()) return { journal: true, schedule: true };
-            if (currentAccessRole !== 'admin' || !adminPermissions[login]) return { journal: false, schedule: false };
+            if (isOwnerRole()) return { ...FULL_ACCESS_PERMISSIONS };
+            if (currentAccessRole !== 'admin' || !adminPermissions[login]) {
+                return Object.fromEntries(Object.keys(FULL_ACCESS_PERMISSIONS).map(key => [key, false]));
+            }
             return { ...adminPermissions[login] };
         }
 
-        function canEditJournal() {
-            return !!getPermissionsForLogin().journal;
-        }
-
-        function canEditSchedule() {
-            return !!getPermissionsForLogin().schedule;
-        }
+        function canEditJournal() { return !!getPermissionsForLogin().journal; }
+        function canEditSchedule() { return !!getPermissionsForLogin().schedule; }
+        function canEditGroupInfo() { return !!getPermissionsForLogin().groupInfo; }
+        function canManageStudents() { return !!getPermissionsForLogin().students; }
+        function canUseBackups() { return !!getPermissionsForLogin().backups; }
+        function canManageAdminPermissions() { return !!getPermissionsForLogin().manageAdmins; }
 
         function syncSessionPermissionFlags() {
             sessionStorage.setItem('toe_role', currentAccessRole);
@@ -241,12 +251,25 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             else sessionStorage.removeItem('toe_admin');
             if (isOwnerRole()) sessionStorage.setItem('toe_owner', '1');
             else sessionStorage.removeItem('toe_owner');
-            if (canEditJournal()) sessionStorage.setItem('toe_can_journal', '1');
-            else sessionStorage.removeItem('toe_can_journal');
-            if (canEditSchedule()) sessionStorage.setItem('toe_can_schedule', '1');
-            else sessionStorage.removeItem('toe_can_schedule');
-            window.__toeCanJournal = canEditJournal();
-            window.__toeCanSchedule = canEditSchedule();
+            const flags = {
+                journal: canEditJournal(),
+                schedule: canEditSchedule(),
+                group_info: canEditGroupInfo(),
+                students: canManageStudents(),
+                backups: canUseBackups(),
+                manage_admins: canManageAdminPermissions()
+            };
+            Object.entries(flags).forEach(([key, allowed]) => {
+                const storageKey = `toe_can_${key}`;
+                if (allowed) sessionStorage.setItem(storageKey, '1');
+                else sessionStorage.removeItem(storageKey);
+            });
+            window.__toeCanJournal = flags.journal;
+            window.__toeCanSchedule = flags.schedule;
+            window.__toeCanGroupInfo = flags.group_info;
+            window.__toeCanStudents = flags.students;
+            window.__toeCanBackups = flags.backups;
+            window.__toeCanManageAdmins = flags.manage_admins;
         }
 
         function applyAccessRoleFromUser(user) {
@@ -715,7 +738,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
             updateHomeWeekBanner();
             updateHomeTodayCard();
-            setInterval(updateHomeTodayCard, 60000);
+            setInterval(updateHomeTodayCard, 15000);
         });
 
 
@@ -926,7 +949,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function persistGroupInfoToCloud(info) {
-            if (!isOwnerRole()) return false;
+            if (!canEditGroupInfo()) return false;
             if (!isCloudConnected || !db || !auth?.currentUser) return false;
             const payload = {
                 ...DEFAULT_GROUP_INFO,
@@ -987,7 +1010,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     } catch (_) {}
 
                     // Первый облачный документ может создать только владелец.
-                    if (isOwnerRole()) await persistGroupInfoToCloud(getGroupInfo());
+                    if (canEditGroupInfo()) await persistGroupInfoToCloud(getGroupInfo());
                 }, err => {
                     console.warn('Realtime group info error', err);
                 });
@@ -1019,7 +1042,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function syncStudentCountToCloud() {
-            if (!isOwnerRole()) return false;
+            if (!canEditGroupInfo()) return false;
             const info = { ...getGroupInfo(), studentCount: students.length };
             saveGroupInfoLocally(info);
             return persistGroupInfoToCloud(info);
@@ -1040,7 +1063,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function persistStudentsToCloud(records = studentRecords) {
-            if (!isOwnerRole()) return false;
+            if (!canManageStudents()) return false;
             const normalized = normalizeStudentRecords(records);
             storeStudentRecordsLocally(normalized);
             syncStudentCountLocally();
@@ -1091,7 +1114,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 studentsUnsubscribe = onSnapshot(ref, async snap => {
                     if (snap.exists()) {
                         applyStudentsPayload(snap.data() || {});
-                    } else if (isOwnerRole()) {
+                    } else if (canManageStudents()) {
                         await persistStudentsToCloud(studentRecords);
                     }
                 }, err => {
@@ -1107,8 +1130,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         window.addStudent = async function() {
-            if (!isOwnerRole()) {
-                showToast('Добавлять студентов может только владелец');
+            if (!canManageStudents()) {
+                showToast('Нет права на изменение состава группы');
                 return;
             }
             const input = document.getElementById('new-student-name');
@@ -1135,8 +1158,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.removeStudent = async function(index) {
-            if (!isOwnerRole()) {
-                showToast('Удалять студентов может только владелец');
+            if (!canManageStudents()) {
+                showToast('Нет права на изменение состава группы');
                 return;
             }
             const record = studentRecords[index];
@@ -1148,7 +1171,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.saveGroupInfo = async function() {
-            if (!isOwnerRole()) { showToast('Данные главной страницы может менять только владелец'); return; }
+            if (!canEditGroupInfo()) { showToast('Нет права на изменение данных главной страницы'); return; }
             const info = getGroupInfo();
             saveGroupInfoLocally(info);
             const cloudOk = await persistGroupInfoToCloud(info);
@@ -1161,13 +1184,13 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 el.contentEditable = 'false';
                 el.title = 'Количество меняется автоматически по составу группы';
             } else {
-                el.contentEditable = isOwnerRole() ? 'true' : 'false';
+                el.contentEditable = canEditGroupInfo() ? 'true' : 'false';
             }
             el.setAttribute('spellcheck', 'false');
         }
 
         async function syncGroupFieldFromDisplay(el) {
-            if (!el || !isOwnerRole()) return;
+            if (!el || !canEditGroupInfo()) return;
             const field = el.dataset.groupField;
             const info = getGroupInfo();
             let value = el.textContent.trim();
@@ -1207,7 +1230,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const modal = document.getElementById('admin-settings-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            if (isOwnerRole()) loadGroupInfoToAdminForm();
+            if (canEditGroupInfo()) loadGroupInfoToAdminForm();
             document.getElementById('admin-login-box')?.classList.toggle('hidden', isEditorRole());
             document.getElementById('admin-panel')?.classList.toggle('hidden', !isEditorRole());
             updateAdminUI();
@@ -1253,13 +1276,14 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function renderOwnerPermissionControls() {
             const section = document.getElementById('owner-permissions-section');
-            if (section) section.classList.toggle('hidden', !isOwnerRole());
+            if (section) section.classList.toggle('hidden', !canManageAdminPermissions());
+            const keys = ['journal', 'schedule', 'groupInfo', 'students', 'backups', 'manageAdmins'];
             ['admin1', 'admin2'].forEach(login => {
                 const perms = adminPermissions[login] || DEFAULT_ADMIN_PERMISSIONS[login];
-                const journal = document.getElementById(`perm-${login}-journal`);
-                const schedule = document.getElementById(`perm-${login}-schedule`);
-                if (journal) journal.checked = !!perms.journal;
-                if (schedule) schedule.checked = !!perms.schedule;
+                keys.forEach(key => {
+                    const input = document.getElementById(`perm-${login}-${key}`);
+                    if (input) input.checked = !!perms[key];
+                });
             });
         }
 
@@ -1277,7 +1301,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         async function persistAdminPermissionsToCloud(nextPermissions) {
-            if (!isOwnerRole() || !db || !auth?.currentUser) return false;
+            if (!canManageAdminPermissions() || !db || !auth?.currentUser) return false;
             const normalized = normalizeAdminPermissions(nextPermissions);
             const payload = {
                 ...normalized,
@@ -1348,18 +1372,20 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         window.saveAdminPermissions = async function() {
-            if (!isOwnerRole()) { showToast('Менять права может только владелец'); return; }
+            if (!canManageAdminPermissions()) { showToast('Нет права на управление администраторами'); return; }
             const button = document.getElementById('save-admin-permissions-btn');
             const status = document.getElementById('admin-permissions-status');
+            const readPermissions = (login) => ({
+                journal: !!document.getElementById(`perm-${login}-journal`)?.checked,
+                schedule: !!document.getElementById(`perm-${login}-schedule`)?.checked,
+                groupInfo: !!document.getElementById(`perm-${login}-groupInfo`)?.checked,
+                students: !!document.getElementById(`perm-${login}-students`)?.checked,
+                backups: !!document.getElementById(`perm-${login}-backups`)?.checked,
+                manageAdmins: !!document.getElementById(`perm-${login}-manageAdmins`)?.checked
+            });
             const next = {
-                admin1: {
-                    journal: !!document.getElementById('perm-admin1-journal')?.checked,
-                    schedule: !!document.getElementById('perm-admin1-schedule')?.checked
-                },
-                admin2: {
-                    journal: !!document.getElementById('perm-admin2-journal')?.checked,
-                    schedule: !!document.getElementById('perm-admin2-schedule')?.checked
-                }
+                admin1: readPermissions('admin1'),
+                admin2: readPermissions('admin2')
             };
             if (button) { button.disabled = true; button.textContent = 'Сохранение…'; }
             if (status) status.textContent = 'Сохраняем права в Firebase…';
@@ -1381,14 +1407,22 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const owner = isOwnerRole();
             const journalAllowed = canEditJournal();
             const scheduleAllowed = canEditSchedule();
+            const groupInfoAllowed = canEditGroupInfo();
+            const studentsAllowed = canManageStudents();
+            const backupsAllowed = canUseBackups();
+            const adminRightsAllowed = canManageAdminPermissions();
+
             document.body.classList.toggle('admin-mode', editor);
             document.body.classList.toggle('owner-mode', owner);
             document.body.classList.toggle('journal-edit-mode', journalAllowed);
             document.body.classList.toggle('schedule-edit-mode', scheduleAllowed);
+            document.body.classList.toggle('group-info-edit-mode', groupInfoAllowed);
+            document.body.classList.toggle('students-edit-mode', studentsAllowed);
+
             const hint = document.getElementById('journal-admin-hint');
             if (hint) {
                 hint.classList.toggle('hidden', journalAllowed);
-                if (!journalAllowed && currentAccessRole === 'admin') hint.innerHTML = '<i class="fa-solid fa-lock"></i> Владелец отключил для этого администратора редактирование журнала';
+                if (!journalAllowed && currentAccessRole === 'admin') hint.innerHTML = '<i class="fa-solid fa-lock"></i> Нет права на редактирование журнала';
                 else if (!journalAllowed) hint.innerHTML = '<i class="fa-solid fa-lock"></i> Изменение журнала доступно только после входа с соответствующими правами';
             }
             const journalTools = document.getElementById('journal-edit-tools');
@@ -1396,13 +1430,17 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const manualSave = document.getElementById('manual-save-journal-btn');
             if (manualSave) manualSave.classList.toggle('hidden', !journalAllowed);
             const rosterTools = document.getElementById('roster-admin-tools');
-            if (rosterTools) rosterTools.classList.toggle('hidden', !owner);
+            if (rosterTools) rosterTools.classList.toggle('hidden', !studentsAllowed);
+
             const loginBox = document.getElementById('admin-login-box');
             const panel = document.getElementById('admin-panel');
             if (loginBox) loginBox.classList.toggle('hidden', editor);
             if (panel) panel.classList.toggle('hidden', !editor);
             const backup = document.getElementById('owner-backup-section');
-            if (backup) backup.classList.toggle('hidden', !owner);
+            if (backup) backup.classList.toggle('hidden', !backupsAllowed);
+            const permissionsSection = document.getElementById('owner-permissions-section');
+            if (permissionsSection) permissionsSection.classList.toggle('hidden', !adminRightsAllowed);
+
             const banner = document.getElementById('admin-role-banner');
             const description = document.getElementById('admin-role-description');
             if (banner) banner.textContent = owner ? 'Владелец: полный доступ включён.' : (editor ? `${AUTH_ACCOUNTS[currentAccountLogin]?.label || 'Администратор'}: вход выполнен.` : '');
@@ -1410,10 +1448,17 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (owner) {
                     description.textContent = 'Доступно всё: главная страница, состав группы, журнал, расписание, управление правами и резервные копии.';
                 } else if (editor) {
-                    const allowed = [journalAllowed ? 'журнал' : '', scheduleAllowed ? 'расписание' : ''].filter(Boolean);
-                    description.textContent = allowed.length
-                        ? `Разрешено владельцем: ${allowed.join(' и ')}. Главная страница и состав группы доступны только для просмотра.`
-                        : 'Владелец отключил права редактирования. Сейчас доступен только просмотр сайта.';
+                    const labels = [
+                        [journalAllowed, 'журнал'],
+                        [scheduleAllowed, 'расписание'],
+                        [groupInfoAllowed, 'главная информация'],
+                        [studentsAllowed, 'состав группы'],
+                        [backupsAllowed, 'резервные копии'],
+                        [adminRightsAllowed, 'управление правами']
+                    ].filter(([allowed]) => allowed).map(([, label]) => label);
+                    description.textContent = labels.length
+                        ? `Разрешено владельцем: ${labels.join(', ')}.`
+                        : 'Владелец отключил все права редактирования. Сейчас доступен только просмотр сайта.';
                 } else {
                     description.textContent = '';
                 }
@@ -1535,7 +1580,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         window.createManualBackup = async function() {
-            if (!isOwnerRole()) { showToast('Резервные копии доступны только владельцу'); return; }
+            if (!canUseBackups()) { showToast('Нет права на резервные копии'); return; }
             try {
                 await createAutomaticBackup();
                 updateBackupStatus();
@@ -1544,7 +1589,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         };
 
         window.restoreLatestBackup = async function() {
-            if (!isOwnerRole()) { showToast('Резервные копии доступны только владельцу'); return; }
+            if (!canUseBackups()) { showToast('Нет права на резервные копии'); return; }
             if (!confirm('Восстановить данные из последней резервной копии? Текущие локальные данные будут заменены.')) return;
             try {
                 const raw = await dbGet('toe_full_backup_latest');
@@ -1836,50 +1881,111 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             showToast("Всем установлен статус: " + getStatusName(status));
         };
 
+        function parseScheduleTimeRange(timeText) {
+            const text = String(timeText || '').trim();
+            const range = text.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);
+            if (range) {
+                return {
+                    start: Number(range[1]) * 60 + Number(range[2]),
+                    end: Number(range[3]) * 60 + Number(range[4])
+                };
+            }
+            const single = text.match(/(\d{1,2}):(\d{2})/);
+            if (!single) return null;
+            const start = Number(single[1]) * 60 + Number(single[2]);
+            return { start, end: start };
+        }
+
+        function getScheduleDayKey(date) {
+            return ({1:'mon', 2:'tue', 3:'wed', 4:'thu', 5:'fri'})[date.getDay()] || null;
+        }
+
+        function getLessonsForScheduleDate(date) {
+            const dayKey = getScheduleDayKey(date);
+            if (!dayKey) return [];
+            const weekType = getWeekTypeForDate(date);
+            const source = getScheduleDataForWeek(weekType);
+            return (source[dayKey] || []).filter(item => !item.isClassHour);
+        }
+
+        function getFloorFromRoom(roomText) {
+            const room = String(roomText || '').trim();
+            const match = room.match(/\b([1-9])\d{2}\b/);
+            return match ? Number(match[1]) : null;
+        }
+
+        function findNextHomeLesson(now) {
+            const today = new Date(now);
+            today.setHours(0, 0, 0, 0);
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+            // Ищем текущую/следующую пару сегодня. Текущая пара остаётся
+            // на карточке до фактического времени её окончания.
+            if (getScheduleDayKey(today)) {
+                const lessons = getLessonsForScheduleDate(today);
+                for (const item of lessons) {
+                    const range = parseScheduleTimeRange(item.time);
+                    if (!range) continue;
+                    if (range.end > nowMinutes) {
+                        return { date: today, lesson: item, weekType: getWeekTypeForDate(today) };
+                    }
+                }
+            }
+
+            // После последней пары (а также в выходные) сразу ищем первую
+            // пару следующего учебного дня. Поиск допускает дни без занятий.
+            const candidate = new Date(today);
+            for (let i = 0; i < 14; i++) {
+                candidate.setDate(candidate.getDate() + 1);
+                candidate.setHours(0, 0, 0, 0);
+                if (!getScheduleDayKey(candidate)) continue;
+                const lessons = getLessonsForScheduleDate(candidate);
+                if (!lessons.length) continue;
+                return {
+                    date: new Date(candidate),
+                    lesson: lessons[0],
+                    weekType: getWeekTypeForDate(candidate)
+                };
+            }
+            return null;
+        }
+
         function updateHomeTodayCard() {
+            const captionEl = document.getElementById('home-date-caption');
             const dateEl = document.getElementById('home-today-date');
             const weekEl = document.getElementById('home-today-week');
             const lessonEl = document.getElementById('home-next-lesson');
             if (!dateEl || !weekEl || !lessonEl) return;
 
             const now = new Date();
-            const day = now.getDay();
+            const result = findNextHomeLesson(now);
             const dayNames = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
             const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-            dateEl.textContent = `${dayNames[day]}, ${now.getDate()} ${months[now.getMonth()]}`;
 
-            let effectiveDay = day;
-            if (day === 0) effectiveDay = 5;
-            if (day === 6) effectiveDay = 5;
-            const dayKeys = {1:'mon',2:'tue',3:'wed',4:'thu',5:'fri'};
-            const dayKey = dayKeys[effectiveDay];
-            const weekType = getWeekTypeForDate(now);
+            if (!result) {
+                if (captionEl) captionEl.textContent = 'Расписание';
+                dateEl.textContent = `${dayNames[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+                weekEl.textContent = '—';
+                lessonEl.textContent = 'Ближайших занятий в расписании не найдено.';
+                return;
+            }
+
+            const { date, lesson, weekType } = result;
+            const sameDay = formatLocalDate(date) === formatLocalDate(now);
+            if (captionEl) captionEl.textContent = sameDay ? 'Сегодня' : 'Следующий учебный день';
+            dateEl.textContent = `${dayNames[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
             weekEl.textContent = weekType === 'numerator' ? 'Числитель' : 'Знаменатель';
 
-            const source = getScheduleDataForWeek(weekType);
-            const lessons = (source[dayKey] || []).filter(item => !item.isClassHour);
-            const nowMinutes = now.getHours() * 60 + now.getMinutes();
-            let next = null;
+            const room = String(lesson.room || '').trim();
+            const floor = getFloorFromRoom(room);
+            const locationParts = [];
+            if (room) locationParts.push(room);
+            if (floor) locationParts.push(`${floor} этаж`);
+            const locationText = locationParts.length
+                ? `<span class="text-slate-500">${locationParts.join(' · ')}</span>`
+                : '';
 
-            if (day >= 1 && day <= 5) {
-                for (const item of lessons) {
-                    const match = String(item.time || '').match(/(\d{1,2}):(\d{2})/);
-                    if (!match) continue;
-                    const startMinutes = Number(match[1]) * 60 + Number(match[2]);
-                    if (startMinutes >= nowMinutes) { next = item; break; }
-                }
-            }
-
-            if (next) {
-                lessonEl.innerHTML = `<span class="text-indigo-600">${next.time}</span> · ${next.subject} · ${next.room}`;
-            } else if (day === 0 || day === 6) {
-                const first = lessons[0];
-                lessonEl.innerHTML = first
-                    ? `В выходной день занятий нет. В понедельник: <span class="text-indigo-600">${first.time}</span> · ${first.subject}`
-                    : 'В выходной день занятий нет.';
-            } else {
-                lessonEl.textContent = 'На сегодня занятий больше нет.';
-            }
+            lessonEl.innerHTML = `<span class="text-indigo-600">${lesson.time}</span> · ${lesson.subject}${locationText ? `<br>${locationText}` : ''}`;
         }
 
         function renderApp() {

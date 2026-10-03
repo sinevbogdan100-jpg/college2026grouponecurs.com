@@ -24,62 +24,57 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/toe_group/shared/access/admin_permissions);
     }
 
-    function admin1CanEditJournal() {
-      return isAdmin1()
-        && (!permissionsExist()
-          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1.journal == true);
+    function defaultAdminPermission(field) {
+      // Совместимость со старым документом: журнал и расписание были включены.
+      return field == 'journal' || field == 'schedule';
     }
 
-    function admin2CanEditJournal() {
-      return isAdmin2()
-        && (!permissionsExist()
-          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2.journal == true);
+    function admin1Has(field) {
+      return isAdmin1() && (
+        (!permissionsExist() && defaultAdminPermission(field))
+        || (permissionsExist()
+            && field in get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1
+            && get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1[field] == true)
+      );
     }
 
-    function admin1CanEditSchedule() {
-      return isAdmin1()
-        && (!permissionsExist()
-          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin1.schedule == true);
+    function admin2Has(field) {
+      return isAdmin2() && (
+        (!permissionsExist() && defaultAdminPermission(field))
+        || (permissionsExist()
+            && field in get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2
+            && get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2[field] == true)
+      );
     }
 
-    function admin2CanEditSchedule() {
-      return isAdmin2()
-        && (!permissionsExist()
-          || get(/databases/$(database)/documents/toe_group/shared/access/admin_permissions).data.admin2.schedule == true);
-    }
-
-    function canEditJournal() {
-      return isOwner() || admin1CanEditJournal() || admin2CanEditJournal();
-    }
-
-    function canEditSchedule() {
-      return isOwner() || admin1CanEditSchedule() || admin2CanEditSchedule();
+    function hasPermission(field) {
+      return isOwner() || admin1Has(field) || admin2Has(field);
     }
 
     match /toe_group/shared/access/admin_permissions {
-      // Права не содержат паролей или секретов. Они нужны сайту, чтобы сразу
-      // скрывать недоступные элементы редактирования на каждом устройстве.
       allow read: if signedIn();
-      allow write: if isOwner();
+      // Владелец всегда может менять права. Администратор — только если владелец
+      // заранее выдал ему отдельное право manageAdmins.
+      allow write: if isOwner() || admin1Has('manageAdmins') || admin2Has('manageAdmins');
     }
 
     match /toe_group/shared/attendance_records/{docId} {
       allow read: if signedIn();
 
-      // Главную информацию и состав группы может менять только владелец.
-      allow write: if isOwner()
-        && (docId == 'group_info_shared' || docId == 'students_shared');
+      // Данные главной страницы: название группы, куратор, староста, зам. старосты.
+      allow write: if docId == 'group_info_shared' && hasPermission('groupInfo');
 
-      // Журнал и его общую статистику можно менять только при включённом
-      // владельцем праве "Журнал".
-      allow write: if canEditJournal()
-        && (docId == 'roster_stats_shared' || docId.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+      // Добавление и удаление студентов.
+      allow write: if docId == 'students_shared' && hasPermission('students');
+
+      // Журнал и общая статистика посещаемости.
+      allow write: if hasPermission('journal')
+        && (docId == 'roster_stats_shared' || docId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
     }
 
     match /toe_group/shared/schedule/{docId} {
       allow read: if signedIn();
-      // Расписание можно менять только при включённом владельцем праве "Расписание".
-      allow write: if canEditSchedule() && docId == 'main';
+      allow write: if docId == 'main' && hasPermission('schedule');
     }
   }
 }
