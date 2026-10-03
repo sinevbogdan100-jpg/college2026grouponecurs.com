@@ -15,7 +15,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step16-root";
+} from "./firebase.js?v=20261003-step17-root";
 
 import {
     getWeekTypeForDate,
@@ -27,8 +27,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step16-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step16-root";
+} from "./utils.js?v=20261003-step17-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step17-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -39,10 +39,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step16-root";
+} from "./schedule.js?v=20261003-step17-root";
 
         
-window.__SITE_BUILD__ = 'step16-2026-10-03';
+window.__SITE_BUILD__ = 'step17-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====

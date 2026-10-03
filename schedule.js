@@ -1,6 +1,6 @@
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step16-root";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step16-root";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step16-root";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step17-root";
+import { getWeekTypeForDate } from "./utils.js?v=20261003-step17-root";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step17-root";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
@@ -95,6 +95,8 @@ const scheduleDataDenominator = {
 let currentScheduleDay = 'mon';
 let currentScheduleWeekType = 'denominator';
 let editingScheduleIndex = -1;
+let scheduleEditorOriginal = null;
+let scheduleChangeNoteManuallyEdited = false;
 let scheduleUnsubscribe = null;
 let schedulePollTimer = null;
 let scheduleReconnectTimer = null;
@@ -272,6 +274,124 @@ window.onScheduleTimeChanged = function() {
     if (match) breakInput.value = String(match.breakDuration || '').trim();
 };
 
+
+function cloneScheduleItem(item = {}) {
+    return {
+        time: String(item.time || '').trim(),
+        breakDuration: String(item.breakDuration || '').trim(),
+        subject: String(item.subject || '').trim(),
+        room: String(item.room || '').trim(),
+        teacher: String(item.teacher || '').trim(),
+        isClassHour: !!item.isClassHour,
+        changeType: String(item.changeType || 'normal'),
+        changeNote: String(item.changeNote || '').trim(),
+        cancelled: !!item.cancelled
+    };
+}
+
+function setScheduleEditorReadOnly(ids, readOnly) {
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.readOnly = !!readOnly;
+        el.classList.toggle('bg-slate-50', !!readOnly);
+        el.classList.toggle('text-slate-400', !!readOnly);
+    });
+}
+
+function getScheduleEditorValues() {
+    return {
+        time: document.getElementById('edit-time')?.value.trim() || '',
+        breakDuration: document.getElementById('edit-break')?.value.trim() || '',
+        subject: document.getElementById('edit-subject')?.value.trim() || '',
+        room: document.getElementById('edit-room')?.value.trim() || '',
+        teacher: document.getElementById('edit-teacher')?.value.trim() || ''
+    };
+}
+
+function buildScheduleChangeNote(type) {
+    const original = scheduleEditorOriginal || {};
+    const current = getScheduleEditorValues();
+    const subject = current.subject || original.subject || 'Пара';
+    switch (type) {
+        case 'room':
+            return current.room && original.room && current.room !== original.room
+                ? `Замена кабинета: ${subject} — вместо ${original.room} ${current.room}`
+                : `Замена кабинета: ${subject}`;
+        case 'teacher':
+            return current.teacher && original.teacher && current.teacher !== original.teacher
+                ? `Замена преподавателя: ${subject} — вместо ${original.teacher} ${current.teacher}`
+                : `Замена преподавателя: ${subject}`;
+        case 'subject':
+            return current.subject && original.subject && current.subject !== original.subject
+                ? `Замена предмета: вместо ${original.subject} — ${current.subject}`
+                : `Замена предмета`;
+        case 'time':
+            return current.time && original.time && current.time !== original.time
+                ? `Перенос пары: ${subject} — с ${original.time} на ${current.time}`
+                : `Перенос пары: ${subject}`;
+        case 'replace':
+            return current.subject && original.subject && current.subject !== original.subject
+                ? `Замена пары: вместо ${original.subject} — ${current.subject}${current.time ? `, ${current.time}` : ''}`
+                : `Замена пары: ${subject}${current.time ? `, ${current.time}` : ''}`;
+        case 'cancel':
+            return `Пара отменена: ${original.subject || subject}${original.time ? ` (${original.time})` : ''}`;
+        default:
+            return '';
+    }
+}
+
+function refreshScheduleChangeNote(force = false) {
+    const note = document.getElementById('edit-change-note');
+    const type = document.getElementById('edit-change-type')?.value || 'normal';
+    if (!note || (!force && scheduleChangeNoteManuallyEdited)) return;
+    note.value = buildScheduleChangeNote(type);
+}
+
+window.markScheduleChangeNoteManual = function() {
+    scheduleChangeNoteManuallyEdited = true;
+};
+
+window.onScheduleEditorFieldChanged = function() {
+    refreshScheduleChangeNote(false);
+};
+
+window.onScheduleChangeTypeChanged = function() {
+    const type = document.getElementById('edit-change-type')?.value || 'normal';
+    const hint = document.getElementById('schedule-change-hint');
+    const fields = ['edit-time', 'edit-break', 'edit-subject', 'edit-room', 'edit-teacher'];
+    setScheduleEditorReadOnly(fields, false);
+
+    let message = 'Можно изменить любые данные пары.';
+    if (type === 'room') {
+        setScheduleEditorReadOnly(['edit-time', 'edit-break', 'edit-subject', 'edit-teacher'], true);
+        message = 'Изменяется только кабинет. Остальные данные пары защищены от случайного изменения.';
+        setTimeout(() => document.getElementById('edit-room')?.focus(), 0);
+    } else if (type === 'teacher') {
+        setScheduleEditorReadOnly(['edit-time', 'edit-break', 'edit-subject', 'edit-room'], true);
+        message = 'Изменяется только преподаватель.';
+        setTimeout(() => document.getElementById('edit-teacher')?.focus(), 0);
+    } else if (type === 'subject') {
+        setScheduleEditorReadOnly(['edit-time', 'edit-break'], true);
+        message = 'Выберите новый предмет — известные кабинет и преподаватель подставятся автоматически.';
+        setTimeout(() => document.getElementById('edit-subject')?.focus(), 0);
+    } else if (type === 'time') {
+        setScheduleEditorReadOnly(['edit-subject', 'edit-room', 'edit-teacher'], true);
+        message = 'Измените время пары. Перемена подставится из уже известных интервалов, если совпадение найдено.';
+        setTimeout(() => document.getElementById('edit-time')?.focus(), 0);
+    } else if (type === 'replace') {
+        message = 'Полная замена: можно поменять предмет, время, кабинет и преподавателя.';
+        setTimeout(() => document.getElementById('edit-subject')?.focus(), 0);
+    } else if (type === 'cancel') {
+        setScheduleEditorReadOnly(fields, true);
+        message = 'Пара останется в расписании как отменённая. При необходимости измените только комментарий.';
+        setTimeout(() => document.getElementById('edit-change-note')?.focus(), 0);
+    }
+    if (hint) hint.textContent = message;
+    scheduleChangeNoteManuallyEdited = false;
+    refreshScheduleChangeNote(true);
+};
+
 export function renderSchedule(dayKey = currentScheduleDay) {
     const container = document.getElementById('schedule-container');
     if (!container) return;
@@ -287,12 +407,17 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     }
     list.forEach((item, index) => {
         const card = document.createElement('div');
-        card.className = "bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-1.5";
+        const cancelled = !!item.cancelled;
+        card.className = cancelled
+            ? 'bg-rose-50/70 p-3.5 rounded-xl border border-rose-200 shadow-xs space-y-1.5'
+            : 'bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-1.5';
         const badgeText = item.isClassHour ? `Классный час (${item.time})` : `Пара ${lessonCounter++} (${item.time})`;
-        const badgeColor = item.isClassHour ? "text-amber-700 bg-amber-50" : "text-indigo-600 bg-indigo-50";
+        const badgeColor = cancelled ? 'text-rose-700 bg-rose-50 border-rose-200' : (item.isClassHour ? 'text-amber-700 bg-amber-50 border-amber-100' : 'text-indigo-600 bg-indigo-50 border-indigo-100');
+        const changeNote = String(item.changeNote || '').trim();
+        const changeBox = changeNote ? `<div class="mt-2 rounded-lg ${cancelled ? 'bg-rose-100/80 text-rose-800 border-rose-200' : 'bg-amber-50 text-amber-800 border-amber-100'} border px-2.5 py-2 text-[10px] font-medium"><i class="fa-solid ${cancelled ? 'fa-ban' : 'fa-triangle-exclamation'} mr-1"></i>${changeNote}</div>` : '';
         card.innerHTML = `
             <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] font-bold ${badgeColor} px-2 py-0.5 rounded-md border border-indigo-100">${badgeText}</span>
+                <span class="text-[10px] font-bold ${badgeColor} px-2 py-0.5 rounded-md border">${badgeText}${cancelled ? ' · ОТМЕНЕНА' : ''}</span>
                 <div class="flex items-center gap-2">
                     <span class="text-[10px] text-slate-400">${item.breakDuration || ''}</span>
                     <div class="schedule-admin-actions">
@@ -302,7 +427,8 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                     </div>
                 </div>
             </div>
-            <div><h3 class="font-bold text-sm text-slate-900">${item.subject}</h3><div class="flex items-center gap-3 mt-1 text-xs text-slate-500"><span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i>${item.room}</span>${item.teacher ? `<span><i class="fa-solid fa-chalkboard-user text-indigo-500 mr-1"></i>${item.teacher}</span>` : ''}</div></div>`;
+            <div class="${cancelled ? 'opacity-60' : ''}"><h3 class="font-bold text-sm text-slate-900">${item.subject}</h3><div class="flex items-center gap-3 mt-1 text-xs text-slate-500"><span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i>${item.room}</span>${item.teacher ? `<span><i class="fa-solid fa-chalkboard-user text-indigo-500 mr-1"></i>${item.teacher}</span>` : ''}</div></div>
+            ${changeBox}`;
         container.appendChild(card);
     });
 }
@@ -315,7 +441,9 @@ window.openScheduleEditor = function(index) {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') { showToast('Нет права на редактирование расписания'); return; }
     editingScheduleIndex = index;
     fillScheduleEditorDatalists();
-    const item = index >= 0 ? getCurrentScheduleList()[index] : {time:'',breakDuration:'',subject:'',room:'',teacher:'',isClassHour:false};
+    const item = index >= 0 ? getCurrentScheduleList()[index] : {time:'',breakDuration:'',subject:'',room:'',teacher:'',isClassHour:false,changeType:'normal',changeNote:'',cancelled:false};
+    scheduleEditorOriginal = cloneScheduleItem(item);
+    scheduleChangeNoteManuallyEdited = false;
     document.getElementById('schedule-editor-title').innerText = index >= 0 ? 'Редактирование пары' : 'Добавление пары';
     document.getElementById('edit-time').value = item.time || '';
     document.getElementById('edit-break').value = item.breakDuration || '';
@@ -323,10 +451,18 @@ window.openScheduleEditor = function(index) {
     document.getElementById('edit-room').value = item.room || '';
     document.getElementById('edit-teacher').value = item.teacher || '';
     document.getElementById('edit-class-hour').checked = !!item.isClassHour;
+    document.getElementById('edit-change-type').value = index < 0 ? 'normal' : (item.cancelled ? 'cancel' : (item.changeType || 'normal'));
+    document.getElementById('edit-change-note').value = item.changeNote || '';
+    if (item.changeNote) scheduleChangeNoteManuallyEdited = true;
     document.getElementById('schedule-delete-btn').classList.toggle('hidden', index < 0);
     const modal=document.getElementById('schedule-editor-modal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    window.onScheduleChangeTypeChanged();
+    if (item.changeNote) {
+        document.getElementById('edit-change-note').value = item.changeNote;
+        scheduleChangeNoteManuallyEdited = true;
+    }
 };
 
 window.closeScheduleEditor = function() {
@@ -339,8 +475,21 @@ window.saveScheduleLesson = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list=getCurrentScheduleList();
     if (!list) { showToast('Не удалось определить день расписания'); return; }
-    const item={time:document.getElementById('edit-time').value.trim(),breakDuration:document.getElementById('edit-break').value.trim(),subject:document.getElementById('edit-subject').value.trim(),room:document.getElementById('edit-room').value.trim(),teacher:document.getElementById('edit-teacher').value.trim(),isClassHour:document.getElementById('edit-class-hour').checked};
+    const changeType = document.getElementById('edit-change-type')?.value || 'normal';
+    const item={
+        time:document.getElementById('edit-time').value.trim(),
+        breakDuration:document.getElementById('edit-break').value.trim(),
+        subject:document.getElementById('edit-subject').value.trim(),
+        room:document.getElementById('edit-room').value.trim(),
+        teacher:document.getElementById('edit-teacher').value.trim(),
+        isClassHour:document.getElementById('edit-class-hour').checked,
+        changeType,
+        changeNote:document.getElementById('edit-change-note')?.value.trim() || '',
+        cancelled:changeType === 'cancel',
+        changedAt: changeType === 'normal' ? '' : new Date().toISOString()
+    };
     if(!item.subject || !item.time){showToast('Укажите предмет и время');return;}
+    if (changeType !== 'normal' && !item.changeNote) item.changeNote = buildScheduleChangeNote(changeType);
     const oldItem = editingScheduleIndex >= 0 ? list[editingScheduleIndex] : null;
     if(editingScheduleIndex>=0) list[editingScheduleIndex]=item; else list.push(item);
     try {
@@ -348,7 +497,7 @@ window.saveScheduleLesson = async function() {
         window.closeScheduleEditor();
         renderSchedule(currentScheduleDay);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = true;
-        showToast('Расписание сохранено в облако');
+        showToast(changeType === 'cancel' ? 'Отмена пары сохранена в облако' : 'Расписание сохранено в облако');
     } catch (e) {
         if (editingScheduleIndex >= 0) list[editingScheduleIndex] = oldItem; else list.pop();
         renderSchedule(currentScheduleDay);

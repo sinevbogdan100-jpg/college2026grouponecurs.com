@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step16-2026-10-03">
+    <meta name="app-build" content="step17-2026-10-03">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step16-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step17-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -459,15 +459,30 @@
                 <button onclick="closeScheduleEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
             </div>
             <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 text-[10px] text-indigo-800">
-                Выберите предмет из подсказок — кабинет и преподаватель подставятся автоматически. Их можно исправить вручную.
+                Текущие данные пары подставляются автоматически. Выберите тип изменения — редактор оставит активными только нужные поля.
             </div>
+            <label class="block text-[11px] text-slate-600">Тип изменения
+                <select id="edit-change-type" onchange="onScheduleChangeTypeChanged()" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm">
+                    <option value="normal">Обычное редактирование</option>
+                    <option value="room">Замена кабинета</option>
+                    <option value="teacher">Замена преподавателя</option>
+                    <option value="subject">Замена предмета</option>
+                    <option value="time">Перенос пары / изменение времени</option>
+                    <option value="replace">Полная замена пары</option>
+                    <option value="cancel">Пары не будет</option>
+                </select>
+            </label>
+            <div id="schedule-change-hint" class="rounded-xl bg-slate-50 border border-slate-200 p-3 text-[10px] text-slate-600">Можно изменить любые данные пары.</div>
             <div class="grid grid-cols-2 gap-2">
-                <label class="text-[11px] text-slate-600">Время<input id="edit-time" list="schedule-time-list" onchange="onScheduleTimeChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="08:00 - 09:30"></label>
-                <label class="text-[11px] text-slate-600">Перемена<input id="edit-break" list="schedule-break-list" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Перемена: 10 мин"></label>
+                <label class="text-[11px] text-slate-600">Время<input id="edit-time" list="schedule-time-list" onchange="onScheduleTimeChanged();onScheduleEditorFieldChanged()" oninput="onScheduleEditorFieldChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="08:00 - 09:30"></label>
+                <label class="text-[11px] text-slate-600">Перемена<input id="edit-break" list="schedule-break-list" oninput="onScheduleEditorFieldChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Перемена: 10 мин"></label>
             </div>
-            <label class="block text-[11px] text-slate-600">Предмет<input id="edit-subject" list="schedule-subject-list" onchange="onScheduleSubjectChanged()" oninput="onScheduleSubjectChanged(true)" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Начните вводить предмет"></label>
-            <label class="block text-[11px] text-slate-600">Кабинет / место<input id="edit-room" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
-            <label class="block text-[11px] text-slate-600">Преподаватель<input id="edit-teacher" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="block text-[11px] text-slate-600">Предмет<input id="edit-subject" list="schedule-subject-list" onchange="onScheduleSubjectChanged();onScheduleEditorFieldChanged()" oninput="onScheduleSubjectChanged(true);onScheduleEditorFieldChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Начните вводить предмет"></label>
+            <label class="block text-[11px] text-slate-600">Кабинет / место<input id="edit-room" oninput="onScheduleEditorFieldChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="block text-[11px] text-slate-600">Преподаватель<input id="edit-teacher" oninput="onScheduleEditorFieldChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <label class="block text-[11px] text-slate-600">Комментарий / текст изменения
+                <textarea id="edit-change-note" rows="2" oninput="markScheduleChangeNoteManual()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none" placeholder="Сформируется автоматически, но можно изменить вручную"></textarea>
+            </label>
             <datalist id="schedule-subject-list"></datalist>
             <datalist id="schedule-time-list"></datalist>
             <datalist id="schedule-break-list"></datalist>
@@ -478,7 +493,7 @@
 
 
 
-    <script type="module" src="app.js?v=20261003-step16-root"></script>
+    <script type="module" src="app.js?v=20261003-step17-root"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -508,7 +523,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step16-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step17-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -530,7 +545,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step16-root"></script>
+<script src="realtime-debug.js?v=20261003-step17-root"></script>
 
 </body>
 </html>
