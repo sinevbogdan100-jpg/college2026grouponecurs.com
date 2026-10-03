@@ -1795,3 +1795,173 @@ body{background:linear-gradient(180deg,#fafaff 0,#f5f6fb 100%);color:var(--ink)}
   #view-tracker .journal-assessment-grid .journal-history-panel,
   #view-tracker .journal-assessment-grid .journal-ref-actions{grid-column:auto}
 }
+
+
+/* ===== STUDENT PROFILES + ASSESSMENT LIST — step18.3-profiles-stats1 ===== */
+.student-profile-avatar{
+  width:32px;height:32px;flex:0 0 32px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  overflow:hidden;background:#edf1f7;color:#70809c;
+}
+.student-profile-avatar.male{background:#e8f2ff;color:#2474e8}
+.student-profile-avatar.female{background:#ffeaf2;color:#e85186}
+.student-profile-avatar.neutral{background:#edf1f7;color:#70809c}
+.student-profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+#view-tracker .journal-ref-person .student-profile-avatar{width:29px;height:29px;flex-basis:29px;font-size:11px}
+#view-tracker .journal-ref-note-view{
+  min-width:0;height:30px;padding:0 8px;border:1px solid #eceff5;border-radius:8px;
+  display:flex;align-items:center;gap:5px;background:#f8f9fc;color:#69758d;font-size:8.5px;overflow:hidden;
+}
+#view-tracker .journal-ref-note-view span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#view-tracker .journal-inline-actions{
+  margin-top:10px;padding:11px;border:1px solid #e8edf6;border-radius:12px;background:#fbfcfe;
+}
+#view-tracker .journal-inline-actions h2{margin:0 0 8px;color:#111b37;font-size:11px;font-weight:850}
+#view-tracker .journal-inline-actions>div{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#view-tracker .journal-inline-actions button{
+  min-height:38px;border:0;border-radius:9px;background:#eef2f8;color:#31415d;
+  display:flex;align-items:center;justify-content:center;gap:6px;font-size:9px;font-weight:750;
+}
+
+#view-tracker .journal-assessment-view{display:grid;gap:12px}
+#view-tracker .journal-assessment-view.hidden{display:none!important}
+#view-tracker .assessment-group-summary{width:100%}
+#view-tracker .assessment-list-panel,#view-tracker .assessment-detail-panel{width:100%}
+#view-tracker .assessment-list-head,
+#view-tracker .assessment-student-row{
+  display:grid;
+  grid-template-columns:minmax(190px,1.5fr) 70px repeat(5,44px) 64px;
+  gap:6px;align-items:center;
+}
+#view-tracker .assessment-list-head{
+  padding:0 10px 8px;color:#73809a;font-size:8px;font-weight:750;
+}
+#view-tracker .assessment-list-head span:not(:first-child){text-align:center}
+#view-tracker .assessment-student-list{display:grid;border:1px solid #edf0f6;border-radius:12px;overflow:hidden}
+#view-tracker .assessment-student-row{
+  width:100%;min-height:52px;padding:7px 10px;border:0;border-bottom:1px solid #edf0f6;
+  background:#fff;color:#3e4e68;text-align:center;font-size:9px;
+}
+#view-tracker .assessment-student-row:last-child{border-bottom:0}
+#view-tracker .assessment-student-row:hover{background:#f8faff}
+#view-tracker .assessment-student-main{display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
+#view-tracker .assessment-student-main strong{
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#172541;font-size:10px;
+}
+#view-tracker .assessment-percent{color:#119651;font-size:12px}
+#view-tracker .assessment-detail-panel{position:relative}
+#view-tracker .assessment-back-btn{
+  border:0;background:#f1f4f9;color:#4a5a76;border-radius:9px;padding:7px 10px;
+  display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;margin-bottom:12px;
+}
+#view-tracker .assessment-detail-head{
+  display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:11px;align-items:center;margin-bottom:12px;
+}
+#view-tracker .assessment-detail-avatar .student-profile-avatar{width:52px;height:52px;flex-basis:52px;font-size:18px}
+#view-tracker .assessment-detail-name h2{margin:0;color:#14203c;font-size:16px;font-weight:850}
+#view-tracker .assessment-detail-name span{display:block;margin-top:3px;color:#7c89a0;font-size:9px}
+#view-tracker #assessment-detail-percent{color:#159655;font-size:22px}
+#view-tracker .assessment-detail-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-bottom:12px}
+#view-tracker .assessment-detail-stats>div{min-height:58px;padding:8px 4px;border-radius:9px;text-align:center}
+#view-tracker .assessment-detail-stats span{display:block;font-size:7px}
+#view-tracker .assessment-detail-stats strong{display:block;margin-top:4px;font-size:16px}
+#view-tracker .assessment-detail-stats .present{background:#eafaf1;color:#0e934e}
+#view-tracker .assessment-detail-stats .sick{background:#fff0f3;color:#d6324d}
+#view-tracker .assessment-detail-stats .excused{background:#edf4ff;color:#2366d5}
+#view-tracker .assessment-detail-stats .unexcused{background:#fff5e9;color:#c97600}
+#view-tracker .assessment-detail-stats .late{background:#f3efff;color:#7143df}
+#view-tracker .assessment-detail-stats .total{background:#f0f2f6;color:#44516d}
+#view-tracker .assessment-detail-history{display:grid;gap:7px}
+#view-tracker .assessment-history-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 11px;border:1px solid #edf0f6;border-radius:10px;background:#fbfcfe;
+}
+#view-tracker .assessment-history-date{min-width:0}
+#view-tracker .assessment-history-date strong{display:block;color:#172541;font-size:9.5px}
+#view-tracker .assessment-history-date span{display:block;margin-top:3px;color:#7c89a2;font-size:8.5px;overflow-wrap:anywhere}
+#view-tracker .assessment-history-row>b{flex:0 0 auto;padding:5px 7px;border-radius:7px;font-size:8px}
+#view-tracker .assessment-history-row>b.present{background:#eafaf1;color:#0e934e}
+#view-tracker .assessment-history-row>b.sick{background:#fff0f3;color:#d6324d}
+#view-tracker .assessment-history-row>b.excused{background:#edf4ff;color:#2366d5}
+#view-tracker .assessment-history-row>b.unexcused{background:#fff5e9;color:#c97600}
+#view-tracker .assessment-history-row>b.late{background:#f3efff;color:#7143df}
+#view-tracker .assessment-empty{padding:20px 12px;text-align:center;color:#8b96aa;font-size:9px;background:#fbfcfe}
+
+.roster-profile-tools{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;margin-bottom:12px;border:1px solid #e8e1ff;border-radius:13px;background:#fff;
+}
+.roster-profile-tools.hidden{display:none!important}
+.roster-profile-tools>div{min-width:0}
+.roster-profile-tools strong{display:block;color:#172541;font-size:12px}
+.roster-profile-tools span{display:block;margin-top:3px;color:#7d899f;font-size:9px}
+.roster-profile-tools>button{
+  flex:0 0 auto;min-height:38px;padding:0 13px;border:0;border-radius:10px;background:#6a3df0;color:#fff;
+  display:flex;align-items:center;gap:6px;font-size:10px;font-weight:750;
+}
+.roster-profile-avatar{width:38px!important;height:38px!important;flex-basis:38px!important}
+
+#student-profile-modal{z-index:220}
+.student-profile-modal-card{
+  width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 28px);overflow:auto;
+  margin:auto;padding:18px;border-radius:18px;background:#fff;box-shadow:0 24px 70px rgba(14,28,56,.20);
+}
+.student-profile-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.student-profile-modal-head span{display:block;color:#7a879e;font-size:9px}
+.student-profile-modal-head h2{margin:3px 0 0;color:#111b37;font-size:19px;font-weight:850}
+.student-profile-modal-head>button{width:36px;height:36px;border:0;border-radius:10px;background:#f1f4f8;color:#55627b}
+.student-profile-preview-wrap{
+  display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;
+  padding:12px;border:1px solid #e9edf5;border-radius:13px;background:#fbfcfe;margin-bottom:13px;
+}
+.student-profile-preview{
+  width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;background:#edf1f7;color:#70809c;font-size:24px;
+}
+.student-profile-preview.male{background:#e8f2ff;color:#2474e8}
+.student-profile-preview.female{background:#ffeaf2;color:#e85186}
+.student-profile-preview img{width:100%;height:100%;object-fit:cover}
+.student-profile-preview-wrap strong{display:block;color:#172541;font-size:11px}
+.student-profile-preview-wrap span{display:block;margin-top:4px;color:#7d899f;font-size:9px;line-height:1.35}
+.student-profile-field{display:block;margin-top:12px}
+.student-profile-field>span{display:block;margin-bottom:6px;color:#263553;font-size:10px;font-weight:700}
+.student-profile-field>input{
+  width:100%;height:42px;padding:0 11px;border:1px solid #dfe5ef;border-radius:10px;background:#fff;color:#172541;font-size:11px;outline:none;
+}
+.student-profile-field>input:focus{border-color:#7754f3;box-shadow:0 0 0 3px rgba(119,84,243,.08)}
+.student-gender-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.student-gender-switch button{
+  min-height:42px;border:1px solid #dfe5ef;border-radius:10px;background:#fff;color:#4f5d77;font-size:10px;font-weight:700;
+}
+.student-gender-switch button.active{border-color:#6a3df0;background:#f2efff;color:#5c31e9}
+.student-photo-actions{display:flex;flex-wrap:wrap;gap:8px}
+.student-photo-upload,.student-photo-actions>button{
+  min-height:38px;padding:0 11px;border:1px solid #e0e5ee;border-radius:9px;background:#f7f9fc;color:#41516d;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:9px;font-weight:700;cursor:pointer;
+}
+.student-photo-upload input{display:none}
+.student-photo-actions>button.hidden{display:none!important}
+.student-profile-field small{display:block;margin-top:7px;color:#8b95a9;font-size:8px;line-height:1.4}
+.student-profile-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
+.student-profile-modal-actions button{min-height:42px;border:0;border-radius:10px;font-size:10px;font-weight:800}
+.student-profile-modal-actions .secondary{background:#f0f3f8;color:#45536d}
+.student-profile-modal-actions .primary{background:#6637ef;color:#fff}
+
+@media(max-width:767px){
+  #view-tracker .assessment-list-head,
+  #view-tracker .assessment-student-row{
+    grid-template-columns:minmax(120px,1fr) 48px repeat(5,30px) 42px;
+    gap:3px;
+  }
+  #view-tracker .assessment-list-head{padding-left:6px;padding-right:6px;font-size:6.8px}
+  #view-tracker .assessment-student-row{padding:6px;font-size:7.5px}
+  #view-tracker .assessment-student-main{gap:5px}
+  #view-tracker .assessment-student-main .student-profile-avatar{width:28px;height:28px;flex-basis:28px;font-size:9px}
+  #view-tracker .assessment-student-main strong{font-size:8px}
+  #view-tracker .assessment-percent{font-size:9px}
+  #view-tracker .assessment-detail-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .roster-profile-tools{align-items:flex-start;flex-direction:column}
+  .roster-profile-tools>button{width:100%;justify-content:center}
+  .student-profile-modal-card{padding:14px}
+}
