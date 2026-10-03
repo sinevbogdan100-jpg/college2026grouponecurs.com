@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.3-journal-ref2-2026-10-04">
+    <meta name="app-build" content="step18.3-profiles-stats1-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-journal-ref2">
+    <link rel="stylesheet" href="style.css?v=20261004-profiles-stats1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -336,58 +336,58 @@
                     </div>
                     <div id="students-container" class="journal-ref-students"></div>
                 </div>
-            </main>
-        </section>
 
-        <section id="attendance-analytics" class="journal-assessment-view hidden">
-            <div class="journal-assessment-grid">
-                <section class="journal-ref-panel journal-score-panel">
-                    <div class="journal-ref-panel-head">
-                        <div><h2>Оценка посещаемости</h2><span>Выберите студента</span></div>
-                    </div>
-                    <select id="journal-score-select" class="journal-score-select" onchange="renderJournalScoreCard()"></select>
-                    <div class="journal-score-person">
-                        <div class="journal-score-avatar"><i class="fa-solid fa-user"></i></div>
-                        <div class="journal-score-name"><strong id="journal-score-name">—</strong><span>Общая посещаемость</span></div>
-                        <b id="journal-score-percent">0%</b>
-                    </div>
-                    <div class="journal-score-progress"><i id="journal-score-progress" style="width:0%"></i></div>
-                    <div class="journal-score-tiles">
-                        <div class="present"><span>П</span><strong id="journal-score-present">0</strong></div>
-                        <div class="sick"><span>Б</span><strong id="journal-score-sick">0</strong></div>
-                        <div class="excused"><span>У</span><strong id="journal-score-excused">0</strong></div>
-                        <div class="unexcused"><span>Н</span><strong id="journal-score-unexcused">0</strong></div>
-                        <div class="late"><span>О</span><strong id="journal-score-late">0</strong></div>
-                        <div class="total"><span>Всего</span><strong id="journal-score-total">0</strong></div>
-                    </div>
-                </section>
-
-                <section class="journal-ref-panel journal-group-panel">
-                    <div class="journal-ref-panel-head"><div><h2>Статистика группы</h2><span>За выбранную в журнале дату</span></div></div>
-                    <div class="journal-group-tiles">
-                        <div class="present"><span>Присутствуют</span><strong id="stat-present">0</strong></div>
-                        <div class="sick"><span>Болеют</span><strong id="stat-sick">0</strong></div>
-                        <div class="excused"><span>Уважительная</span><strong id="stat-excused">0</strong></div>
-                        <div class="unexcused"><span>Неуважительная</span><strong id="stat-unexcused">0</strong></div>
-                        <div class="late"><span>Опоздания</span><strong id="stat-late">0</strong></div>
-                    </div>
-                    <div class="journal-group-progress"><i id="journal-group-progress" style="width:0%"></i></div>
-                    <div class="journal-group-meta"><span id="journal-group-percent">Посещаемость группы: 0%</span><span id="journal-group-marked">0 из 0</span></div>
-                </section>
-
-                <section class="journal-ref-panel journal-history-panel">
-                    <div class="journal-ref-panel-head"><div><h2>История студента</h2><span>Отметки и примечания по датам</span></div></div>
-                    <div id="journal-score-history" class="journal-score-history"></div>
-                </section>
-
-                <section id="journal-report-actions" class="journal-ref-panel journal-ref-actions">
+                <section id="journal-report-actions" class="journal-inline-actions">
                     <h2>Быстрые действия</h2>
                     <div>
                         <button onclick="openReportPreview('absent')"><i class="fa-regular fa-file-lines"></i><span>Отчёт за день</span></button>
                         <button onclick="openReportPreview('full')"><i class="fa-regular fa-calendar"></i><span>Полный отчёт</span></button>
                     </div>
                 </section>
-            </div>
+            </main>
+        </section>
+
+        <section id="attendance-analytics" class="journal-assessment-view hidden">
+            <section class="journal-ref-panel journal-group-panel assessment-group-summary">
+                <div class="journal-ref-panel-head"><div><h2>Статистика группы</h2><span>За выбранную в журнале дату</span></div></div>
+                <div class="journal-group-tiles">
+                    <div class="present"><span>Присутствуют</span><strong id="stat-present">0</strong></div>
+                    <div class="sick"><span>Болеют</span><strong id="stat-sick">0</strong></div>
+                    <div class="excused"><span>Уважительная</span><strong id="stat-excused">0</strong></div>
+                    <div class="unexcused"><span>Неуважительная</span><strong id="stat-unexcused">0</strong></div>
+                    <div class="late"><span>Опоздания</span><strong id="stat-late">0</strong></div>
+                </div>
+                <div class="journal-group-progress"><i id="journal-group-progress" style="width:0%"></i></div>
+                <div class="journal-group-meta"><span id="journal-group-percent">Посещаемость группы: 0%</span><span id="journal-group-marked">0 из 0</span></div>
+            </section>
+
+            <section id="attendance-student-list-view" class="journal-ref-panel assessment-list-panel">
+                <div class="journal-ref-panel-head">
+                    <div><h2>Все студенты</h2><span>Посещаемость за всё сохранённое время</span></div>
+                </div>
+                <div class="assessment-list-head">
+                    <span>Студент</span><span>Посещ.</span><span>П</span><span>Б</span><span>У</span><span>Н</span><span>О</span><span>Пропуски</span>
+                </div>
+                <div id="attendance-student-list" class="assessment-student-list"></div>
+            </section>
+
+            <section id="attendance-student-detail" class="journal-ref-panel assessment-detail-panel hidden">
+                <button type="button" class="assessment-back-btn" onclick="closeAttendanceStudentDetail()"><i class="fa-solid fa-chevron-left"></i> Все студенты</button>
+                <div class="assessment-detail-head">
+                    <div id="assessment-detail-avatar" class="assessment-detail-avatar"></div>
+                    <div class="assessment-detail-name"><h2 id="assessment-detail-name">—</h2><span>Полная история посещаемости</span></div>
+                    <strong id="assessment-detail-percent">0%</strong>
+                </div>
+                <div class="assessment-detail-stats">
+                    <div class="present"><span>Присутствовал</span><strong id="assessment-detail-present">0</strong></div>
+                    <div class="sick"><span>Болел</span><strong id="assessment-detail-sick">0</strong></div>
+                    <div class="excused"><span>Уважительная</span><strong id="assessment-detail-excused">0</strong></div>
+                    <div class="unexcused"><span>Неуважительная</span><strong id="assessment-detail-unexcused">0</strong></div>
+                    <div class="late"><span>Опоздания</span><strong id="assessment-detail-late">0</strong></div>
+                    <div class="total"><span>Всего отметок</span><strong id="assessment-detail-total">0</strong></div>
+                </div>
+                <div id="assessment-detail-history" class="assessment-detail-history"></div>
+            </section>
         </section>
     </div>
 
@@ -457,19 +457,58 @@
             <div class="leadership-card"><i class="fa-regular fa-user"></i><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
 
-        <div id="roster-admin-tools" class="hidden bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs mb-3">
-            <div class="font-bold text-sm text-slate-900">Управление составом</div>
-            <div class="text-[10px] text-slate-500 mt-0.5">Добавление и удаление синхронизируется между всеми устройствами.</div>
-            <div class="flex gap-2 mt-3">
-                <input id="new-student-name" maxlength="80" class="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400" placeholder="Фамилия Имя" onkeydown="if(event.key==='Enter'){event.preventDefault();addStudent();}">
-                <button onclick="addStudent()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Добавить</button>
+        <div id="roster-admin-tools" class="hidden roster-profile-tools">
+            <div>
+                <strong>Управление составом</strong>
+                <span>Пол, аватар и фото синхронизируются вместе с составом группы.</span>
             </div>
-            <div class="text-[9px] text-slate-400 mt-2">При удалении студент исчезает из группы, журнала и статистики. Старые архивные записи сохраняются.</div>
+            <button onclick="openStudentProfileEditor(-1)"><i class="fa-solid fa-plus"></i> Добавить ученика</button>
         </div>
 
         <div id="roster-container" class="space-y-2">
             <!-- Populated via JS -->
         </div>
+    </div>
+
+    <div id="student-profile-modal" class="app-overlay hidden" onclick="if(event.target===this) closeStudentProfileEditor()">
+        <section class="student-profile-modal-card">
+            <div class="student-profile-modal-head">
+                <div><span>Профиль студента</span><h2 id="student-profile-modal-title">Добавление ученика</h2></div>
+                <button type="button" onclick="closeStudentProfileEditor()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="student-profile-preview-wrap">
+                <div id="student-profile-preview" class="student-profile-preview neutral"><i class="fa-solid fa-user"></i></div>
+                <div><strong>Аватар</strong><span>Фото необязательно. Без фото используется цветная иконка по выбранному полу.</span></div>
+            </div>
+
+            <label class="student-profile-field">
+                <span>Фамилия и имя *</span>
+                <input id="student-profile-name" maxlength="80" placeholder="Например: Абрамов Артём">
+            </label>
+
+            <div class="student-profile-field">
+                <span>Пол *</span>
+                <div class="student-gender-switch">
+                    <button id="student-gender-male" type="button" onclick="setStudentProfileGender('male')"><i class="fa-solid fa-user"></i> Мужской</button>
+                    <button id="student-gender-female" type="button" onclick="setStudentProfileGender('female')"><i class="fa-solid fa-user"></i> Женский</button>
+                </div>
+            </div>
+
+            <div class="student-profile-field">
+                <span>Фото профиля</span>
+                <div class="student-photo-actions">
+                    <label class="student-photo-upload"><i class="fa-regular fa-image"></i> Выбрать фото<input id="student-profile-photo" type="file" accept="image/*" onchange="handleStudentProfilePhoto(this)"></label>
+                    <button id="student-profile-remove-photo" type="button" onclick="removeStudentProfilePhoto()"><i class="fa-regular fa-trash-can"></i> Убрать фото</button>
+                </div>
+                <small>Фотография будет видна всем посетителям сайта. Перед сохранением изображение уменьшается и пере-кодируется без EXIF/геометок.</small>
+            </div>
+
+            <div class="student-profile-modal-actions">
+                <button type="button" class="secondary" onclick="closeStudentProfileEditor()">Отмена</button>
+                <button type="button" class="primary" onclick="saveStudentProfile()">Сохранить</button>
+            </div>
+        </section>
     </div>
 
     <div id="schedule-editor-modal" onclick="if(event.target===this) closeScheduleEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
@@ -554,7 +593,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-journal-ref2"></script>
+    <script type="module" src="app.js?v=20261004-profiles-stats1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
