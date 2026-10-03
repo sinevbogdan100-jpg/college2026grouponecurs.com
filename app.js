@@ -10,7 +10,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step8-root";
+} from "./firebase.js?v=20261003-step9-root";
 
 import {
     getWeekTypeForDate,
@@ -22,8 +22,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step8-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step8-root";
+} from "./utils.js?v=20261003-step9-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step9-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -34,10 +34,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step8-root";
+} from "./schedule.js?v=20261003-step9-root";
 
         
-window.__SITE_BUILD__ = 'step8-2026-10-03';
+window.__SITE_BUILD__ = 'step9-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -154,8 +154,12 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         let rosterStatsRebuildTimer = null;
         let rosterStatsRebuildInFlight = false;
         let rosterStatsRebuildPending = false;
+        let studentsUnsubscribe = null;
+        let studentsPollTimer = null;
+        let lastStudentsUpdatedAt = '';
         const GROUP_INFO_DOC_ID = 'group_info_shared';
         const ROSTER_STATS_DOC_ID = 'roster_stats_shared';
+        const STUDENTS_DOC_ID = 'students_shared';
         window.__attendanceListenerActive = false;
         window.__firebaseDebug = window.__firebaseDebug || {init:false, auth:null};
         window.__firebaseUid = '';
@@ -172,27 +176,74 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         });
 
 
-        const students = [
-            "Бондаренко Роман",
-            "Ган Штефан",
-            "Гудель Никита",
-            "Елькина Маргарита",
-            "Кайруллинов Нурсултан",
-            "Кальнаус Михаил",
-            "Қуанышбай Әлихан",
-            "Маженов Адиль",
-            "Масгутов Ансар",
-            "Оразбеков Ернур",
-            "Пулат Альбина",
-            "Рахметов Кадырали",
-            "Сарсенбинов Амир",
-            "Синёв Богдан",
-            "Сироткин Виктор",
-            "Тлеулесов Ерсұлтан",
-            "Толеубайулы Мухамед",
-            "Турсуканов Диас",
-            "Федосеенков Иван"
+        const DEFAULT_STUDENT_RECORDS = [
+            { name: "Бондаренко Роман", joinedAt: "" },
+            { name: "Ган Штефан", joinedAt: "" },
+            { name: "Гудель Никита", joinedAt: "" },
+            { name: "Елькина Маргарита", joinedAt: "" },
+            { name: "Кайруллинов Нурсултан", joinedAt: "" },
+            { name: "Кальнаус Михаил", joinedAt: "" },
+            { name: "Қуанышбай Әлихан", joinedAt: "" },
+            { name: "Маженов Адиль", joinedAt: "" },
+            { name: "Масгутов Ансар", joinedAt: "" },
+            { name: "Оразбеков Ернур", joinedAt: "" },
+            { name: "Пулат Альбина", joinedAt: "" },
+            { name: "Рахметов Кадырали", joinedAt: "" },
+            { name: "Сарсенбинов Амир", joinedAt: "" },
+            { name: "Синёв Богдан", joinedAt: "" },
+            { name: "Сироткин Виктор", joinedAt: "" },
+            { name: "Тлеулесов Ерсұлтан", joinedAt: "" },
+            { name: "Толеубайулы Мухамед", joinedAt: "" },
+            { name: "Турсуканов Диас", joinedAt: "" },
+            { name: "Федосеенков Иван", joinedAt: "" }
         ];
+
+        function normalizeStudentName(value) {
+            return String(value || '').replace(/\s+/g, ' ').trim();
+        }
+
+        function normalizeStudentRecords(list) {
+            const result = [];
+            const seen = new Set();
+            (Array.isArray(list) ? list : []).forEach(item => {
+                const rawName = typeof item === 'string' ? item : item?.name;
+                const name = normalizeStudentName(rawName);
+                if (!name || seen.has(name.toLocaleLowerCase('ru-RU'))) return;
+                seen.add(name.toLocaleLowerCase('ru-RU'));
+                const joinedAt = typeof item === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(String(item?.joinedAt || ''))
+                    ? String(item.joinedAt)
+                    : '';
+                result.push({ name, joinedAt });
+            });
+            return result;
+        }
+
+        function readLocalStudentRecords() {
+            try {
+                const raw = localStorage.getItem('toe_students_roster');
+                if (raw !== null) {
+                    const saved = JSON.parse(raw);
+                    if (Array.isArray(saved)) return normalizeStudentRecords(saved);
+                }
+            } catch (_) {}
+            return normalizeStudentRecords(DEFAULT_STUDENT_RECORDS);
+        }
+
+        let studentRecords = readLocalStudentRecords();
+        let students = studentRecords.map(item => item.name);
+
+        function getStudentsForDate(dateStr) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return [...students];
+            return studentRecords
+                .filter(item => !item.joinedAt || item.joinedAt <= dateStr)
+                .map(item => item.name);
+        }
+
+        function storeStudentRecordsLocally(records) {
+            studentRecords = normalizeStudentRecords(records);
+            students = studentRecords.map(item => item.name);
+            localStorage.setItem('toe_students_roster', JSON.stringify(studentRecords));
+        }
 
         function updateHomeWeekBanner() {
             const now = new Date();
@@ -489,6 +540,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     await loadAttendanceForDate(today);
                     subscribeToAttendance(today);
                     subscribeToAttendanceArchive();
+                    subscribeToStudents();
                     subscribeToRosterStats();
                     subscribeToGroupInfo();
                     subscribeToSchedule();
@@ -593,9 +645,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (!raw) return null;
                 const saved = JSON.parse(raw);
                 const state = saved?.state || {};
-                const marked = students.filter(name => state[name]).length;
+                const expectedStudents = getStudentsForDate(dateKey);
+                const marked = expectedStudents.filter(name => state[name]).length;
                 if (!marked) return null;
-                return marked >= students.length ? 'complete' : 'partial';
+                return marked >= expectedStudents.length ? 'complete' : 'partial';
             } catch (e) { return null; }
         }
 
@@ -735,10 +788,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 'group-curator': info.curator,
                 'group-headman': info.headman,
                 'group-deputy': info.deputy,
-                'group-student-count': info.studentCount,
-                'group-student-count-card': info.studentCount,
+                'group-student-count': students.length,
+                'group-student-count-card': students.length,
                 'tracker-curator': info.curator,
-                'roster-student-count': info.studentCount
+                'roster-student-count': students.length
             };
             Object.entries(ids).forEach(([id, value]) => {
                 const el = document.getElementById(id);
@@ -838,6 +891,151 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
         }
 
+        function renderStudentDependentViews() {
+            renderGroupInfo();
+            const roster = document.getElementById('roster-container');
+            if (roster) renderRosterList();
+            const journal = document.getElementById('students-container');
+            if (journal) renderApp();
+            renderMiniCalendar();
+        }
+
+        function syncStudentCountLocally() {
+            const info = getGroupInfo();
+            if (Number(info.studentCount) === students.length) {
+                renderGroupInfo();
+                return;
+            }
+            saveGroupInfoLocally({ ...info, studentCount: students.length });
+        }
+
+        async function syncStudentCountToCloud() {
+            const info = { ...getGroupInfo(), studentCount: students.length };
+            saveGroupInfoLocally(info);
+            return persistGroupInfoToCloud(info);
+        }
+
+        function applyStudentsPayload(data = {}) {
+            const updatedAt = String(data.updatedAt || '');
+            if (updatedAt && updatedAt === lastStudentsUpdatedAt) return;
+            if (!Array.isArray(data.students)) return;
+            const incoming = normalizeStudentRecords(data.students);
+            if (!incoming.length && data.students.length > 0) return;
+            if (updatedAt) lastStudentsUpdatedAt = updatedAt;
+            storeStudentRecordsLocally(incoming);
+            syncStudentCountLocally();
+            rosterStatsReady = false;
+            renderStudentDependentViews();
+            scheduleRosterStatsRebuild(200);
+        }
+
+        async function persistStudentsToCloud(records = studentRecords) {
+            const normalized = normalizeStudentRecords(records);
+            storeStudentRecordsLocally(normalized);
+            syncStudentCountLocally();
+            renderStudentDependentViews();
+            rosterStatsReady = false;
+            scheduleRosterStatsRebuild(150);
+
+            if (!isCloudConnected || !db || !auth?.currentUser) return false;
+            const payload = {
+                students: normalized,
+                updatedAt: new Date().toISOString(),
+                build: window.__SITE_BUILD__
+            };
+            try {
+                await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID), payload, { merge: false });
+                lastStudentsUpdatedAt = payload.updatedAt;
+                await syncStudentCountToCloud();
+                return true;
+            } catch (e) {
+                console.warn('Не удалось сохранить состав группы в облако', e);
+                return false;
+            }
+        }
+
+        async function pollStudentsOnce() {
+            if (!isCloudConnected || !db || !auth?.currentUser) return;
+            try {
+                const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID));
+                if (snap.exists()) applyStudentsPayload(snap.data() || {});
+            } catch (e) {
+                console.warn('Students polling error', e);
+            }
+        }
+
+        function startStudentsPolling() {
+            if (studentsPollTimer) clearInterval(studentsPollTimer);
+            studentsPollTimer = setInterval(() => { void pollStudentsOnce(); }, 5000);
+        }
+
+        function subscribeToStudents() {
+            if (!isCloudConnected || !db || !auth?.currentUser) return false;
+            if (studentsUnsubscribe) {
+                try { studentsUnsubscribe(); } catch (_) {}
+                studentsUnsubscribe = null;
+            }
+            const ref = doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID);
+            try {
+                studentsUnsubscribe = onSnapshot(ref, async snap => {
+                    if (snap.exists()) {
+                        applyStudentsPayload(snap.data() || {});
+                    } else {
+                        await persistStudentsToCloud(studentRecords);
+                    }
+                }, err => {
+                    console.warn('Realtime students error', err);
+                });
+                startStudentsPolling();
+                return true;
+            } catch (e) {
+                console.warn('Students listener registration error', e);
+                startStudentsPolling();
+                return false;
+            }
+        }
+
+        window.addStudent = async function() {
+            if (sessionStorage.getItem('toe_admin') !== '1') {
+                showToast('Добавлять студентов может только администратор');
+                return;
+            }
+            const input = document.getElementById('new-student-name');
+            const name = normalizeStudentName(input?.value);
+            if (!name) {
+                showToast('Введите фамилию и имя студента');
+                input?.focus();
+                return;
+            }
+            if (name.length > 80 || /[<>&"'`]/.test(name)) {
+                showToast('Проверьте имя студента');
+                input?.focus();
+                return;
+            }
+            if (students.some(existing => existing.toLocaleLowerCase('ru-RU') === name.toLocaleLowerCase('ru-RU'))) {
+                showToast('Такой студент уже есть в группе');
+                return;
+            }
+
+            const next = [...studentRecords, { name, joinedAt: getCurrentDateStr() }];
+            const cloudOk = await persistStudentsToCloud(next);
+            if (input) input.value = '';
+            showToast(cloudOk ? `Студент ${name} добавлен в облако` : `Студент ${name} добавлен только на этом устройстве`);
+        };
+
+        window.removeStudent = async function(index) {
+            if (sessionStorage.getItem('toe_admin') !== '1') {
+                showToast('Удалять студентов может только администратор');
+                return;
+            }
+            const record = studentRecords[index];
+            if (!record) return;
+            if (!confirm(`Убрать ${record.name} из группы? Старые записи посещаемости останутся в архиве.`)) return;
+            const next = studentRecords.filter((_, i) => i !== index);
+            const cloudOk = await persistStudentsToCloud(next);
+            showToast(cloudOk ? `${record.name} удалён из состава группы` : `${record.name} удалён только на этом устройстве`);
+        };
+
         window.saveGroupInfo = async function() {
             const info = getGroupInfo();
             saveGroupInfoLocally(info);
@@ -847,7 +1045,12 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function makeGroupFieldEditable(el) {
             if (!el) return;
-            el.contentEditable = sessionStorage.getItem('toe_admin') === '1' ? 'true' : 'false';
+            if (el.dataset.groupField === 'studentCount') {
+                el.contentEditable = 'false';
+                el.title = 'Количество меняется автоматически по составу группы';
+            } else {
+                el.contentEditable = sessionStorage.getItem('toe_admin') === '1' ? 'true' : 'false';
+            }
             el.setAttribute('spellcheck', 'false');
         }
 
@@ -923,7 +1126,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             document.body.classList.toggle('admin-mode', isAdmin);
             const hint = document.getElementById('journal-admin-hint');
             if (hint) hint.classList.toggle('hidden', isAdmin);
+            const rosterTools = document.getElementById('roster-admin-tools');
+            if (rosterTools) rosterTools.classList.toggle('hidden', !isAdmin);
             setupInlineGroupEditing();
+            renderRosterList();
         }
 
         window.adminLogout = function() {
@@ -1264,9 +1470,16 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                                 <div class="text-[10px] text-slate-400 mt-0.5">Отмечено дней: ${stats.total}</div>
                             </div>
                         </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-bold text-indigo-600">${stats.attendancePercent}%</div>
-                            <div class="text-[9px] text-slate-400">посещаемость</div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <div class="text-right">
+                                <div class="text-sm font-bold text-indigo-600">${stats.attendancePercent}%</div>
+                                <div class="text-[9px] text-slate-400">посещаемость</div>
+                            </div>
+                            <div class="roster-admin-actions">
+                                <button onclick="removeStudent(${index})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center" title="Удалить студента">
+                                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-4 gap-1 mt-2.5 text-center">
@@ -1306,7 +1519,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 showToast('Изменение журнала доступно только администратору');
                 return;
             }
-            students.forEach(s => {
+            const selectedStudents = getStudentsForDate(selectedDate);
+            selectedStudents.forEach(s => {
                 attendanceState[s] = status;
             });
             window.__journalDirty = true;
@@ -1368,7 +1582,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
             let counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
 
-            students.forEach((name, index) => {
+            const selectedDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
+            const journalStudents = getStudentsForDate(selectedDate);
+            journalStudents.forEach((name, index) => {
                 if (searchVal && !name.toLowerCase().includes(searchVal)) return;
 
                 const currentStatus = attendanceState[name] || 'present';
@@ -1562,7 +1778,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             let lines = [];
             let presentCount = 0;
             let absentCount = 0;
-            students.forEach((name) => {
+            const reportDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
+            getStudentsForDate(reportDate).forEach((name) => {
                 const st = attendanceState[name] || 'present';
                 if (st === 'present') {
                     presentCount++;

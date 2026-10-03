@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step6">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261003-step8-root">
+    <link rel="stylesheet" href="style.css?v=20261003-step9-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -124,7 +124,7 @@
                     </div>
                     <div>
                         <div class="text-[10px] uppercase tracking-wide text-slate-400">Студентов</div>
-                        <div id="group-student-count" class="text-xs font-semibold text-slate-800 mt-1 admin-inline-edit" data-group-field="studentCount" tabindex="0">19</div>
+                        <div id="group-student-count" class="text-xs font-semibold text-slate-800 mt-1" title="Количество меняется автоматически по составу группы">19</div>
                     </div>
                 </div>
             </div>
@@ -358,6 +358,16 @@
             </div>
         </div>
 
+        <div id="roster-admin-tools" class="hidden bg-white p-3.5 rounded-xl border border-indigo-100 shadow-xs mb-3">
+            <div class="font-bold text-sm text-slate-900">Управление составом</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Добавление и удаление синхронизируется между всеми устройствами.</div>
+            <div class="flex gap-2 mt-3">
+                <input id="new-student-name" maxlength="80" class="min-w-0 flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400" placeholder="Фамилия Имя" onkeydown="if(event.key==='Enter'){event.preventDefault();addStudent();}">
+                <button onclick="addStudent()" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>Добавить</button>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-2">При удалении студент исчезает из группы, журнала и статистики. Старые архивные записи сохраняются.</div>
+        </div>
+
         <div id="roster-container" class="space-y-2">
             <!-- Populated via JS -->
         </div>
@@ -369,13 +379,19 @@
                 <div><h2 id="schedule-editor-title" class="font-bold text-base text-slate-900">Редактирование пары</h2><p class="text-[11px] text-slate-500 mt-0.5">Только для администратора</p></div>
                 <button onclick="closeScheduleEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <label class="text-[11px] text-slate-600">Время<input id="edit-time" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="08:00 - 09:30"></label>
-                <label class="text-[11px] text-slate-600">Перемена<input id="edit-break" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Перемена: 10 мин"></label>
+            <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 text-[10px] text-indigo-800">
+                Выберите предмет из подсказок — кабинет и преподаватель подставятся автоматически. Их можно исправить вручную.
             </div>
-            <label class="block text-[11px] text-slate-600">Предмет<input id="edit-subject" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="text-[11px] text-slate-600">Время<input id="edit-time" list="schedule-time-list" onchange="onScheduleTimeChanged()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="08:00 - 09:30"></label>
+                <label class="text-[11px] text-slate-600">Перемена<input id="edit-break" list="schedule-break-list" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Перемена: 10 мин"></label>
+            </div>
+            <label class="block text-[11px] text-slate-600">Предмет<input id="edit-subject" list="schedule-subject-list" onchange="onScheduleSubjectChanged()" oninput="onScheduleSubjectChanged(true)" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="Начните вводить предмет"></label>
             <label class="block text-[11px] text-slate-600">Кабинет / место<input id="edit-room" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
             <label class="block text-[11px] text-slate-600">Преподаватель<input id="edit-teacher" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            <datalist id="schedule-subject-list"></datalist>
+            <datalist id="schedule-time-list"></datalist>
+            <datalist id="schedule-break-list"></datalist>
             <label class="flex items-center gap-2 text-xs text-slate-600"><input id="edit-class-hour" type="checkbox" class="w-4 h-4"> Классный час</label>
             <div class="flex gap-2"><button id="schedule-delete-btn" onclick="deleteScheduleLesson()" class="hidden flex-1 py-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-100 text-sm font-semibold">Удалить</button><button onclick="saveScheduleLesson()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Сохранить</button></div>
         </div>
@@ -383,7 +399,7 @@
 
 
 
-    <script type="module" src="app.js?v=20261003-step8-root"></script>
+    <script type="module" src="app.js?v=20261003-step9-root"></script>
 
     <div id="report-preview-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -413,7 +429,7 @@
     </nav>
 
 <!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step8-root">
+<link rel="stylesheet" href="realtime-debug.css?v=20261003-step9-root">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -435,7 +451,7 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step8-root"></script>
+<script src="realtime-debug.js?v=20261003-step9-root"></script>
 
 </body>
 </html>

@@ -1,6 +1,6 @@
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step8-root";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step8-root";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step8-root";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step9-root";
+import { getWeekTypeForDate } from "./utils.js?v=20261003-step9-root";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step9-root";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
@@ -189,6 +189,89 @@ window.setScheduleDay = function(day) {
     renderSchedule(day);
 };
 
+function collectScheduleItems() {
+    const items = [];
+    [scheduleDataNumerator, scheduleDataDenominator].forEach(source => {
+        Object.values(source || {}).forEach(dayList => {
+            (Array.isArray(dayList) ? dayList : []).forEach(item => items.push(item));
+        });
+    });
+    return items;
+}
+
+function buildSubjectCatalog() {
+    const catalog = new Map();
+    collectScheduleItems().forEach(item => {
+        const subject = String(item?.subject || '').trim();
+        if (!subject) return;
+        const existing = catalog.get(subject) || { subject, room: '', teacher: '' };
+        if (!existing.room && item.room) existing.room = String(item.room).trim();
+        if (!existing.teacher && item.teacher) existing.teacher = String(item.teacher).trim();
+        catalog.set(subject, existing);
+    });
+    return [...catalog.values()].sort((a, b) => a.subject.localeCompare(b.subject, 'ru'));
+}
+
+function fillScheduleEditorDatalists() {
+    const subjectList = document.getElementById('schedule-subject-list');
+    const timeList = document.getElementById('schedule-time-list');
+    const breakList = document.getElementById('schedule-break-list');
+
+    if (subjectList) {
+        subjectList.innerHTML = '';
+        buildSubjectCatalog().forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.subject;
+            const details = [item.room, item.teacher].filter(Boolean).join(' · ');
+            if (details) option.label = details;
+            subjectList.appendChild(option);
+        });
+    }
+
+    const items = collectScheduleItems();
+    const times = [...new Set(items.map(item => String(item?.time || '').trim()).filter(Boolean))];
+    const breaks = [...new Set(items.map(item => String(item?.breakDuration || '').trim()).filter(Boolean))];
+
+    if (timeList) {
+        timeList.innerHTML = '';
+        times.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            timeList.appendChild(option);
+        });
+    }
+    if (breakList) {
+        breakList.innerHTML = '';
+        breaks.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            breakList.appendChild(option);
+        });
+    }
+}
+
+window.onScheduleSubjectChanged = function(fromTyping = false) {
+    const subjectInput = document.getElementById('edit-subject');
+    const roomInput = document.getElementById('edit-room');
+    const teacherInput = document.getElementById('edit-teacher');
+    if (!subjectInput || !roomInput || !teacherInput) return;
+    const value = subjectInput.value.trim();
+    const match = buildSubjectCatalog().find(item => item.subject.toLocaleLowerCase('ru') === value.toLocaleLowerCase('ru'));
+    if (!match) return;
+    if (fromTyping && value.length < 2) return;
+    roomInput.value = match.room || '';
+    teacherInput.value = match.teacher || '';
+};
+
+window.onScheduleTimeChanged = function() {
+    const timeInput = document.getElementById('edit-time');
+    const breakInput = document.getElementById('edit-break');
+    if (!timeInput || !breakInput) return;
+    const time = timeInput.value.trim();
+    const match = collectScheduleItems().find(item => String(item?.time || '').trim() === time && item?.breakDuration);
+    if (match) breakInput.value = String(match.breakDuration || '').trim();
+};
+
 export function renderSchedule(dayKey = currentScheduleDay) {
     const container = document.getElementById('schedule-container');
     if (!container) return;
@@ -210,7 +293,14 @@ export function renderSchedule(dayKey = currentScheduleDay) {
         card.innerHTML = `
             <div class="flex items-center justify-between gap-2">
                 <span class="text-[10px] font-bold ${badgeColor} px-2 py-0.5 rounded-md border border-indigo-100">${badgeText}</span>
-                <div class="flex items-center gap-2"><span class="text-[10px] text-slate-400">${item.breakDuration || ''}</span><div class="schedule-admin-actions"><button onclick="openScheduleEditor(${index})" class="px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-semibold border border-indigo-100">Изменить</button></div></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-400">${item.breakDuration || ''}</span>
+                    <div class="schedule-admin-actions">
+                        <button onclick="moveScheduleLesson(${index}, -1)" class="w-7 h-7 rounded-md bg-slate-50 text-slate-600 text-[10px] border border-slate-200" title="Поднять выше" ${index === 0 ? 'disabled style="opacity:.35"' : ''}>↑</button>
+                        <button onclick="moveScheduleLesson(${index}, 1)" class="w-7 h-7 rounded-md bg-slate-50 text-slate-600 text-[10px] border border-slate-200" title="Опустить ниже" ${index === list.length - 1 ? 'disabled style="opacity:.35"' : ''}>↓</button>
+                        <button onclick="openScheduleEditor(${index})" class="px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-semibold border border-indigo-100">Изменить</button>
+                    </div>
+                </div>
             </div>
             <div><h3 class="font-bold text-sm text-slate-900">${item.subject}</h3><div class="flex items-center gap-3 mt-1 text-xs text-slate-500"><span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i>${item.room}</span>${item.teacher ? `<span><i class="fa-solid fa-chalkboard-user text-indigo-500 mr-1"></i>${item.teacher}</span>` : ''}</div></div>`;
         container.appendChild(card);
@@ -224,6 +314,7 @@ function getCurrentScheduleList() {
 window.openScheduleEditor = function(index) {
     if (sessionStorage.getItem('toe_admin') !== '1') { showToast('Редактирование расписания доступно только администратору'); return; }
     editingScheduleIndex = index;
+    fillScheduleEditorDatalists();
     const item = index >= 0 ? getCurrentScheduleList()[index] : {time:'',breakDuration:'',subject:'',room:'',teacher:'',isClassHour:false};
     document.getElementById('schedule-editor-title').innerText = index >= 0 ? 'Редактирование пары' : 'Добавление пары';
     document.getElementById('edit-time').value = item.time || '';
@@ -264,6 +355,25 @@ window.saveScheduleLesson = async function() {
         console.error('Schedule save failed:', e);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = false;
         showToast('Ошибка сохранения расписания');
+    }
+};
+
+window.moveScheduleLesson = async function(index, delta) {
+    if (sessionStorage.getItem('toe_admin') !== '1') return;
+    const list = getCurrentScheduleList();
+    if (!list || !Number.isInteger(index) || !Number.isInteger(delta)) return;
+    const target = index + delta;
+    if (target < 0 || target >= list.length) return;
+    [list[index], list[target]] = [list[target], list[index]];
+    renderSchedule(currentScheduleDay);
+    try {
+        await saveScheduleData();
+        showToast('Порядок пар сохранён в облако');
+    } catch (e) {
+        [list[index], list[target]] = [list[target], list[index]];
+        renderSchedule(currentScheduleDay);
+        console.error('Schedule reorder failed:', e);
+        showToast('Не удалось сохранить порядок пар');
     }
 };
 

@@ -504,3 +504,6 @@ html, body {
   background:transparent !important;
 }
 </style>
+/* Управление составом группы */
+.roster-admin-actions { display: none; }
+body.admin-mode .roster-admin-actions { display: flex; }
