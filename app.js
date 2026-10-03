@@ -1096,12 +1096,12 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         async function persistStudentsToCloud(records = studentRecords) {
             if (!canManageStudents()) return false;
             const normalized = normalizeStudentRecords(records);
+            storeStudentRecordsLocally(normalized);
             const approxBytes = new Blob([JSON.stringify(normalized)]).size;
             if (approxBytes > 800000) {
                 showToast('Профили стали слишком большими для облачной записи. Уменьшите или удалите часть фотографий.');
                 return false;
             }
-            storeStudentRecordsLocally(normalized);
             syncStudentCountLocally();
             renderStudentDependentViews();
             rosterStatsReady = false;
@@ -1733,7 +1733,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             students.forEach(name => {
                 const stats = byStudent[name];
                 stats.absent = stats.sick + stats.excused + stats.unexcused;
-                stats.attendancePercent = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0;
+                stats.attendancePercent = stats.total > 0 ? Math.round(((stats.present + stats.late) / stats.total) * 100) : 0;
             });
             return byStudent;
         }
@@ -1756,6 +1756,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             rosterStatsByStudent = next;
             rosterStatsReady = rows.length > 0;
             renderRosterList();
+            if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
         }
 
         async function rebuildRosterStatsFromCloud() {
