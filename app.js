@@ -42,7 +42,7 @@ import {
 } from "./schedule.js?v=20261003-step18-3-recovery1";
 
         
-window.__SITE_BUILD__ = 'step18.3-home-ref1-2026-10-03';
+window.__SITE_BUILD__ = 'step18.3-journal-ref1-2026-10-04';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -2025,53 +2025,89 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             `;
         }
 
+        function renderJournalScoreCard() {
+            const select = document.getElementById('journal-score-select');
+            if (!select) return;
+            const current = select.value && students.includes(select.value) ? select.value : (students[0] || '');
+            const previous = select.value;
+            select.innerHTML = students.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${name === current ? 'selected' : ''}>${name}</option>`).join('');
+            if (previous && students.includes(previous)) select.value = previous;
+            const selected = select.value || current;
+            const stats = selected ? getStudentAttendanceStats(selected) : emptyAttendanceStats();
+            const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = String(value); };
+            setText('journal-score-name', selected || '—');
+            setText('journal-score-percent', (stats.attendancePercent || 0) + '%');
+            setText('journal-score-present', stats.present || 0);
+            setText('journal-score-sick', stats.sick || 0);
+            setText('journal-score-excused', stats.excused || 0);
+            setText('journal-score-unexcused', stats.unexcused || 0);
+            setText('journal-score-late', stats.late || 0);
+            setText('journal-score-total', stats.total || 0);
+            const progress = document.getElementById('journal-score-progress');
+            if (progress) progress.style.width = Math.max(0, Math.min(100, stats.attendancePercent || 0)) + '%';
+        }
+        window.renderJournalScoreCard = renderJournalScoreCard;
+
         function renderApp() {
             const container = document.getElementById('students-container');
-            const searchVal = (document.getElementById('search-input').value || '').toLowerCase();
+            if (!container) return;
+            const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
             container.innerHTML = '';
 
-            let counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
-
+            const counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
             const selectedDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
             const journalStudents = getStudentsForDate(selectedDate);
+            const editable = canEditJournal();
+            const defs = [
+                ['present', 'П', 'Присутствует'],
+                ['sick', 'Б', 'Болеет'],
+                ['excused', 'У', 'Уважительная причина'],
+                ['unexcused', 'Н', 'Неуважительная причина'],
+                ['late', 'О', 'Опоздание']
+            ];
+
             journalStudents.forEach((name, index) => {
                 if (searchVal && !name.toLowerCase().includes(searchVal)) return;
-
                 const currentStatus = attendanceState[name] || null;
                 if (currentStatus && counts[currentStatus] !== undefined) counts[currentStatus]++;
 
-                const card = document.createElement('div');
-                card.className = "journal-student-card bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col space-y-2.5";
-
-                let buttonsHtml = canEditJournal() ? `
-                    <div class="journal-status-grid grid grid-cols-5 gap-1">
-                        <button onclick="setAttendance('${name}', 'present')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'present' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Присутствует">П</button>
-                        <button onclick="setAttendance('${name}', 'late')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'late' ? 'bg-amber-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Опаздывает">О</button>
-                        <button onclick="setAttendance('${name}', 'sick')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'sick' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Болеет">Б</button>
-                        <button onclick="setAttendance('${name}', 'excused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'excused' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Уважительная причина">У</button>
-                        <button onclick="setAttendance('${name}', 'unexcused')" class="py-1.5 rounded-lg text-[10px] font-semibold transition ${currentStatus === 'unexcused' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" title="Неуважительная причина">Н</button>
+                const row = document.createElement('div');
+                row.className = 'journal-ref-row';
+                const safeName = name.replace(/'/g, "\\'");
+                const buttons = defs.map(([status, label, title]) => {
+                    const selected = currentStatus === status ? ' selected' : '';
+                    const action = editable ? `onclick="setAttendance('${safeName}', '${status}')"` : 'disabled';
+                    return `<button ${action} class="journal-status-btn ${status}${selected}" title="${title}">${label}</button>`;
+                }).join('');
+                const note = attendanceNotes[name] || '';
+                row.innerHTML = `
+                    <span class="journal-ref-index">${index + 1}</span>
+                    <div class="journal-ref-person">
+                        <span class="journal-ref-avatar"><i class="fa-solid fa-user"></i></span>
+                        <strong>${name}</strong>
                     </div>
-                ` : '';
-
-                card.innerHTML = `
-                    <div class="journal-student-head flex items-center justify-between">
-                        <div class="journal-student-ident flex items-center space-x-2.5">
-                            <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
-                            <span class="font-bold text-sm text-slate-900">${name}</span>
-                        </div>
-                        <span class="journal-status-badge text-[10px] font-medium px-2 py-0.5 rounded-md ${currentStatus ? getStatusBadgeClass(currentStatus) : 'bg-slate-100 text-slate-500'}">${currentStatus ? getStatusName(currentStatus) : 'Не отмечено'}</span>
-                    </div>
-                    ${buttonsHtml}
-                    <button onclick="openAttendanceNote('${name.replace("'", "\'")}')" class="journal-note-btn"><i class="fa-regular fa-note-sticky"></i><span>${attendanceNotes[name] ? attendanceNotes[name] : 'Добавить примечание'}</span></button>
-                `;
-                container.appendChild(card);
+                    ${buttons}
+                    <button class="journal-ref-note ${note ? 'has-note' : ''}" ${editable ? `onclick="openAttendanceNote('${safeName}')"` : 'disabled'} title="${note || 'Добавить примечание'}">
+                        <i class="fa-regular fa-note-sticky"></i><span>${note || 'Добавить...'}</span>
+                    </button>`;
+                container.appendChild(row);
             });
 
-            document.getElementById('stat-present').innerText = counts.present;
-            document.getElementById('stat-late').innerText = counts.late;
-            document.getElementById('stat-sick').innerText = counts.sick;
-            document.getElementById('stat-excused').innerText = counts.excused;
-            document.getElementById('stat-unexcused').innerText = counts.unexcused;
+            const marked = counts.present + counts.late + counts.sick + counts.excused + counts.unexcused;
+            const attending = counts.present + counts.late;
+            const groupPercent = marked ? Math.round((attending / marked) * 100) : 0;
+            const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = String(value); };
+            setText('stat-present', counts.present);
+            setText('stat-late', counts.late);
+            setText('stat-sick', counts.sick);
+            setText('stat-excused', counts.excused);
+            setText('stat-unexcused', counts.unexcused);
+            setText('journal-group-percent', 'Посещаемость группы: ' + groupPercent + '%');
+            setText('journal-group-marked', marked + ' из ' + journalStudents.length);
+            const groupProgress = document.getElementById('journal-group-progress');
+            if (groupProgress) groupProgress.style.width = groupPercent + '%';
+
+            renderJournalScoreCard();
             if (activeJournalTab === 'stats') renderAttendanceAnalytics();
         }
 
