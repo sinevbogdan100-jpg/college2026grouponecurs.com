@@ -27,7 +27,7 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step18-3-recovery1";
+} from "./utils.js?v=20261004-settings-reference";
 import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-3-recovery1";
 import {
     configureSchedule,
@@ -39,7 +39,8 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-mobile-ui-polish2";
+} from "./schedule.js?v=20261004-settings-reference";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-settings-reference";
 
         
 window.__SITE_BUILD__ = 'step18.3-mobile-ui-polish2-2026-10-04';
@@ -462,7 +463,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const friday = new Date(new Date(adjustedDate).setDate(diffToMon + 4));
 
             const options = { month: 'short', day: 'numeric' };
-            const dateStr = `${monday.toLocaleDateString('ru-RU', options)} — ${friday.toLocaleDateString('ru-RU', options)}`;
+            const dateStr = `${monday.toLocaleDateString(interfaceLocale(), options)} — ${friday.toLocaleDateString(interfaceLocale(), options)}`;
 
             if (bannerText) {
                 bannerText.innerText = type === 'numerator' ? 'Числитель' : 'Знаменатель';
@@ -868,7 +869,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const title = document.getElementById('mini-calendar-title');
             const days = document.getElementById('mini-calendar-days');
             if (!title || !days) return;
-            title.textContent = `${ruMonths[miniCalendarMonth.getMonth()]} ${miniCalendarMonth.getFullYear()}`;
+            title.textContent = miniCalendarMonth.toLocaleDateString(interfaceLocale(), {month:'long',year:'numeric'});
             days.innerHTML = '';
 
             const first = new Date(miniCalendarMonth.getFullYear(), miniCalendarMonth.getMonth(), 1);
@@ -971,8 +972,19 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             curatorAvatar: '',
             headmanAvatar: '',
             deputyAvatar: '',
+            groupIcon: 'user-group',
+            groupAvatar: '',
             studentCount: 19
         };
+
+        const GROUP_ICONS = Object.freeze({
+            'user-group': 'Группа', 'graduation-cap': 'Учёба', 'book-open': 'Книга',
+            'bolt': 'Энергия', 'atom': 'Наука', 'laptop-code': 'Технологии',
+            'gear': 'Механика', 'building-columns': 'Колледж'
+        });
+        function normalizeGroupIcon(value) {
+            return Object.prototype.hasOwnProperty.call(GROUP_ICONS, value) ? value : 'user-group';
+        }
 
         function normalizeLeaderAvatar(value) {
             const avatar = String(value || '');
@@ -982,13 +994,18 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function readLocalGroupInfo() {
             try {
                 const saved = JSON.parse(localStorage.getItem('toe_group_info') || '{}');
-                return { ...DEFAULT_GROUP_INFO, ...saved };
+                return normalizeGroupInfoCloudData(saved);
             } catch (e) {
                 return { ...DEFAULT_GROUP_INFO };
             }
         }
 
         let groupInfoState = readLocalGroupInfo();
+        let groupSettingsDirty = false;
+        let groupIconDraft = 'user-group';
+        let groupAvatarDraft = '';
+        let groupSettingsSaving = false;
+        let settingsSystemTimer = null;
 
         function getGroupInfo() {
             return { ...DEFAULT_GROUP_INFO, ...groupInfoState };
@@ -1045,6 +1062,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (el) el.textContent = value;
             });
             renderLeaderAvatars(info);
+            renderGroupIcon(info);
+            loadGroupInfoToAdminForm();
         }
 
         function normalizeGroupInfoCloudData(data = {}) {
@@ -1056,6 +1075,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 curatorAvatar: normalizeLeaderAvatar(data.curatorAvatar),
                 headmanAvatar: normalizeLeaderAvatar(data.headmanAvatar),
                 deputyAvatar: normalizeLeaderAvatar(data.deputyAvatar),
+                groupIcon: normalizeGroupIcon(data.groupIcon),
+                groupAvatar: normalizeLeaderAvatar(data.groupAvatar),
                 studentCount: Number.isFinite(Number(data.studentCount)) ? Number(data.studentCount) : DEFAULT_GROUP_INFO.studentCount
             };
         }
@@ -1386,7 +1407,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             }
             const record = studentRecords[index];
             if (!record) return;
-            if (!confirm(`Убрать ${record.name} из группы? Старые записи посещаемости останутся в архиве.`)) return;
+            if (!confirm(translateUI(`Убрать ${record.name} из группы? Старые записи посещаемости останутся в архиве.`))) return;
             const next = studentRecords.filter((_, i) => i !== index);
             const cloudOk = await persistStudentsToCloud(next);
             showToast(cloudOk ? `${record.name} удалён из состава группы` : `${record.name} удалён только на этом устройстве`);
@@ -1402,12 +1423,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function makeGroupFieldEditable(el) {
             if (!el) return;
-            if (el.dataset.groupField === 'studentCount') {
-                el.contentEditable = 'false';
-                el.title = 'Количество меняется автоматически по составу группы';
-            } else {
-                el.contentEditable = canEditGroupInfo() ? 'true' : 'false';
-            }
+            el.contentEditable = 'false';
+            el.removeAttribute('tabindex');
             el.setAttribute('spellcheck', 'false');
         }
 
@@ -1442,9 +1459,127 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function loadGroupInfoToAdminForm() {
-            // Данные группы больше не дублируются в окне настроек.
-            // Редактирование выполняется прямо в месте их отображения на главной.
-            setupInlineGroupEditing();
+            const info = getGroupInfo();
+            if (!groupSettingsDirty) {
+                ['groupName', 'curator', 'headman', 'deputy'].forEach(field => {
+                    const id = field === 'groupName' ? 'name' : field;
+                    const input = document.getElementById(`settings-group-${id}`);
+                    if (input) input.value = info[field] || (field === 'deputy' ? '—' : '');
+                });
+                groupIconDraft = normalizeGroupIcon(info.groupIcon);
+                groupAvatarDraft = normalizeLeaderAvatar(info.groupAvatar);
+            }
+            const count = document.getElementById('settings-student-count');
+            if (count) count.textContent = students.length;
+            const allowed = canEditGroupInfo();
+            const fields = document.getElementById('settings-group-fields');
+            if (fields) fields.disabled = !allowed || groupSettingsSaving;
+            document.getElementById('settings-group-icon-tools')?.classList.toggle('hidden', !allowed);
+            const save = document.getElementById('settings-group-save');
+            if (save) { save.classList.toggle('hidden', !allowed); save.disabled = groupSettingsSaving; }
+            const upload = document.getElementById('settings-group-photo');
+            if (upload) upload.disabled = !allowed || groupSettingsSaving;
+            renderGroupIconOptions();
+        }
+
+        function renderGroupIcon(info = getGroupInfo()) {
+            const el = document.getElementById('group-icon-home');
+            if (!el) return;
+            const avatar = normalizeLeaderAvatar(info.groupAvatar);
+            el.innerHTML = avatar ? `<img src="${avatar}" alt="">` : `<i class="fa-solid fa-${normalizeGroupIcon(info.groupIcon)}"></i>`;
+            el.disabled = !canEditGroupInfo();
+            el.setAttribute('aria-disabled', String(el.disabled));
+        }
+
+        function renderGroupIconOptions() {
+            const preview = document.getElementById('settings-group-icon-preview');
+            if (preview) preview.innerHTML = groupAvatarDraft
+                ? `<img src="${groupAvatarDraft}" alt="">`
+                : `<i class="fa-solid fa-${normalizeGroupIcon(groupIconDraft)}"></i>`;
+            const options = document.getElementById('settings-group-icon-options');
+            if (options) options.innerHTML = Object.entries(GROUP_ICONS).map(([icon, label]) =>
+                `<button type="button" onclick="chooseGroupIcon('${icon}')" aria-label="${translateUI(label)}" title="${translateUI(label)}" aria-pressed="${!groupAvatarDraft && icon === groupIconDraft}" ${!canEditGroupInfo() || groupSettingsSaving ? 'disabled' : ''}><i class="fa-solid fa-${icon}"></i></button>`
+            ).join('');
+            document.getElementById('settings-group-remove-photo')?.classList.toggle('hidden', !groupAvatarDraft);
+        }
+
+        window.markGroupSettingsDirty = function() {
+            if (!canEditGroupInfo() || groupSettingsSaving) return;
+            groupSettingsDirty = true;
+            const status = document.getElementById('settings-group-save-status');
+            if (status) status.textContent = '';
+        };
+        window.chooseGroupIcon = function(icon) {
+            if (!canEditGroupInfo() || groupSettingsSaving) return;
+            ++groupPhotoRequest;
+            groupIconDraft = normalizeGroupIcon(icon);
+            groupAvatarDraft = '';
+            markGroupSettingsDirty();
+            renderGroupIconOptions();
+        };
+        let groupPhotoRequest = 0;
+        window.handleGroupPhoto = async function(input) {
+            if (!canEditGroupInfo() || groupSettingsSaving) return;
+            const file = input?.files?.[0];
+            if (!file) return;
+            const request = ++groupPhotoRequest;
+            try {
+                const avatar = await compressStudentAvatar(file);
+                if (request !== groupPhotoRequest || !canEditGroupInfo()) return;
+                groupAvatarDraft = normalizeLeaderAvatar(avatar);
+                markGroupSettingsDirty();
+                renderGroupIconOptions();
+            } catch (e) { showToast(e?.message || 'Не удалось обработать фото'); }
+            finally { if (input) input.value = ''; }
+        };
+        window.removeGroupPhoto = function() {
+            if (!canEditGroupInfo() || groupSettingsSaving) return;
+            ++groupPhotoRequest;
+            groupAvatarDraft = '';
+            markGroupSettingsDirty();
+            renderGroupIconOptions();
+        };
+        window.saveGroupSettings = async function(event) {
+            event?.preventDefault();
+            if (!canEditGroupInfo() || groupSettingsSaving) return;
+            const next = { ...getGroupInfo(), groupIcon: normalizeGroupIcon(groupIconDraft), groupAvatar: normalizeLeaderAvatar(groupAvatarDraft), studentCount: students.length };
+            for (const field of ['groupName', 'curator', 'headman', 'deputy']) {
+                const id = field === 'groupName' ? 'name' : field;
+                const value = normalizeStudentName(document.getElementById(`settings-group-${id}`)?.value);
+                if ((field === 'groupName' && !value) || value.length > (field === 'groupName' ? 60 : 80) || /[<>]/.test(value)) {
+                    showToast('Проверьте данные группы');
+                    return;
+                }
+                next[field] = value || '—';
+            }
+            ++groupPhotoRequest;
+            groupSettingsSaving = true;
+            loadGroupInfoToAdminForm();
+            try {
+                saveGroupInfoLocally(next);
+                const ok = await persistGroupInfoToCloud(next);
+                groupSettingsDirty = false;
+                const message = ok ? 'Данные группы сохранены в облаке' : 'Данные группы сохранены только на этом устройстве';
+                const status = document.getElementById('settings-group-save-status');
+                if (status) status.textContent = message;
+                showToast(message);
+                renderRosterList();
+            } finally {
+                groupSettingsSaving = false;
+                loadGroupInfoToAdminForm();
+            }
+        };
+        window.openGroupSettings = function() {
+            openAdminSettings();
+            const section = document.getElementById('settings-group-section');
+            if (section) { section.open = true; section.scrollIntoView({block:'start',behavior:'smooth'}); }
+        };
+
+        function refreshSettingsSystem() {
+            const version = document.getElementById('settings-build-version');
+            if (version) version.textContent = '18.5';
+            const sync = document.getElementById('settings-sync-status');
+            if (sync) sync.textContent = translateUI(isCloudConnected ? 'Подключено к облаку' : 'Нет подключения к облаку');
         }
 
         // Настройки доступа: владелец + два администратора. Обычные посетители работают без входа.
@@ -1453,10 +1588,14 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             document.body.classList.add('settings-open');
-            if (canEditGroupInfo()) loadGroupInfoToAdminForm();
+            loadGroupInfoToAdminForm();
             document.getElementById('admin-login-box')?.classList.toggle('hidden', isEditorRole());
             document.getElementById('admin-panel')?.classList.toggle('hidden', !isEditorRole());
             updateAdminUI();
+            refreshSettingsSystem();
+            clearInterval(settingsSystemTimer);
+            settingsSystemTimer = setInterval(refreshSettingsSystem, 5000);
+            document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === 'settings'));
         };
 
         window.closeAdminSettings = function() {
@@ -1464,6 +1603,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             document.body.classList.remove('settings-open');
+            clearInterval(settingsSystemTimer);
+            settingsSystemTimer = null;
+            document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === (localStorage.getItem('toe_current_view') || 'home')));
         };
 
         window.adminLogin = async function() {
@@ -1713,6 +1855,10 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             renderOwnerPermissionControls();
             setupInlineGroupEditing();
             renderLeaderAvatars(getGroupInfo());
+            renderGroupIcon();
+            loadGroupInfoToAdminForm();
+            document.getElementById('settings-backups-section')?.classList.toggle('hidden', !backupsAllowed);
+            document.getElementById('settings-logout')?.classList.toggle('hidden', !editor);
             renderRosterList();
             try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
             // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
@@ -1840,7 +1986,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         window.restoreLatestBackup = async function() {
             if (!canUseBackups()) { showToast('Нет права на резервные копии'); return; }
-            if (!confirm('Восстановить данные из последней резервной копии? Текущие локальные данные будут заменены.')) return;
+            if (!confirm(translateUI('Восстановить данные из последней резервной копии? Текущие локальные данные будут заменены.'))) return;
             try {
                 const raw = await dbGet('toe_full_backup_latest');
                 if (!raw) { showToast('Резервная копия не найдена'); return; }
@@ -1874,7 +2020,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (!raw) { el.textContent = 'Резервная копия ещё не создана'; return; }
                 const snap = JSON.parse(raw);
                 const d = new Date(snap.createdAt);
-                el.textContent = `Последняя копия: ${d.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}`;
+                el.textContent = `Последняя копия: ${d.toLocaleString(interfaceLocale(), {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}`;
             } catch(e) { el.textContent = 'Резервная копия доступна локально'; }
         }
 
@@ -2219,7 +2365,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         window.renameStudent = async function(index) {
             if (!canManageStudents()) { showToast('Нет права на изменение состава группы'); return; }
             const record=studentRecords[index]; if(!record) return;
-            const nextName=normalizeStudentName(prompt('Фамилия и имя студента', record.name));
+            const nextName=normalizeStudentName(prompt(translateUI('Фамилия и имя студента'), record.name));
             if(!nextName || nextName===record.name) return;
             if(students.some((n,i)=>i!==index && n.toLocaleLowerCase('ru-RU')===nextName.toLocaleLowerCase('ru-RU'))) { showToast('Такой студент уже есть'); return; }
             const next=studentRecords.map((r,i)=>i===index?{...r,name:nextName}:r);
@@ -2346,7 +2492,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
             if (!result) {
                 if (captionEl) captionEl.textContent = 'Расписание';
-                dateEl.textContent = `${dayNames[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+                dateEl.textContent = now.toLocaleDateString(interfaceLocale(), {weekday:'long',day:'numeric',month:'long'});
                 weekEl.textContent = '—';
                 lessonEl.textContent = 'Ближайших занятий в расписании не найдено.';
                 return;
@@ -2355,7 +2501,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const { date, lesson, weekType } = result;
             const sameDay = formatLocalDate(date) === formatLocalDate(now);
             if (captionEl) captionEl.textContent = sameDay ? 'Следующая пара' : 'Следующий учебный день';
-            dateEl.textContent = `${dayNames[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+            dateEl.textContent = date.toLocaleDateString(interfaceLocale(), {weekday:'long',day:'numeric',month:'long'});
             weekEl.textContent = weekType === 'numerator' ? 'Числитель' : 'Знаменатель';
 
             const room = String(lesson.room || '').trim();
@@ -2421,7 +2567,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 if (!status) return;
                 const note = saved?.notes?.[name] || '';
                 rows.push(`<div class="assessment-history-row">
-                    <div class="assessment-history-date"><strong>${new Date(date+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'short',day:'2-digit',month:'long',year:'numeric'})}</strong><span>${note ? escapeStudentText(note) : 'Без примечания'}</span></div>
+                    <div class="assessment-history-date"><strong>${new Date(date+'T00:00:00').toLocaleDateString(interfaceLocale(),{weekday:'short',day:'2-digit',month:'long',year:'numeric'})}</strong><span>${note ? escapeStudentText(note) : 'Без примечания'}</span></div>
                     <b class="${status}">${getStatusName(status)}</b>
                 </div>`);
             });
@@ -2676,11 +2822,11 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                     presentCount++;
                 } else {
                     absentCount++;
-                    if (type === 'absent') lines.push(`${name}, ${getStatusName(st)}.`);
+                    if (type === 'absent') lines.push(`${name}, ${translateUI(getStatusName(st))}.`);
                 }
-                if (type === 'full') lines.push(`${name}, ${getStatusName(st)}.`);
+                if (type === 'full') lines.push(`${name}, ${translateUI(getStatusName(st))}.`);
             });
-            lines.push(`Присутствуют: ${presentCount}. Отсутствуют: ${absentCount}.`);
+            lines.push(translateUI(`Присутствуют: ${presentCount}. Отсутствуют: ${absentCount}.`));
             return lines.join('\n');
         }
 
@@ -2746,7 +2892,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         function showToast(msg) {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-message');
-            msgEl.innerText = msg;
+            msgEl.innerText = translateUI(msg);
             toast.classList.remove('-translate-y-20', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
             setTimeout(() => {
@@ -2769,7 +2915,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             const saving = document.getElementById('save-status')?.classList.contains('saving');
             if (window.__journalDirty || saving) {
                 event.preventDefault();
-                event.returnValue = 'Изменения ещё сохраняются. Покинуть страницу?';
+                event.returnValue = translateUI('Изменения ещё сохраняются. Покинуть страницу?');
                 return event.returnValue;
             }
         });
@@ -2790,24 +2936,28 @@ let notificationsUnsubscribe=null;
 let supportUnsubscribe=null;
 const visitorSupportId=(()=>{let id=localStorage.getItem('toe_support_id'); if(!id){id='v_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('toe_support_id',id);}return id;})();
 
-const KZ_EXACT={
- 'Главная':'Басты бет','Журнал':'Журнал','Расписание':'Кесте','Группа':'Топ','Настройки':'Баптаулар','Поддержка':'Қолдау',
- 'Сегодня':'Бүгін','Следующий учебный день':'Келесі оқу күні','Ближайшее занятие':'Келесі сабақ','Расписание на сегодня':'Бүгінгі сабақтар',
- 'Числитель':'Алым','Знаменатель':'Бөлім','Куратор':'Куратор','Староста':'Топ старостасы','Зам. старосты':'Староста орынбасары','Студентов':'Студенттер',
- 'Посещаемость':'Қатысу','Посещаемость студентов':'Студенттердің қатысуы','Присутствуют':'Қатысқан','Опаздывают':'Кешіккен','Болеет':'Ауырған','Уважит.':'Себепті','Неуваж.':'Себепсіз',
- 'Добавить':'Қосу','Уведомления':'Хабарландырулар','Все расписание':'Толық кесте','Подробная статистика':'Толық статистика',
- 'История посещаемости':'Қатысу тарихы','Физика':'Физика','Математика':'Математика','Химия':'Химия','Биология':'Биология','География':'География',
- 'Информатика':'Информатика','История Казахстана':'Қазақстан тарихы','Физическая культура':'Дене шынықтыру','Иностранный язык':'Шет тілі',
- 'Русская литература':'Орыс әдебиеті','Русский язык и литература':'Орыс тілі мен әдебиеті','Казахский язык и литература':'Қазақ тілі мен әдебиеті',
- 'Глобальные компетенции':'Жаһандық құзыреттер','Классный час':'Тәрбие сағаты','Перемена':'Үзіліс','Большая перемена':'Үлкен үзіліс','Конец занятий':'Сабақ аяқталды'
+window.setInterfaceLanguage = function(lang) {
+    localStorage.setItem(UI_LANG_KEY, lang === 'kz' ? 'kz' : 'ru');
+    updateLanguageButtons();
+    applyKzTranslations();
+    renderHomeDayTimeline();
+    renderSchedule(getCurrentScheduleDay());
+    renderMiniCalendar();
+    renderApp();
+    if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
+    updateAdminUI();
+    updateBackupStatus();
+    refreshSettingsSystem();
+    applyKzTranslations();
 };
-function currentLang(){return localStorage.getItem(UI_LANG_KEY)||'ru';}
-window.setInterfaceLanguage=function(lang){localStorage.setItem(UI_LANG_KEY,lang==='kz'?'kz':'ru'); updateLanguageButtons(); location.reload();};
-function updateLanguageButtons(){const lang=currentLang();document.getElementById('lang-ru')?.classList.toggle('active',lang==='ru');document.getElementById('lang-kz')?.classList.toggle('active',lang==='kz');}
-function applyKzTranslations(root=document.body){if(currentLang()!=='kz') return; const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode); nodes.forEach(n=>{const t=n.nodeValue.trim(); if(KZ_EXACT[t]) n.nodeValue=n.nodeValue.replace(t,KZ_EXACT[t]);});}
-window.addEventListener('DOMContentLoaded',()=>{updateLanguageButtons();setTimeout(()=>applyKzTranslations(),120);});
-const langObserver=new MutationObserver(m=>{if(currentLang()==='kz')m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)applyKzTranslations(n);}));});
-window.addEventListener('DOMContentLoaded',()=>langObserver.observe(document.body,{childList:true,subtree:true}));
+function updateLanguageButtons() {
+    const lang = currentLang();
+    document.getElementById('lang-ru')?.classList.toggle('active', lang === 'ru');
+    document.getElementById('lang-kz')?.classList.toggle('active', lang === 'kz');
+    document.documentElement.lang = lang === 'kz' ? 'kk' : 'ru';
+}
+startInterfaceTranslations();
+updateLanguageButtons();
 
 window.openAppMenu=function(){const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
 window.closeAppMenu=function(){document.getElementById('app-menu-drawer')?.classList.add('hidden');document.body.classList.remove('modal-open');};
@@ -2831,7 +2981,7 @@ window.renderAttendanceAnalytics=function(){
  summary.innerHTML=`<div class="metric-card primary"><strong>${pct}%</strong><span>Общая посещаемость</span></div><div class="metric-card"><strong>${totals.present}</strong><span>Присутствий</span></div><div class="metric-card"><strong>${absent}</strong><span>Пропусков</span></div><div class="metric-card"><strong>${totals.late}</strong><span>Опозданий</span></div>`;
  const selected=select.value&&students.includes(select.value)?select.value:students[0]; select.innerHTML=students.map(n=>`<option ${n===selected?'selected':''}>${n}</option>`).join('');
  const stats=getStudentAttendanceStats(selected); if(head)head.innerHTML=`<div><strong>${selected||'—'}</strong><span>Посещаемость ${stats.attendancePercent}% · отмечено дней ${stats.total}</span></div><div class="analytics-chips"><span class="ok">П ${stats.present}</span><span class="late">О ${stats.late}</span><span class="bad">Пропуски ${stats.absent}</span></div>`;
- const rows=[]; Object.keys(attendanceArchive||{}).sort().reverse().forEach(date=>{const d=attendanceArchive[date];const status=d?.state?.[selected];if(!status||status==='present')return;const note=d?.notes?.[selected]||'';rows.push(`<div class="history-row"><div class="history-date">${new Date(date+'T00:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'})}</div><div class="history-status ${status}">${getStatusName(status)}</div>${note?`<div class="history-note">${note}</div>`:''}</div>`);}); hist.innerHTML=rows.length?rows.join(''):'<div class="empty-state">Пропусков и опозданий пока нет.</div>';
+ const rows=[]; Object.keys(attendanceArchive||{}).sort().reverse().forEach(date=>{const d=attendanceArchive[date];const status=d?.state?.[selected];if(!status||status==='present')return;const note=d?.notes?.[selected]||'';rows.push(`<div class="history-row"><div class="history-date">${new Date(date+'T00:00:00').toLocaleDateString(interfaceLocale(),{day:'2-digit',month:'long',year:'numeric'})}</div><div class="history-status ${status}">${getStatusName(status)}</div>${note?`<div class="history-note">${note}</div>`:''}</div>`);}); hist.innerHTML=rows.length?rows.join(''):'<div class="empty-state">Пропусков и опозданий пока нет.</div>';
 };
 
 window.openAttendanceNote=function(name){editingAttendanceNoteStudent=name;const m=document.getElementById('attendance-note-modal');document.getElementById('attendance-note-title').textContent=name;const status=attendanceState[name]||'';const presets=status==='late'?['Опоздал на 5 минут','Опоздал на 10 минут','Опоздал на 15 минут','Опоздал на 20 минут']:status==='sick'?['Больничный','По справке','На лечении']:status==='excused'?['По справке','Семейные обстоятельства','Разрешение куратора']:status==='unexcused'?['Причина не указана','Без уважительной причины']:['Без примечания'];document.getElementById('attendance-note-presets').innerHTML=presets.map(t=>`<button onclick="useAttendanceNotePreset('${t}')">${t}</button>`).join('');document.getElementById('attendance-note-text').value=attendanceNotes[name]||'';m?.classList.remove('hidden');};
@@ -2976,7 +3126,7 @@ function canPublishNotifications(){return currentAccessRole==='owner'||canPublis
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
 function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}
 function saveReadNotificationIds(ids){try{localStorage.setItem(NOTIFICATIONS_READ_KEY,JSON.stringify([...ids].slice(-500)));}catch(e){}}
-function notificationTimeLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function notificationTimeLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString(interfaceLocale(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function escapeNotificationText(value){return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
 function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
 function renderHomeLatestNotification(){
@@ -3018,13 +3168,13 @@ window.closeSupport=function(){document.getElementById('support-modal')?.classLi
 async function loadSupportInbox(){
     const inbox=document.getElementById('support-staff-inbox'); if(!inbox||!db)return;
     try{const snap=await getDocs(collection(db,...CLOUD_ROOT,'support')); const threads=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
-      inbox.innerHTML=threads.length?`<div class="support-inbox-title">Обращения</div>`+threads.map(t=>`<button class="support-thread-btn ${t.id===activeSupportThreadId?'active':''}" onclick="openSupportThread('${t.id}')"><strong>${t.displayName||'Пользователь'}</strong><span>${t.updatedAt?new Date(t.updatedAt).toLocaleString('ru-RU'):''}</span><p>${(t.messages?.at(-1)?.text||'').slice(0,80)}</p></button>`).join(''):'<div class="empty-state">Обращений пока нет.</div>';
+      inbox.innerHTML=threads.length?`<div class="support-inbox-title">Обращения</div>`+threads.map(t=>`<button class="support-thread-btn ${t.id===activeSupportThreadId?'active':''}" onclick="openSupportThread('${t.id}')"><strong>${t.displayName||'Пользователь'}</strong><span>${t.updatedAt?new Date(t.updatedAt).toLocaleString(interfaceLocale()):''}</span><p>${(t.messages?.at(-1)?.text||'').slice(0,80)}</p></button>`).join(''):'<div class="empty-state">Обращений пока нет.</div>';
       if(threads.length&&!activeSupportThreadId) openSupportThread(threads[0].id);
     }catch(e){console.warn('support inbox',e);inbox.innerHTML='<div class="empty-state">Не удалось загрузить обращения.</div>';}
 }
 window.openSupportThread=function(id){activeSupportThreadId=id;document.getElementById('support-active-thread')?.classList.remove('hidden');subscribeSupportThread(id);loadSupportInbox();};
 function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id)return;if(supportUnsubscribe)supportUnsubscribe();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{const data=snap.exists()?snap.data():{};const active=document.getElementById('support-active-thread');if(active&&isSupportStaff())active.textContent=`Диалог: ${data.displayName||'Пользователь'}`;renderSupportMessages(data.messages||[]);},e=>console.warn('support',e));}
-function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString('ru-RU'):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
+function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString(interfaceLocale()):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
 window.sendSupportMessage=async function(){
     const text=document.getElementById('support-text').value.trim();if(!text)return;
     const staff=isSupportStaff(); const id=staff?activeSupportThreadId:ownSupportThreadId(); if(!id){showToast('Выберите обращение');return;}

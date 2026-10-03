@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.4-mobile-group-readability-2026-10-04">
+    <meta name="app-build" content="step18.5-settings-reference-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-mobile-group-readability">
+    <link rel="stylesheet" href="style.css?v=20261004-settings-reference">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -51,38 +51,52 @@
 
     <!-- Настройки теперь открываются из нижней навигации -->
 
-    <div id="admin-settings-modal" onclick="if(event.target===this) closeAdminSettings()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[60] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl border border-slate-200">
-            <div class="settings-modal-header flex items-center justify-between">
-                <div>
-                    <h2 class="font-bold text-base text-slate-900">Настройки</h2>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Внешний вид и настройки редактора</p>
-                </div>
-                <button onclick="closeAdminSettings()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
+    <div id="admin-settings-modal" onclick="if(event.target===this) closeAdminSettings()" class="fixed inset-0 z-[60] hidden items-center justify-center settings-reference">
+      <div class="settings-reference-page">
+        <header class="settings-modal-header settings-reference-header">
+          <h2>Настройки</h2>
+          <button type="button" onclick="closeAdminSettings()" aria-label="Закрыть настройки"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <div class="settings-reference-list">
+          <section class="settings-reference-card settings-language-card">
+            <div class="settings-reference-summary">
+              <span class="settings-reference-icon"><i class="fa-solid fa-globe"></i></span>
+              <strong>Язык</strong>
+              <div class="lang-toggle" role="group" aria-label="Язык интерфейса">
+                <button id="lang-ru" type="button" onclick="setInterfaceLanguage('ru')">РУС</button>
+                <button id="lang-kz" type="button" onclick="setInterfaceLanguage('kz')">ҚАЗ</button>
+              </div>
             </div>
-            <div class="space-y-2">
-                <div class="text-[11px] font-semibold text-slate-600">Версия сайта</div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="device-phone" onclick="setDeviceMode('phone')" class="device-mode-btn py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-200" title="Версия для телефона" aria-label="Версия для телефона">
-                        <i class="fa-solid fa-mobile-screen-button"></i><span>Телефон</span>
-                    </button>
-                    <button id="device-pc" onclick="setDeviceMode('pc')" class="device-mode-btn py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-200" title="Версия для компьютера" aria-label="Версия для компьютера">
-                        <i class="fa-solid fa-desktop"></i><span>Компьютер</span>
-                    </button>
-                </div>
+          </section>
+          <details class="settings-reference-card" id="settings-display-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-mobile-screen-button"></i></span><span class="settings-reference-copy"><strong>Отображение</strong><small>Телефон / Компьютер</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <div class="settings-reference-content settings-device-options">
+              <button id="device-phone" type="button" onclick="setDeviceMode('phone')" class="device-mode-btn"><i class="fa-solid fa-mobile-screen-button"></i><span><strong>Телефон</strong><small>Мобильный вид</small></span></button>
+              <button id="device-pc" type="button" onclick="setDeviceMode('pc')" class="device-mode-btn"><i class="fa-solid fa-desktop"></i><span><strong>Компьютер</strong><small>Широкий вид</small></span></button>
             </div>
-            <div class="settings-block">
-                <div class="settings-label">Язык интерфейса</div>
-                <div class="lang-toggle" role="group" aria-label="Язык">
-                    <button id="lang-ru" type="button" onclick="setInterfaceLanguage('ru')">РУС</button>
-                    <button id="lang-kz" type="button" onclick="setInterfaceLanguage('kz')">ҚАЗ</button>
-                </div>
-                <div class="settings-hint">Имена студентов и преподавателей не переводятся.</div>
-            </div>
-            <div class="pt-2 border-t border-slate-100"></div>
-            <div id="admin-login-box" class="space-y-3">
+          </details>
+          <details class="settings-reference-card" id="settings-group-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-user-group"></i></span><span class="settings-reference-copy"><strong>Данные группы</strong><small>Основная информация</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <form class="settings-reference-content settings-group-form" id="settings-group-form" onsubmit="saveGroupSettings(event)">
+              <fieldset id="settings-group-fields" disabled>
+                <label><span>Название группы</span><input id="settings-group-name" required maxlength="60" oninput="markGroupSettingsDirty()" autocomplete="off"></label>
+                <label><span>Куратор</span><input id="settings-group-curator" maxlength="80" oninput="markGroupSettingsDirty()" autocomplete="off"></label>
+                <label><span>Староста</span><input id="settings-group-headman" maxlength="80" oninput="markGroupSettingsDirty()" autocomplete="off"></label>
+                <label><span>Зам. старосты</span><input id="settings-group-deputy" maxlength="80" oninput="markGroupSettingsDirty()" autocomplete="off"></label>
+              </fieldset>
+              <div class="settings-group-count"><span>Количество студентов</span><output id="settings-student-count">19</output></div>
+              <div class="settings-group-icon-row"><span>Иконка группы</span><div id="settings-group-icon-preview" class="settings-group-icon-preview"><i class="fa-solid fa-user-group"></i></div></div>
+              <div id="settings-group-icon-tools" class="hidden">
+                <div class="settings-group-icon-options" id="settings-group-icon-options" role="group" aria-label="Выбор иконки группы"></div>
+                <div class="settings-group-photo-actions"><label class="student-photo-upload"><i class="fa-regular fa-image"></i> Выбрать фото<input id="settings-group-photo" type="file" accept="image/*" onchange="handleGroupPhoto(this)"></label><button id="settings-group-remove-photo" class="hidden" type="button" onclick="removeGroupPhoto()">Убрать фото</button></div>
+              </div>
+              <button id="settings-group-save" type="submit" class="settings-reference-save hidden">Сохранить изменения</button>
+              <p id="settings-group-save-status" role="status" class="settings-reference-status"></p>
+            </form>
+          </details>
+          <details class="settings-reference-card" id="settings-admins-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-shield-halved"></i></span><span class="settings-reference-copy"><strong>Администраторы и права</strong><small>Управление доступом</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <div class="settings-reference-content"><div id="admin-login-box" class="space-y-3">
                 <div>
                     <label for="admin-login" class="block text-[11px] font-semibold text-slate-600 mb-1">Логин</label>
                     <input id="admin-login" type="text" autocomplete="username" placeholder="owner / admin1 / admin2" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400">
@@ -94,10 +108,7 @@
                 <button id="admin-login-btn" onclick="adminLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Войти</button>
                 <p class="text-[9px] text-slate-400 text-center">Доступ имеют только владелец и два администратора.</p>
             </div>
-            <div id="admin-panel" class="hidden space-y-3">
-                <div id="admin-role-banner" class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">Редактор включён.</div>
-                <div id="admin-role-description" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600"></div>
-                <div id="owner-permissions-section" class="hidden pt-2 border-t border-slate-100 space-y-3">
+              <div id="admin-panel" class="hidden space-y-3"><div id="admin-role-banner" class="settings-access-banner"></div><div id="admin-role-description" class="settings-reference-status"></div><div id="owner-permissions-section" class="hidden pt-2 border-t border-slate-100 space-y-3">
                     <div>
                         <div class="text-[11px] font-semibold text-slate-700">Права администраторов</div>
                         <p class="text-[9px] text-slate-400 mt-0.5">Каждое право работает отдельно. Если право выключено, соответствующие кнопки и функции полностью скрываются.</p>
@@ -186,8 +197,12 @@
                     </div>
                     <button id="save-admin-permissions-btn" onclick="saveAdminPermissions()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Сохранить права</button>
                     <div id="admin-permissions-status" class="text-[9px] text-slate-400 text-center">Права синхронизируются через Firebase.</div>
-                </div>
-                <div id="owner-backup-section" class="hidden pt-2 border-t border-slate-100 space-y-2">
+                </div></div>
+            </div>
+          </details>
+          <details class="settings-reference-card hidden" id="settings-backups-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span><span class="settings-reference-copy"><strong>Резервные копии</strong><small>Сохранение и восстановление данных</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <div class="settings-reference-content"><div id="owner-backup-section" class="hidden pt-2 border-t border-slate-100 space-y-2">
                     <div class="text-[11px] font-semibold text-slate-600">Резервная копия сайта</div>
                     <div id="backup-status" class="text-[10px] text-slate-400">Резервная копия ещё не создана</div>
                     <div class="grid grid-cols-2 gap-2">
@@ -195,10 +210,15 @@
                         <button onclick="restoreLatestBackup()" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 text-xs font-semibold">Восстановить данные</button>
                     </div>
                     <p class="text-[9px] text-slate-400">Этот блок показывается только при наличии права «Резервные копии».</p>
-                </div>
-                <button onclick="adminLogout()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">Выйти</button>
-            </div>
+                </div></div>
+          </details>
+          <details class="settings-reference-card" id="settings-system-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-circle-info"></i></span><span class="settings-reference-copy"><strong>Система</strong><small>Версия и состояние синхронизации</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <div class="settings-reference-content settings-system-grid"><span>Версия сайта</span><strong id="settings-build-version" data-i18n-skip></strong><span>Синхронизация</span><strong id="settings-sync-status"></strong></div>
+          </details>
         </div>
+        <button id="settings-logout" type="button" class="settings-reference-logout hidden" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i><span>Выйти из режима администратора</span></button>
+      </div>
     </div>
 
     <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 w-[90%] max-w-sm pointer-events-none">
@@ -220,7 +240,7 @@
 
         <main class="home-ref-shell">
             <section class="home-ref-group-card">
-                <div class="home-ref-group-icon"><i class="fa-solid fa-user-group"></i></div>
+                <button type="button" id="group-icon-home" class="home-ref-group-icon" onclick="openGroupSettings()" disabled aria-disabled="true" aria-label="Изменить иконку группы"><i class="fa-solid fa-user-group"></i></button>
                 <div class="home-ref-group-copy">
                     <h1 id="group-name" class="admin-inline-edit" data-group-field="groupName" tabindex="0">ТОЭ-26-9-1</h1>
                     <div class="home-ref-student-line"><span id="group-student-count">19</span> студентов</div>
@@ -451,6 +471,8 @@
             <div class="leadership-card"><button type="button" id="leader-avatar-deputy-roster" class="leader-profile-avatar" disabled aria-disabled="true" onclick="openLeaderPhotoEditor('deputy')" aria-label="Фото заместителя старосты"><i class="fa-regular fa-user"></i></button><span>Зам. старосты</span><strong id="roster-deputy">—</strong></div>
         </div>
 
+        <div class="roster-section-divider"><h2>Состав группы</h2></div>
+
         <div id="roster-admin-tools" class="hidden roster-profile-tools">
             <div>
                 <strong>Управление составом</strong>
@@ -615,7 +637,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-mobile-group-readability"></script>
+    <script type="module" src="app.js?v=20261004-settings-reference"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -671,4 +693,5 @@
 
 </body>
 </html>
+
 

@@ -1,3 +1,4 @@
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-settings-reference";
 // Общие независимые функции проекта.
 // Здесь нет доступа к Firebase и состоянию журнала.
 
@@ -58,7 +59,7 @@ export function formatCalendarLabel(date) {
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const today = new Date();
     const sameToday = formatLocalDate(date) === formatLocalDate(today);
-    return sameToday ? 'Сегодня' : `${date.getDate()} ${months[date.getMonth()]}`;
+    return sameToday ? translateUI('Сегодня') : date.toLocaleDateString(interfaceLocale(), {day:'numeric',month:'long'});
 }
 
 export function getStatusName(status) {
@@ -82,7 +83,7 @@ export function getWeekRangeText() {
   const friday = new Date(monday);
   friday.setDate(monday.getDate() + 4);
   const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-  return `${monday.getDate()} ${months[monday.getMonth()]} — ${friday.getDate()} ${months[friday.getMonth()]}`;
+  return `${monday.toLocaleDateString(interfaceLocale(), {day:'numeric',month:'long'})} — ${friday.toLocaleDateString(interfaceLocale(), {day:'numeric',month:'long'})}`;
 }
 
 export function getStatusBadgeClass(status) {
@@ -95,3 +96,4 @@ export function getStatusBadgeClass(status) {
         default: return 'bg-slate-50 text-slate-700 border border-slate-100';
     }
 }
+

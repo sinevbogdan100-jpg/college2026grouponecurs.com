@@ -3865,3 +3865,114 @@ body:not(.schedule-edit-mode) .schedule-admin-actions{
   #view-roster .roster-person-main{gap:9px}
   #view-roster .roster-profile-avatar{width:42px !important;height:42px !important;flex-basis:42px !important}
 }
+
+/* ===== SETTINGS REFERENCE + HOME BREAK COMFORT — 2026-10-04 ===== */
+#toast{z-index:260}
+.roster-section-divider{display:none}
+#group-icon-home{padding:0 !important;overflow:hidden;flex-shrink:0}
+#group-icon-home img,.settings-group-icon-preview img{width:100%;height:100%;object-fit:cover;display:block}
+#group-icon-home:disabled{opacity:1;cursor:default}
+body.group-info-edit-mode #group-icon-home:not(:disabled){cursor:pointer}
+body.group-info-edit-mode .admin-inline-edit{cursor:default;padding:0;margin:0}
+body.group-info-edit-mode .admin-inline-edit:hover,body.group-info-edit-mode .admin-inline-edit:focus{background:transparent;box-shadow:none}
+#admin-settings-modal.settings-reference{background:rgba(21,27,48,.34)}
+#admin-settings-modal.settings-reference>.settings-reference-page{
+  width:100% !important;max-width:560px !important;max-height:92dvh !important;
+  padding:22px !important;border-radius:22px !important;overflow-y:auto !important;
+  background:#fff !important;border:0;box-shadow:0 20px 70px rgba(20,30,60,.15) !important;
+}
+#admin-settings-modal .settings-reference-header{
+  display:flex;justify-content:center;align-items:center;position:relative;top:auto;
+  margin:0 0 22px !important;padding:10px 42px !important;background:#fff;
+}
+#admin-settings-modal .settings-reference-header::before{display:none}
+#admin-settings-modal .settings-reference-header h2{font-size:24px;font-weight:800;color:#111936;line-height:1.3}
+#admin-settings-modal .settings-reference-header>button{
+  position:absolute;right:0;top:6px;width:36px;min-height:36px !important;border-radius:10px;background:#f2f5fb;color:#657491;
+}
+.settings-reference-list{display:grid;gap:12px}
+.settings-reference-card{background:linear-gradient(110deg,#f0f4fd,#f8faff);border:1px solid transparent;border-radius:14px;min-width:0}
+.settings-reference-card[open]{border-color:#e7ecf6;background:#fcfdff}
+.settings-reference-card.hidden{display:none !important}
+.settings-reference-summary{
+  display:flex;align-items:center;gap:13px;padding:15px 14px;min-height:76px;cursor:pointer;list-style:none;color:#111936;
+}
+.settings-reference-summary::-webkit-details-marker{display:none}
+.settings-reference-icon{
+  width:44px;height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;background:#eaf0ff;color:#075bff;font-size:23px;
+}
+.settings-reference-copy{flex:1;min-width:0}
+.settings-reference-summary strong{display:block;font-size:16px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.settings-reference-copy small{display:block;margin-top:3px;color:#64718f;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.settings-reference-chevron{flex:0 0 auto;color:#17234e;font-size:13px;transform:rotate(-90deg)}
+.settings-reference-card[open]>.settings-reference-summary>.settings-reference-chevron{transform:rotate(180deg)}
+.settings-language-card .settings-reference-summary{gap:12px;cursor:default}
+.settings-language-card .settings-reference-summary>strong{flex:1}
+#admin-settings-modal .settings-language-card .lang-toggle{flex:0 0 auto;display:flex;gap:5px;padding:0;background:transparent}
+#admin-settings-modal .settings-language-card .lang-toggle button{min-width:58px;min-height:38px !important;padding:7px 10px;font-size:14px !important;background:#edf2fa;color:#162047;border-radius:8px;box-shadow:none}
+#admin-settings-modal .settings-language-card .lang-toggle button.active{background:#5b35ff;color:#fff;box-shadow:0 3px 10px rgba(91,53,255,.15)}
+.settings-reference-content{padding:0 14px 16px;font-size:14px;color:#34435e}
+.settings-device-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#admin-settings-modal .settings-device-options button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:72px;padding:10px;border:1px solid transparent;border-radius:11px;background:#f1f4fa;text-align:left;color:#182448}
+#admin-settings-modal .settings-device-options button.active{border-color:#7252ff;background:#f1edff;color:#5930ee}
+.settings-device-options button>i{font-size:25px;flex-shrink:0}
+.settings-device-options strong{display:block;font-size:14px}
+.settings-device-options small{display:block;margin-top:3px;color:#657491;font-size:12px}
+.settings-group-form fieldset{padding:0;margin:0;border:0;display:grid;gap:10px;min-width:0}
+.settings-group-form label:not(.student-photo-upload),.settings-group-count,.settings-group-icon-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px;align-items:center;min-width:0}
+.settings-group-form label>span,.settings-group-count>span,.settings-group-icon-row>span{font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+#admin-settings-modal .settings-group-form input:not([type="file"]){width:100%;min-width:0;height:44px;min-height:44px !important;border:1px solid #dfe5f2;background:#fff;border-radius:8px;padding:8px 10px;font-size:14px !important;color:#182448;outline:none}
+.settings-group-form input:focus{border-color:#7252ff !important;box-shadow:0 0 0 3px rgba(91,53,255,.08)}
+.settings-group-form input:disabled{opacity:1;color:#53617b !important;background:#f5f7fb !important}
+.settings-group-count{margin-top:10px}
+.settings-group-count output{display:block;min-height:44px;padding:10px;color:#53617b;background:#f5f7fb;border:1px solid #e5eaf3;border-radius:8px}
+.settings-group-icon-row{margin:14px 0 10px}
+.settings-group-icon-preview{width:48px;height:48px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#eaf0ff;color:#075bff;font-size:24px}
+.settings-group-icon-options{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.settings-group-icon-options button{min-height:40px !important;background:#f0f4fb;color:#647491;border:1px solid #e5eaf3;border-radius:8px;font-size:18px !important}
+.settings-group-icon-options button[aria-pressed="true"]{background:#efebff;border-color:#7252ff;color:#5b35ff}
+.settings-group-photo-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.settings-group-photo-actions .student-photo-upload,.settings-group-photo-actions button{min-height:40px;font-size:13px !important;padding:8px 10px;border-radius:8px;background:#f1f4fa;color:#435372}
+.settings-group-photo-actions input{display:none}
+#admin-settings-modal .settings-reference-save{width:100%;margin-top:18px;min-height:48px;background:#5b35ff;color:#fff;border-radius:10px;font-size:15px !important;font-weight:650}
+.settings-reference-save:disabled{opacity:.6;cursor:wait}
+.settings-reference-status{margin-top:9px;font-size:12px;line-height:1.5;color:#647491;overflow-wrap:anywhere}
+.settings-reference-status:empty{display:none}
+.settings-access-banner{padding:12px;background:#eeebff;border-radius:10px;color:#5433d4;font-size:14px;line-height:1.5}
+.settings-reference-content #owner-permissions-section,.settings-reference-content #owner-backup-section{padding-top:0;border-top:0}
+.settings-system-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.settings-system-grid strong{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+#admin-settings-modal .settings-reference-logout{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:24px;min-height:52px;border-radius:12px;background:#fff0f3;color:#ed2548;font-size:14px !important;line-height:1.4;padding:12px}
+#admin-settings-modal .settings-reference-logout.hidden{display:none !important}
+#admin-settings-modal .hidden{display:none !important}
+
+@media(max-width:767px){
+  #view-home .home-ref-break-card{min-height:72px;padding:12px 13px;gap:10px}
+  #view-home .home-ref-break-main strong{font-size:15px !important;line-height:1.35}
+  #view-home .home-ref-break-main span{font-size:13px !important;line-height:1.4}
+  #view-home .home-ref-break-duration{font-size:13px !important;font-weight:650}
+  #view-home .home-ref-break-icon{width:42px;height:42px;font-size:19px}
+  #view-roster .roster-section-divider{display:block;border-top:1px solid #dce4ef;padding-top:18px;margin:7px 0 14px}
+  #view-roster .roster-section-divider h2{font-size:17px;font-weight:750;color:#172541}
+  #admin-settings-modal.settings-reference{padding:0 !important;background:#fff !important;align-items:stretch !important}
+  #admin-settings-modal.settings-reference>.settings-reference-page{
+    max-width:560px !important;width:100% !important;height:100dvh !important;max-height:100dvh !important;
+    border-radius:0 !important;padding:12px 14px calc(110px + env(safe-area-inset-bottom)) !important;margin:0 auto !important;
+  }
+  #admin-settings-modal .settings-reference-header{position:sticky;top:-12px;margin:0 -2px 14px !important;padding:18px 42px !important;z-index:8;background:rgba(255,255,255,.98)}
+  #admin-settings-modal .settings-reference-header>button{top:14px}
+  body.settings-open .bottom-nav{z-index:65}
+  #admin-settings-modal .settings-reference-summary{padding:14px 12px;gap:10px}
+  #admin-settings-modal .settings-reference-summary strong{font-size:15px}
+  #admin-settings-modal .settings-reference-summary small{font-size:13px}
+  #admin-settings-modal .settings-group-form input:not([type="file"]){font-size:16px !important}
+  .settings-group-icon-options{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .settings-group-icon-options button{min-height:44px !important}
+}
+@media(max-width:365px){
+  .settings-reference-icon{width:38px;height:38px;flex-basis:38px;font-size:21px}
+  #admin-settings-modal .settings-language-card .lang-toggle button{min-width:48px;padding:7px}
+  .settings-group-form label:not(.student-photo-upload){grid-template-columns:1fr;gap:5px}
+  #admin-settings-modal .settings-device-options button{gap:7px;padding:9px 6px}
+}

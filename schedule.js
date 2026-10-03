@@ -1,5 +1,6 @@
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-settings-reference";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step18-3-recovery1";
-import { getWeekTypeForDate } from "./utils.js?v=20261003-step18-3-recovery1";
+import { getWeekTypeForDate } from "./utils.js?v=20261004-settings-reference";
 import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step18-3-recovery1";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
@@ -145,20 +146,20 @@ function scheduleSameDay(a, b) {
 }
 
 function scheduleFormatFullDate(date) {
-    const text = date.toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const text = date.toLocaleDateString(interfaceLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
 function scheduleFormatShortDate(date) {
-    return date.toLocaleDateString('ru-RU', { day:'numeric', month:'short' }).replace(/\s*г\.?$/i,'');
+    return date.toLocaleDateString(interfaceLocale(), { day:'numeric', month:'short' }).replace(/\s*г\.?$/i,'');
 }
 
 function scheduleFormatRange(date = scheduleReferenceDate) {
     const monday = scheduleMonday(date);
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
-    const left = monday.toLocaleDateString('ru-RU', { day:'numeric' });
-    const right = friday.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+    const left = monday.toLocaleDateString(interfaceLocale(), { day:'numeric' });
+    const right = friday.toLocaleDateString(interfaceLocale(), { day:'numeric', month:'long', year:'numeric' });
     return `${left} – ${right}`;
 }
 
@@ -338,7 +339,7 @@ function renderScheduleDayHeading(selectedDate) {
         return;
     }
     heading.classList.remove('hidden');
-    const text = selectedDate.toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long' });
+    const text = selectedDate.toLocaleDateString(interfaceLocale(), { weekday:'long', day:'numeric', month:'long' });
     heading.textContent = text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -442,7 +443,7 @@ function fillScheduleEditorDatalists() {
         subjectList.innerHTML = '';
         buildSubjectCatalog().forEach(item => {
             const option = document.createElement('option');
-            option.value = item.subject;
+            option.value = translateUI(item.subject);
             const details = [item.room, item.teacher].filter(Boolean).join(' · ');
             if (details) option.label = details;
             subjectList.appendChild(option);
@@ -465,10 +466,26 @@ function fillScheduleEditorDatalists() {
         breakList.innerHTML = '';
         breaks.forEach(value => {
             const option = document.createElement('option');
-            option.value = value;
+            option.value = translateUI(value);
             breakList.appendChild(option);
         });
     }
+}
+
+function restoreScheduleSubject(value) {
+    const text = String(value || '').trim();
+    const match = buildSubjectCatalog().find(item =>
+        item.subject.toLocaleLowerCase(interfaceLocale()) === text.toLocaleLowerCase(interfaceLocale()) ||
+        translateUI(item.subject).toLocaleLowerCase(interfaceLocale()) === text.toLocaleLowerCase(interfaceLocale())
+    );
+    return match?.subject || text;
+}
+
+function restoreScheduleBreak(value) {
+    const text = String(value || '').trim();
+    const match = text.match(/^(Үзіліс|Үлкен үзіліс): (\d+) минут$/);
+    if (match) return `${match[1] === 'Үзіліс' ? 'Перемена' : 'Большая перемена'}: ${match[2]} мин`;
+    return text === 'Сабақ аяқталды' ? 'Конец занятий' : text;
 }
 
 window.onScheduleSubjectChanged = function(fromTyping = false) {
@@ -476,7 +493,7 @@ window.onScheduleSubjectChanged = function(fromTyping = false) {
     const roomInput = document.getElementById('edit-room');
     const teacherInput = document.getElementById('edit-teacher');
     if (!subjectInput || !roomInput || !teacherInput) return;
-    const value = subjectInput.value.trim();
+    const value = restoreScheduleSubject(subjectInput.value);
     const match = buildSubjectCatalog().find(item => item.subject.toLocaleLowerCase('ru') === value.toLocaleLowerCase('ru'));
     if (!match) return;
     if (fromTyping && value.length < 2) return;
@@ -490,7 +507,7 @@ window.onScheduleTimeChanged = function() {
     if (!timeInput || !breakInput) return;
     const time = timeInput.value.trim();
     const match = collectScheduleItems().find(item => String(item?.time || '').trim() === time && item?.breakDuration);
-    if (match) breakInput.value = String(match.breakDuration || '').trim();
+    if (match) breakInput.value = translateUI(String(match.breakDuration || '').trim());
 };
 
 
@@ -521,8 +538,8 @@ function setScheduleEditorReadOnly(ids, readOnly) {
 function getScheduleEditorValues() {
     return {
         time: document.getElementById('edit-time')?.value.trim() || '',
-        breakDuration: document.getElementById('edit-break')?.value.trim() || '',
-        subject: document.getElementById('edit-subject')?.value.trim() || '',
+        breakDuration: restoreScheduleBreak(document.getElementById('edit-break')?.value),
+        subject: restoreScheduleSubject(document.getElementById('edit-subject')?.value),
         room: document.getElementById('edit-room')?.value.trim() || '',
         teacher: document.getElementById('edit-teacher')?.value.trim() || ''
     };
@@ -564,7 +581,7 @@ function refreshScheduleChangeNote(force = false) {
     const note = document.getElementById('edit-change-note');
     const type = document.getElementById('edit-change-type')?.value || 'normal';
     if (!note || (!force && scheduleChangeNoteManuallyEdited)) return;
-    note.value = buildScheduleChangeNote(type);
+    note.value = translateUI(buildScheduleChangeNote(type));
 }
 
 window.markScheduleChangeNoteManual = function() {
@@ -686,7 +703,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                 <strong class="schedule-ref-subject">${scheduleEscape(item.subject || 'Занятие')}</strong>
                 <div class="schedule-ref-meta">
                     <span><i class="fa-solid fa-door-open"></i>${scheduleEscape(item.room || '—')}</span>
-                    ${item.teacher ? `<span><i class="fa-solid fa-user-graduate"></i>${scheduleEscape(item.teacher)}</span>` : ''}
+                    ${item.teacher ? `<span data-i18n-skip><i class="fa-solid fa-user-graduate"></i>${scheduleEscape(item.teacher)}</span>` : ''}
                 </div>
                 ${changeHtml}
                 <div class="schedule-admin-actions">
@@ -736,8 +753,8 @@ window.openScheduleEditor = function(index) {
     scheduleChangeNoteManuallyEdited = false;
     document.getElementById('schedule-editor-title').innerText = index >= 0 ? 'Редактирование пары' : 'Добавление пары';
     document.getElementById('edit-time').value = item.time || '';
-    document.getElementById('edit-break').value = item.breakDuration || '';
-    document.getElementById('edit-subject').value = item.subject || '';
+    document.getElementById('edit-break').value = translateUI(item.breakDuration || '');
+    document.getElementById('edit-subject').value = translateUI(item.subject || '');
     document.getElementById('edit-room').value = item.room || '';
     document.getElementById('edit-teacher').value = item.teacher || '';
     document.getElementById('edit-class-hour').checked = !!item.isClassHour;
@@ -768,13 +785,13 @@ window.saveScheduleLesson = async function() {
     const changeType = document.getElementById('edit-change-type')?.value || 'normal';
     const item={
         time:document.getElementById('edit-time').value.trim(),
-        breakDuration:document.getElementById('edit-break').value.trim(),
-        subject:document.getElementById('edit-subject').value.trim(),
+        breakDuration:restoreScheduleBreak(document.getElementById('edit-break').value),
+        subject:restoreScheduleSubject(document.getElementById('edit-subject').value),
         room:document.getElementById('edit-room').value.trim(),
         teacher:document.getElementById('edit-teacher').value.trim(),
         isClassHour:document.getElementById('edit-class-hour').checked,
         changeType,
-        changeNote:document.getElementById('edit-change-note')?.value.trim() || '',
+        changeNote:scheduleChangeNoteManuallyEdited ? (document.getElementById('edit-change-note')?.value.trim() || '') : buildScheduleChangeNote(changeType),
         cancelled:changeType === 'cancel',
         changedAt: changeType === 'normal' ? '' : new Date().toISOString()
     };
@@ -820,7 +837,7 @@ window.deleteScheduleLesson = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list=getCurrentScheduleList();
     if(editingScheduleIndex<0 || !list)return;
-    if(!confirm('Удалить эту пару из расписания?'))return;
+    if(!confirm(translateUI('Удалить эту пару из расписания?')))return;
     const removed=list.splice(editingScheduleIndex,1)[0];
     try {
         await saveScheduleData();
