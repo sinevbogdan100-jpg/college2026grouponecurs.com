@@ -10,7 +10,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step7-root";
+} from "./firebase.js?v=20261003-step8-root";
 
 import {
     getWeekTypeForDate,
@@ -22,8 +22,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261003-step7-root";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step7-root";
+} from "./utils.js?v=20261003-step8-root";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step8-root";
 import {
     configureSchedule,
     loadScheduleData,
@@ -34,10 +34,10 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261003-step7-root";
+} from "./schedule.js?v=20261003-step8-root";
 
         
-window.__SITE_BUILD__ = 'step7-2026-10-03';
+window.__SITE_BUILD__ = 'step8-2026-10-03';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -154,8 +154,8 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         let rosterStatsRebuildTimer = null;
         let rosterStatsRebuildInFlight = false;
         let rosterStatsRebuildPending = false;
-        const GROUP_INFO_DOC_ID = '__group_info__';
-        const ROSTER_STATS_DOC_ID = '__roster_stats__';
+        const GROUP_INFO_DOC_ID = 'group_info_shared';
+        const ROSTER_STATS_DOC_ID = 'roster_stats_shared';
         window.__attendanceListenerActive = false;
         window.__firebaseDebug = window.__firebaseDebug || {init:false, auth:null};
         window.__firebaseUid = '';
