@@ -6,7 +6,8 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/sbp_app_icon"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="SBP Information"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
@@ -19,7 +20,7 @@
 
             <meta-data
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                android:value="https://sinevbogdan100-jpg.github.io/college2026grouponecurs.com/" />
+                android:value="https://sinevbogdan100-jpg.github.io/college2026grouponecurs.com/?source=android-app" />
 
             <meta-data
                 android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
