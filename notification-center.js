@@ -1,4 +1,4 @@
-import { firebaseConfig } from './firebase.js?v=20261004-notification-alerts';
+import { firebaseConfig } from './firebase.js?v=20261004-performance-v1';
 
 const SOUND_KEY = 'toe_notification_sound_v1';
 const DEVICE_KEY = 'toe_device_notifications_v1';
