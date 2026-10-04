@@ -14,5 +14,8 @@ android {
     buildTypes {
         release { minifyEnabled false }
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
 dependencies {}
