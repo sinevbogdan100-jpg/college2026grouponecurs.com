@@ -30,6 +30,12 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      - name: Cache Android debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: sbp-information-android-debug-keystore-v1
+
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
 
