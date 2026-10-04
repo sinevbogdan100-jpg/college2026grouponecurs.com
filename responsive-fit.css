@@ -1,0 +1,477 @@
+/* Final responsive text-fit layer.
+   Loaded after the decorative styles so RU/KZ text stays readable and aligned
+   on phones, tablets, desktop, and installed PWA. */
+
+:where(
+  .home-ref-group-copy,
+  .home-ref-role-card,
+  .home-ref-role-card > div,
+  .home-ref-lesson-main,
+  .home-ref-lesson-meta,
+  .home-ref-lesson-meta > div,
+  .home-ref-notification-copy,
+  .journal-ref-person,
+  .assessment-student-main,
+  .schedule-ref-card,
+  .schedule-ref-card-head,
+  .schedule-ref-meta,
+  .schedule-ref-meta > span,
+  .leadership-card,
+  .roster-person-card,
+  .roster-person-main,
+  .roster-person-text,
+  .settings-reference-copy,
+  .drawer-install-copy,
+  .help-navigation-grid article > div
+){
+  min-width:0;
+}
+
+/* Common rule: important labels/names must remain visible instead of being clipped. */
+#view-home :is(.home-ref-role-card span,.home-ref-role-card strong,.home-ref-lesson-main strong,.home-ref-lesson-meta span,.home-ref-lesson-meta strong),
+#view-tracker :is(.journal-ref-person strong,.assessment-student-main strong,.journal-section-tabs button,.journal-inline-actions button),
+#view-schedule :is(.schedule-ref-subject,.schedule-ref-meta span,.schedule-ref-change span,.schedule-ref-break-card strong,.schedule-ref-break-card time,.schedule-ref-state),
+#view-roster :is(.leadership-card span,.leadership-card strong,.roster-person-text strong,.roster-person-text span),
+#admin-settings-modal :is(.settings-reference-copy strong,.settings-reference-copy small,.settings-reference-content,.settings-reference-content p,.settings-reference-content label,.settings-reference-content button),
+.app-drawer :is(.drawer-nav-section button span,.drawer-install-copy strong,.drawer-install-copy small,.drawer-beta-card p,.drawer-beta-card small,.drawer-ai-note span),
+.help-navigation-panel :is(strong,span){
+  max-width:100%;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:break-word;
+  word-break:normal;
+}
+
+/* Home leadership: same geometry for all three roles. */
+#view-home .home-ref-roles{
+  align-items:stretch;
+}
+#view-home .home-ref-role-card{
+  height:100%;
+}
+#view-home .home-ref-role-card > div > span{
+  min-height:1.35em;
+}
+#view-home .home-ref-role-card > div > strong{
+  min-height:2.7em;
+}
+
+/* On actual phones, use a readable full-width row instead of squeezing 3 labels
+   into three tiny columns. This especially fixes the longer Kazakh labels. */
+@media(max-width:599px){
+  #view-home .home-ref-roles{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  #view-home .home-ref-role-card{
+    min-height:74px!important;
+    grid-template-columns:44px minmax(0,1fr)!important;
+    grid-template-rows:auto!important;
+    gap:10px!important;
+    padding:11px 12px!important;
+    align-items:center!important;
+  }
+  #view-home .home-ref-role-card > .leader-profile-avatar{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:42px!important;
+    height:42px!important;
+    flex-basis:42px!important;
+    align-self:center!important;
+  }
+  #view-home .home-ref-role-card > div{
+    grid-column:2!important;
+    grid-row:1!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    gap:3px!important;
+    min-width:0!important;
+  }
+  #view-home .home-ref-role-card > div > span,
+  #view-home .home-ref-role-card > div > strong{
+    grid-column:auto!important;
+    grid-row:auto!important;
+    width:auto!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    text-align:left!important;
+  }
+  #view-home .home-ref-role-card > div > span{
+    font-size:10.5px!important;
+    line-height:1.25!important;
+  }
+  #view-home .home-ref-role-card > div > strong{
+    font-size:12.5px!important;
+    line-height:1.3!important;
+  }
+}
+
+/* Home schedule: subject gets the flexible width; cabinet/floor use equal cells. */
+#view-home .home-ref-lesson-meta{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  align-items:stretch!important;
+}
+#view-home .home-ref-lesson-meta > div{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:45px;
+  padding:6px 7px;
+  border-radius:9px;
+  background:rgba(255,255,255,.48);
+}
+#view-home .home-ref-lesson-meta span,
+#view-home .home-ref-lesson-meta strong{
+  line-height:1.25!important;
+}
+#view-home .home-ref-lesson-meta strong{
+  margin-top:3px!important;
+}
+
+@media(max-width:560px){
+  #view-home .home-ref-lesson-row{
+    grid-template-columns:44px minmax(0,1fr)!important;
+    gap:8px!important;
+    align-items:start!important;
+    padding:10px!important;
+  }
+  #view-home .home-ref-lesson-number{
+    width:40px!important;
+    height:40px!important;
+    font-size:17px!important;
+  }
+  #view-home .home-ref-lesson-main{
+    padding-top:1px;
+  }
+  #view-home .home-ref-lesson-main strong{
+    font-size:13px!important;
+    line-height:1.3!important;
+  }
+  #view-home .home-ref-lesson-main span{
+    font-size:10px!important;
+    line-height:1.3!important;
+  }
+  #view-home .home-ref-lesson-meta{
+    grid-column:2!important;
+    width:100%;
+    margin-top:2px;
+  }
+  #view-home .home-ref-lesson-meta > div{
+    min-height:42px;
+  }
+  #view-home .home-ref-lesson-meta span{
+    font-size:8px!important;
+  }
+  #view-home .home-ref-lesson-meta strong{
+    font-size:10px!important;
+  }
+}
+
+/* Latest notification: time should never steal width from the message on phones. */
+@media(max-width:480px){
+  #view-home .home-ref-notification-card{
+    grid-template-columns:40px minmax(0,1fr)!important;
+    gap:9px!important;
+  }
+  #view-home .home-ref-notification-icon{
+    width:38px!important;
+    height:38px!important;
+  }
+  #view-home .home-ref-notification-time{
+    grid-column:2!important;
+    justify-self:start;
+    white-space:normal!important;
+  }
+}
+
+/* Journal: names stay complete. Mobile is already card-based; desktop rows may grow. */
+#view-tracker .journal-ref-person strong,
+#view-tracker .assessment-student-main strong,
+#view-tracker .journal-score-name strong{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:break-word!important;
+  line-height:1.25!important;
+}
+#view-tracker .journal-ref-row{
+  height:auto!important;
+}
+#view-tracker .journal-section-tabs button,
+#view-tracker .journal-inline-actions button{
+  line-height:1.2!important;
+}
+@media(min-width:768px){
+  #view-tracker .journal-ref-row{
+    min-height:58px!important;
+  }
+}
+
+/* Schedule: use consistent rows for room/teacher, no random inline wrapping. */
+#view-schedule .schedule-ref-card,
+#view-schedule .schedule-ref-card-head{
+  min-width:0!important;
+}
+#view-schedule .schedule-ref-card-head{
+  align-items:flex-start!important;
+}
+#view-schedule .schedule-ref-state{
+  flex:0 1 auto!important;
+  min-width:0!important;
+  line-height:1.15!important;
+}
+#view-schedule .schedule-ref-meta{
+  display:grid!important;
+  grid-template-columns:minmax(110px,.8fr) minmax(0,1.2fr)!important;
+  gap:6px 12px!important;
+  align-items:start!important;
+}
+#view-schedule .schedule-ref-meta > span{
+  width:100%;
+  display:grid!important;
+  grid-template-columns:14px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:5px!important;
+  line-height:1.3!important;
+}
+#view-schedule .schedule-ref-meta i{
+  width:14px!important;
+  margin-top:1px;
+}
+#view-schedule .schedule-ref-date-copy strong,
+#view-schedule .schedule-live-state strong{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  line-height:1.25!important;
+}
+#view-schedule .schedule-ref-break-card{
+  min-width:0!important;
+}
+#view-schedule .schedule-ref-break-card time{
+  white-space:normal!important;
+  justify-self:end;
+}
+
+@media(max-width:520px){
+  #view-schedule .schedule-ref-meta{
+    grid-template-columns:1fr!important;
+    gap:5px!important;
+  }
+  #view-schedule .schedule-ref-meta > span{
+    min-height:22px;
+  }
+  #view-schedule .schedule-ref-card-head{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:6px!important;
+  }
+  #view-schedule .schedule-ref-card-head time{
+    line-height:1.25!important;
+  }
+  #view-schedule .schedule-ref-break-card{
+    grid-template-columns:1fr!important;
+  }
+  #view-schedule .schedule-ref-break-card time,
+  #view-schedule .schedule-ref-break-card > b{
+    justify-self:start!important;
+  }
+}
+
+/* Roster leadership and students: no ellipsis for names or role labels. */
+#view-roster .group-leadership-grid{
+  align-items:stretch;
+}
+#view-roster .leadership-card{
+  min-width:0;
+  height:100%;
+}
+#view-roster .leadership-card > span,
+#view-roster .leadership-card > strong{
+  width:100%;
+  line-height:1.3!important;
+}
+#view-roster .roster-person-main{
+  flex:1 1 auto!important;
+}
+#view-roster .roster-person-text strong{
+  line-height:1.3!important;
+}
+#view-roster .roster-person-actions{
+  flex:0 0 auto;
+}
+
+@media(max-width:640px){
+  #view-roster .group-leadership-grid{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  #view-roster .leadership-card{
+    min-height:72px!important;
+    display:grid!important;
+    grid-template-columns:44px minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    column-gap:10px!important;
+    row-gap:2px!important;
+    align-items:center!important;
+    padding:10px 12px!important;
+    text-align:left!important;
+  }
+  #view-roster .leadership-card > .leader-profile-avatar{
+    grid-column:1!important;
+    grid-row:1 / 3!important;
+    width:42px!important;
+    height:42px!important;
+    flex-basis:42px!important;
+    margin:0!important;
+  }
+  #view-roster .leadership-card > span,
+  #view-roster .leadership-card > strong{
+    grid-column:2!important;
+    margin:0!important;
+    text-align:left!important;
+  }
+  #view-roster .leadership-card > span{
+    font-size:10px!important;
+  }
+  #view-roster .leadership-card > strong{
+    font-size:12px!important;
+  }
+  #view-roster .roster-person-card{
+    align-items:flex-start!important;
+  }
+  #view-roster .roster-person-text strong{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    overflow-wrap:break-word!important;
+  }
+}
+
+/* Roster top bar: title and count get predictable space. */
+#view-roster .roster-ref-topbar{
+  gap:10px!important;
+}
+#view-roster .roster-ref-topbar > div{
+  min-width:0;
+}
+#view-roster .roster-ref-topbar h1{
+  min-width:0;
+  white-space:normal!important;
+  line-height:1.2!important;
+}
+#view-roster .roster-ref-topbar > span{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+/* Settings: long Kazakh descriptions should grow the card, not overflow it. */
+#admin-settings-modal .settings-reference-summary{
+  min-width:0;
+  height:auto!important;
+}
+#admin-settings-modal .settings-reference-copy{
+  min-width:0;
+}
+#admin-settings-modal .settings-reference-copy strong,
+#admin-settings-modal .settings-reference-copy small{
+  line-height:1.3!important;
+}
+#admin-settings-modal .settings-reference-content{
+  min-width:0;
+}
+#admin-settings-modal .settings-reference-content :is(button,label,strong,span,p,small){
+  max-width:100%;
+  overflow-wrap:break-word;
+}
+#admin-settings-modal .lang-toggle button{
+  white-space:normal!important;
+  line-height:1.2!important;
+  min-width:0;
+}
+
+/* Drawer/help: labels can grow naturally without shifting icons. */
+.app-drawer .drawer-nav-section > button{
+  min-width:0;
+  align-items:center;
+}
+.app-drawer .drawer-nav-section > button > i{
+  flex:0 0 32px;
+}
+.app-drawer .drawer-nav-section > button > span:not(.support-unread-badge){
+  min-width:0;
+  line-height:1.25;
+}
+.help-navigation-grid article{
+  min-width:0;
+}
+
+/* Bottom navigation: RU/KZ labels are allowed two compact lines on phones. */
+@media(max-width:767px){
+  .bottom-nav{
+    align-items:stretch!important;
+  }
+  .bottom-nav button{
+    min-width:0!important;
+    height:auto!important;
+    min-height:50px!important;
+    padding:4px 2px!important;
+    white-space:normal!important;
+    overflow:visible!important;
+  }
+  .bottom-nav button span{
+    width:100%;
+    max-width:100%;
+    min-height:2.1em;
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    overflow-wrap:normal;
+    word-break:normal;
+    line-height:1.05!important;
+    text-align:center;
+    font-size:8px;
+  }
+}
+@media(max-width:360px){
+  .bottom-nav button span{font-size:7.5px}
+}
+
+/* Desktop keeps one-line navigation, but everything else can use natural height. */
+@media(min-width:768px){
+  body:not(.layout-phone) .bottom-nav button span{
+    white-space:nowrap!important;
+  }
+  body:not(.layout-phone) #view-home .home-ref-role-card > div > span,
+  body:not(.layout-phone) #view-home .home-ref-role-card > div > strong,
+  body:not(.layout-phone) #view-roster .leadership-card > span,
+  body:not(.layout-phone) #view-roster .leadership-card > strong{
+    min-height:0;
+  }
+  body:not(.layout-phone) #view-home .home-ref-lesson-meta{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+/* Very narrow screens: preserve content first. */
+@media(max-width:340px){
+  #view-home .home-ref-lesson-row{
+    grid-template-columns:38px minmax(0,1fr)!important;
+  }
+  #view-home .home-ref-lesson-number{
+    width:36px!important;
+    height:36px!important;
+    font-size:15px!important;
+  }
+  #view-roster .roster-ref-topbar{
+    align-items:flex-start!important;
+    flex-wrap:wrap!important;
+  }
+}
