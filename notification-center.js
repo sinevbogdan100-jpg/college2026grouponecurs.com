@@ -160,7 +160,16 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
       if (!push && deviceEnabled() && supported() && Notification.permission === 'granted' && document.visibilityState !== 'visible' && registeredContext !== context()) {
         try {
           const sw = await worker();
-          await sw.showNotification(title, { body, icon: './icon.png', tag: key, data: { kind, threadId } });
+          await sw.showNotification(title, {
+            body,
+            icon: './icon.png',
+            badge: './icon.png',
+            tag: key,
+            silent: false,
+            renotify: true,
+            vibrate: [110, 70, 110],
+            data: { kind, threadId }
+          });
         } catch (_) {}
       }
     };
