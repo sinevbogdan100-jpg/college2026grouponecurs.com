@@ -106,7 +106,9 @@ self.addEventListener('push', event => {
       icon: './icon.png',
       badge: './icon.png',
       tag: payload.key || 'toe-new',
-      renotify: false,
+      silent: false,
+      renotify: true,
+      vibrate: [110, 70, 110],
       data: { kind: payload.kind, threadId: payload.threadId || '' }
     });
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
