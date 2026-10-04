@@ -1932,6 +1932,11 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         let currentVisibleView = '';
         window.switchView = function(viewName, fromReload = false) {
+            // Settings are an overlay, not a separate page. Any navigation action closes
+            // them first on desktop, mobile and installed PWA.
+            const settingsModal = document.getElementById('admin-settings-modal');
+            const settingsOpen = !!settingsModal && !settingsModal.classList.contains('hidden');
+            if (settingsOpen) window.closeAdminSettings?.();
             if (currentVisibleView === viewName && !fromReload) return;
             saveCurrentScrollPosition();
             try { localStorage.setItem('toe_current_view', viewName); } catch(e) {}
