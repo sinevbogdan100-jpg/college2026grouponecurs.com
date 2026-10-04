@@ -162,8 +162,8 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
           const sw = await worker();
           await sw.showNotification(title, {
             body,
-            icon: './icon.png?v=20261004-final-icon-v2',
-            badge: './icon.png?v=20261004-final-icon-v2',
+            icon: './icon.png?v=20261004-exact-icon-v3',
+            badge: './icon.png?v=20261004-exact-icon-v3',
             tag: key,
             silent: false,
             renotify: true,
