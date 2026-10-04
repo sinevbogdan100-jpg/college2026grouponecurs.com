@@ -1,0 +1,75 @@
+/* Shared soft gradients. Decoration only: no sizing, layout, or status-color changes. */
+  body {
+    background-image:
+      radial-gradient(ellipse at 8% 12%, rgba(188, 219, 255, .72), transparent 46%),
+      radial-gradient(ellipse at 92% 30%, rgba(217, 198, 255, .55), transparent 48%),
+      radial-gradient(ellipse at 60% 95%, rgba(184, 235, 225, .45), transparent 44%),
+      linear-gradient(135deg, #e5edf8, #f4f0fb 55%, #e5f3f5) !important;
+  }
+  body #view-home .home-ref-group-card {
+    background-image: linear-gradient(120deg, #e8f2ff, #f0e8ff 48%, #e7f6f5) !important;
+    background-size: 240% 240%;
+    border-color: #dce2f8;
+    box-shadow: 0 12px 36px rgba(91, 72, 166, .08);
+    animation: app-soft-shift 22s ease-in-out infinite;
+  }
+  body #view-home .home-ref-group-icon {
+    background-image: linear-gradient(135deg, #e1e7ff, #eedfff) !important;
+    box-shadow: 0 6px 20px rgba(94, 62, 206, .1);
+  }
+  body #view-home .home-ref-role-card,
+  body #view-roster .leadership-card {
+    background-image: linear-gradient(135deg, #f0f6ff, #fff 70%) !important;
+    border-color: #dfe7f5;
+    box-shadow: 0 6px 20px rgba(52, 80, 140, .045);
+  }
+  body #view-home .home-ref-role-card:nth-child(2),
+  body #view-roster .leadership-card:nth-child(2) {
+    background-image: linear-gradient(135deg, #f2edff, #fff 70%) !important;
+  }
+  body #view-home .home-ref-role-card:nth-child(3),
+  body #view-roster .leadership-card:nth-child(3) {
+    background-image: linear-gradient(135deg, #eaf7f5, #fff 70%) !important;
+  }
+  body #view-tracker :is(.journal-ref-editor, .journal-ref-panel),
+  body #view-roster .roster-person-card {
+    background-image: linear-gradient(125deg, #fff 55%, #f4f6ff) !important;
+    box-shadow: 0 8px 28px rgba(66, 83, 144, .055);
+  }
+  body #view-tracker .journal-ref-head {
+    background-image: linear-gradient(110deg, #f0f5ff, #f6f1ff) !important;
+  }
+  body #view-tracker .journal-ref-row:hover {
+    background-image: linear-gradient(110deg, #f8fbff, #faf7ff) !important;
+  }
+  body #view-roster .roster-person-card {
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  body #view-roster .roster-person-card:hover {
+    border-color: #c7c3ef;
+    box-shadow: 0 10px 28px rgba(93, 73, 163, .1);
+  }
+  body #bottom-nav {
+    background-image: linear-gradient(115deg, rgba(255, 255, 255, .96), rgba(242, 237, 255, .94)) !important;
+    border-color: #dce2f2;
+  }
+  body #bottom-nav button.active {
+    background-image: linear-gradient(115deg, #2563eb, #6335d8) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(76, 66, 190, .18);
+  }
+  body #bottom-nav button.active i { color: #fff !important; }
+  body #admin-settings-modal .settings-reference-card {
+    background-image: linear-gradient(115deg, #eef4ff, #f5f0ff 65%, #f7fbff);
+    border-color: #e0e5f4;
+  }
+  body #view-home .home-ref-progress i {
+    background-image: linear-gradient(90deg, #4d68f5, #7544e8, #a24acb);
+  }
+  @keyframes app-soft-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+@media (prefers-reduced-motion: reduce) {
+  body #view-home .home-ref-group-card { animation: none; }
+}
