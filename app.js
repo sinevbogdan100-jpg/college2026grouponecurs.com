@@ -41,7 +41,7 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection
 } from "./schedule.js?v=20261004-settings-reference";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-settings-reference";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-support-send";
 
         
 window.__SITE_BUILD__ = 'step18.3-mobile-ui-polish2-2026-10-04';
@@ -3156,10 +3156,34 @@ function markNotificationsRead(){const read=getReadNotificationIds();notificatio
 function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();renderHomeLatestNotification();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
 window.openNotifications=function(){document.getElementById('notifications-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());renderNotifications();setTimeout(markNotificationsRead,250);};
 window.closeNotifications=function(){document.getElementById('notifications-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
-window.publishNotification=async function(){if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}const title=document.getElementById('notification-title')?.value.trim()||'';const text=document.getElementById('notification-text')?.value.trim()||'';if(!title&&!text){showToast('Введите заголовок или текст');return;}const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;try{await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccessLogin||'Владелец',type:'announcement'});const t=document.getElementById('notification-title'),b=document.getElementById('notification-text');if(t)t.value='';if(b)b.value='';showToast('Уведомление опубликовано');}catch(e){console.warn('publish notification',e);showToast('Не удалось опубликовать уведомление');}};
+let publishingNotification=false;
+window.publishNotification=async function(){
+    if(publishingNotification)return;
+    if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}
+    if(!db||!auth?.currentUser){showToast('Нет подключения к облаку');return;}
+    const titleField=document.getElementById('notification-title'),textField=document.getElementById('notification-text');
+    const title=titleField?.value.trim()||'',text=textField?.value.trim()||'';
+    if(!title&&!text){showToast('Введите заголовок или текст');return;}
+    const button=document.getElementById('notification-publish-button');publishingNotification=true;if(button)button.disabled=true;
+    const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    try{
+        await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccountLogin||'Владелец',type:'announcement'});
+        if(titleField?.value.trim()===title)titleField.value='';if(textField?.value.trim()===text)textField.value='';
+        showToast('Уведомление опубликовано');
+    }catch(error){console.warn('publish notification',error);showToast(error.code==='permission-denied'?'Нет права публиковать уведомления':'Не удалось опубликовать уведомление');}
+    finally{publishingNotification=false;if(button)button.disabled=false;}
+};
 let activeSupportThreadId='';
+let sendingSupportMessage=false;
+const supportDrafts=new Map();
 function isSupportStaff(){return currentAccessRole==='owner'||(currentAccessRole==='admin'&&canUseSupportStaff());}
 function ownSupportThreadId(){return auth?.currentUser?.uid || visitorSupportId;}
+function updateSupportRecipient(){
+    const staff=isSupportStaff(),thread=supportThreadsCache.find(item=>item.id===activeSupportThreadId);
+    const recipient=document.getElementById('support-active-thread');
+    if(recipient){recipient.classList.toggle('hidden',!staff);recipient.textContent=staff?(thread?`${translateUI('Получатель')}: ${thread.displayName||translateUI('Пользователь')}`:translateUI('Выберите обращение')):'';}
+    const button=document.getElementById('support-send-button');if(button)button.disabled=sendingSupportMessage||(staff&&!activeSupportThreadId);
+}
 let supportNotificationsUnsubscribe=null;
 let supportNotificationsContext='';
 let supportThreadsCache=[];
@@ -3186,18 +3210,19 @@ function renderSupportInbox(){
     const inbox=document.getElementById('support-staff-inbox');if(!inbox||!isSupportStaff())return;
     inbox.innerHTML=supportThreadsCache.length?'<div class="support-inbox-title">Обращения</div>'+supportThreadsCache.map(thread=>{
         const unread=threadUnread(thread),id=escapeNotificationText(thread.id);
-        return `<button data-support-thread="${id}" class="support-thread-btn ${thread.id===activeSupportThreadId?'active':''}"><strong>${escapeNotificationText(thread.displayName||'Пользователь')}${unread?`<span class="support-unread-badge" data-i18n-skip>${unread>99?'99+':unread}</span>`:''}</strong><span>${thread.updatedAt?new Date(thread.updatedAt).toLocaleString(interfaceLocale()):''}</span><p>${escapeNotificationText((thread.messages?.at(-1)?.text||'').slice(0,80))}</p></button>`;
+        return `<button data-support-thread="${id}" class="support-thread-btn ${thread.id===activeSupportThreadId?'active':''}"><strong>${escapeNotificationText(thread.displayName||'Пользователь')}${unread?`<span class="support-unread-badge" data-i18n-skip>${unread>99?'99+':unread}</span>`:''}</strong><span>${thread.updatedAt?new Date(thread.updatedAt).toLocaleString(interfaceLocale()):''}</span><p>${escapeNotificationText((thread.messages?.at(-1)?.text||'').slice(0,80))}</p><span class="support-reply-label">${translateUI('Ответить')}</span></button>`;
     }).join(''):'<div class="empty-state">Обращений пока нет.</div>';
     inbox.querySelectorAll('[data-support-thread]').forEach(button=>button.addEventListener('click',()=>window.openSupportThread(button.dataset.supportThread)));
     applyKzTranslations(inbox);
-    if(isSupportOpen()&&supportThreadsCache.length&&!activeSupportThreadId)window.openSupportThread(supportThreadsCache[0].id);
+    updateSupportRecipient();
 }
 window.refreshSupportNotifications=function(){
     const context=supportContext();
     if(context!==supportNotificationsContext){
         supportNotificationsUnsubscribe?.();supportNotificationsUnsubscribe=null;
         supportUnsubscribe?.();supportUnsubscribe=null;activeSupportThreadId='';
-        supportNotificationsContext=context;supportThreadsCache=[];supportReadCounts={};supportRetryAfter=0;
+        supportNotificationsContext=context;supportThreadsCache=[];supportReadCounts={};supportRetryAfter=0;supportDrafts.clear();
+        const draft=document.getElementById('support-text');if(draft)draft.value='';
         try{const saved=JSON.parse(localStorage.getItem(supportReadKey())||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))supportReadCounts=saved;}catch(_){}
         const box=document.getElementById('support-messages');if(box)box.innerHTML='';
         document.getElementById('support-active-thread')?.classList.add('hidden');
@@ -3223,20 +3248,44 @@ window.openSupport=async function(){
     const inbox=document.getElementById('support-staff-inbox'), name=document.getElementById('support-name');
     if(isSupportStaff()) { if(name) name.classList.add('hidden'); if(inbox) inbox.classList.remove('hidden'); await loadSupportInbox(); }
     else { if(name) name.classList.remove('hidden'); if(inbox) inbox.classList.add('hidden'); activeSupportThreadId=ownSupportThreadId(); subscribeSupportThread(activeSupportThreadId); }
+    updateSupportRecipient();
 };
 window.closeSupport=function(){document.getElementById('support-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');supportUnsubscribe?.();supportUnsubscribe=null;};
 async function loadSupportInbox(){
     window.refreshSupportNotifications();renderSupportInbox();
     if(activeSupportThreadId&&!supportUnsubscribe)subscribeSupportThread(activeSupportThreadId);
 }
-window.openSupportThread=function(id){activeSupportThreadId=id;document.getElementById('support-active-thread')?.classList.remove('hidden');subscribeSupportThread(id);loadSupportInbox();};
-function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id||(!isSupportStaff()&&id!==ownSupportThreadId()))return;if(supportUnsubscribe)supportUnsubscribe();const context=supportContext();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{if(context!==supportContext()||id!==activeSupportThreadId)return;const data=snap.exists()?snap.data():{};const active=document.getElementById('support-active-thread');if(active&&isSupportStaff())active.textContent=`Диалог: ${data.displayName||'Пользователь'}`;renderSupportMessages(data.messages||[]);markSupportThreadRead(id,data.messages||[]);},e=>console.warn('support',e));}
+window.openSupportThread=function(id){
+    if(!isSupportStaff()||!supportThreadsCache.some(thread=>thread.id===id))return;
+    const field=document.getElementById('support-text');
+    if(activeSupportThreadId&&field)supportDrafts.set(activeSupportThreadId,field.value);
+    activeSupportThreadId=id;if(field)field.value=supportDrafts.get(id)||'';
+    const box=document.getElementById('support-messages');if(box)box.innerHTML='';
+    updateSupportRecipient();subscribeSupportThread(id);loadSupportInbox();
+};
+function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id||(!isSupportStaff()&&id!==ownSupportThreadId()))return;if(supportUnsubscribe)supportUnsubscribe();const context=supportContext();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{if(context!==supportContext()||id!==activeSupportThreadId)return;const data=snap.exists()?snap.data():{};updateSupportRecipient();renderSupportMessages(data.messages||[]);markSupportThreadRead(id,data.messages||[]);},e=>console.warn('support',e));}
 function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString(interfaceLocale()):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
 window.sendSupportMessage=async function(){
-    const text=document.getElementById('support-text').value.trim();if(!text)return;
-    const staff=isSupportStaff(); const id=staff?activeSupportThreadId:ownSupportThreadId(); if(!id){showToast('Выберите обращение');return;}
+    if(sendingSupportMessage)return;
+    const field=document.getElementById('support-text'),text=field?.value.trim()||'';if(!text)return;
+    if(!db||!auth?.currentUser){showToast('Нет подключения к облаку');return;}
+    const staff=isSupportStaff(),context=supportContext();const id=staff?activeSupportThreadId:ownSupportThreadId();if(!id){showToast('Выберите обращение');return;}
     const ref=doc(db,...CLOUD_ROOT,'support',id);
-    try{const snap=await getDoc(ref),data=snap.exists()?snap.data():{},messages=Array.isArray(data.messages)?data.messages:[];const displayName=staff?(data.displayName||'Пользователь'):(document.getElementById('support-name').value.trim()||data.displayName||'Пользователь');messages.push({text,author:staff?(currentAccessLogin||'Поддержка'):displayName,role:staff?'staff':'visitor',at:new Date().toISOString()});await setDoc(ref,{messages,updatedAt:new Date().toISOString(),displayName,ownerUid:staff?(data.ownerUid||''):auth.currentUser.uid},{merge:true});document.getElementById('support-text').value='';if(staff)loadSupportInbox();}catch(e){console.warn(e);showToast('Не удалось отправить сообщение');}
+    sendingSupportMessage=true;updateSupportRecipient();
+    try{
+        const snap=await getDoc(ref);if(context!==supportContext()){showToast('Не удалось отправить сообщение');return;}
+        if(staff&&!snap.exists()){showToast('Выберите обращение');return;}
+        const data=snap.exists()?snap.data():{},messages=Array.isArray(data.messages)?[...data.messages]:[];
+        const displayName=staff?(data.displayName||'Пользователь'):(document.getElementById('support-name')?.value.trim()||data.displayName||'Пользователь');
+        messages.push({text,author:staff?(currentAccountLogin||'Поддержка'):displayName,role:staff?'staff':'visitor',at:new Date().toISOString()});
+        await setDoc(ref,{messages,updatedAt:new Date().toISOString(),displayName,ownerUid:staff?(data.ownerUid||id):auth.currentUser.uid},{merge:true});
+        if(context===supportContext()){
+            if(activeSupportThreadId===id&&field.value.trim()===text)field.value='';
+            if(supportDrafts.get(id)?.trim()===text)supportDrafts.delete(id);
+            showToast('Сообщение отправлено');if(staff)loadSupportInbox();
+        }
+    }catch(error){console.warn('send support',error);showToast('Не удалось отправить сообщение');}
+    finally{sendingSupportMessage=false;updateSupportRecipient();}
 };
 
 // Запускаем новые realtime-модули после авторизации.

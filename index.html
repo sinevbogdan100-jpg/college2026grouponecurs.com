@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.8-version-support-badges-2026-10-04">
+    <meta name="app-build" content="step18.9-notifications-support-send-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-support-badges">
+    <link rel="stylesheet" href="style.css?v=20261004-support-send">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-shared-gradients">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -612,7 +612,7 @@
             <div id="notification-admin-composer" class="hidden notification-composer">
                 <input id="notification-title" placeholder="Заголовок, например: Изменение расписания">
                 <textarea id="notification-text" rows="3" placeholder="Текст объявления"></textarea>
-                <button onclick="publishNotification()"><i class="fa-solid fa-paper-plane"></i> Опубликовать для всех</button>
+                <button id="notification-publish-button" type="button" onclick="publishNotification()"><i class="fa-solid fa-paper-plane"></i> Опубликовать для всех</button>
             </div>
             <div id="notifications-list" class="notification-list"></div>
         </section>
@@ -624,9 +624,9 @@
             <div class="support-intro">Можно сообщить о проблеме или предложить улучшение. Ответ владельца/администратора появится в этом диалоге и в уведомлениях.</div>
             <input id="support-name" class="support-input" placeholder="Ваше имя (необязательно)">
             <div id="support-staff-inbox" class="hidden support-staff-inbox"></div>
-            <div id="support-active-thread" class="hidden support-active-thread"></div>
+            <div id="support-active-thread" class="hidden support-active-thread" data-i18n-skip role="status"></div>
             <div id="support-messages" class="support-messages"></div>
-            <div class="support-compose"><textarea id="support-text" rows="2" placeholder="Напишите сообщение..."></textarea><button onclick="sendSupportMessage()"><i class="fa-solid fa-paper-plane"></i></button></div>
+            <div class="support-compose"><textarea id="support-text" rows="2" placeholder="Напишите сообщение..."></textarea><button id="support-send-button" type="button" onclick="sendSupportMessage()" aria-label="Отправить сообщение"><i class="fa-solid fa-paper-plane"></i></button></div>
         </section>
     </div>
 
@@ -639,7 +639,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-support-badges"></script>
+    <script type="module" src="app.js?v=20261004-support-send"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">

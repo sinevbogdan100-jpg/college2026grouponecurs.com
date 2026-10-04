@@ -3988,3 +3988,6 @@ body.group-info-edit-mode .admin-inline-edit:hover,body.group-info-edit-mode .ad
 #menu-support-button .support-unread-badge{margin-left:auto;color:#fff !important}
 #support-staff-inbox .support-thread-btn strong{display:flex;align-items:center;justify-content:space-between;gap:10px}
 #support-staff-inbox .support-thread-btn .support-unread-badge{color:#fff !important;font-size:12px !important}
+#support-active-thread.support-active-thread{padding:11px 13px;margin-bottom:10px;border-radius:11px;background:#eef2ff;color:#4338ca;font-size:14px !important;line-height:1.4;overflow-wrap:anywhere}
+#support-staff-inbox .support-reply-label{display:inline-flex;margin-top:8px;padding:4px 9px;border-radius:7px;background:#f0edff;color:#5b35d5;font-size:12px !important;font-weight:700}
+#support-send-button:disabled,#notification-publish-button:disabled{opacity:.45;cursor:default}
