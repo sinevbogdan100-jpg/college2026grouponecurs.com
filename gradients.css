@@ -73,3 +73,187 @@
 @media (prefers-reduced-motion: reduce) {
   body #view-home .home-ref-group-card { animation: none; }
 }
+
+
+/* ===== GRADIENT EXPANSION — step18.20 ===== */
+body :is(.home-ref-topbar,#view-tracker .journal-ref-topbar,#view-schedule .schedule-ref-topbar,.roster-ref-topbar){
+  background-image:linear-gradient(120deg,rgba(237,245,255,.98),rgba(244,237,255,.97) 52%,rgba(235,249,247,.96))!important;
+  border-color:#dce2f3!important;
+  box-shadow:0 9px 28px rgba(68,65,139,.07)!important;
+}
+body #view-home :is(.home-ref-today,.home-ref-notifications){
+  background-image:linear-gradient(125deg,#ffffff 30%,#f2f5ff 66%,#f4efff)!important;
+  border-color:#e1e5f2!important;
+  box-shadow:0 8px 25px rgba(65,74,143,.055);
+}
+body #view-home .home-ref-role-card:nth-child(1){
+  background-image:linear-gradient(135deg,#edf6ff,#f8fbff 62%,#eeeaff)!important;
+}
+body #view-home .home-ref-role-card:nth-child(2){
+  background-image:linear-gradient(135deg,#f1edff,#fbf9ff 62%,#eaf7ff)!important;
+}
+body #view-home .home-ref-role-card:nth-child(3){
+  background-image:linear-gradient(135deg,#eaf9f5,#fafffe 62%,#f2edff)!important;
+}
+body :is(.home-ref-group-icon,.journal-ref-avatar,.roster-avatar,#view-schedule .schedule-ref-number,#admin-settings-modal .settings-reference-icon){
+  background-image:linear-gradient(135deg,#dfe9ff,#eadfff 55%,#dff6f1)!important;
+  color:#5c4ed0!important;
+  box-shadow:0 5px 15px rgba(84,70,177,.10);
+}
+body #view-tracker .journal-ref-datebar{
+  background-image:linear-gradient(115deg,#f1f6ff,#f8f4ff 55%,#eef9f7)!important;
+  border-color:#dde5f4!important;
+}
+body #view-tracker .journal-section-tabs{
+  background-image:linear-gradient(115deg,#eef3fb,#f3effc)!important;
+}
+body #view-tracker .journal-section-tabs button.active{
+  background-image:linear-gradient(115deg,#496ff0,#7049df 58%,#8b5fd8)!important;
+  color:#fff!important;
+  box-shadow:0 5px 16px rgba(81,68,183,.18);
+}
+body #view-tracker .journal-ref-row:nth-child(odd){
+  background-image:linear-gradient(90deg,#fff 35%,#f8f9ff)!important;
+}
+body #view-tracker .journal-ref-row:nth-child(even){
+  background-image:linear-gradient(90deg,#fff 35%,#f6fbff)!important;
+}
+body #view-tracker .journal-inline-actions{
+  background-image:linear-gradient(125deg,#f6f9ff,#f6f1ff 58%,#effaf8)!important;
+  border-color:#e1e4f2!important;
+}
+body #view-tracker .journal-inline-actions button{
+  background-image:linear-gradient(120deg,#edf3ff,#f1ebff)!important;
+  border-color:#dadff2!important;
+  color:#5547c8!important;
+}
+body #view-tracker .journal-inline-actions button:hover{
+  background-image:linear-gradient(120deg,#e4edff,#e9e0ff)!important;
+}
+body #view-schedule .schedule-ref-week-switch{
+  background-image:linear-gradient(115deg,#eef3fb,#f3effc)!important;
+  border-color:#dfe4f1!important;
+}
+body #view-schedule .schedule-ref-week-switch button:is(.active,[aria-selected="true"]){
+  background-image:linear-gradient(120deg,#4a70ef,#7249df 58%,#8a5bd5)!important;
+  color:#fff!important;
+  box-shadow:0 5px 16px rgba(84,69,184,.18);
+}
+body #view-schedule .schedule-ref-datebar,
+body #view-schedule .schedule-live-card{
+  background-image:linear-gradient(120deg,#f4f8ff,#f7f2ff 58%,#effaf7)!important;
+  border-color:#dfe5f2!important;
+}
+body #view-schedule .schedule-ref-row:not(.current) .schedule-ref-card{
+  margin:3px 8px 3px 0;
+  padding:9px 10px;
+  border:1px solid #e7eaf3;
+  border-radius:11px;
+  background-image:linear-gradient(110deg,#fff 40%,#f7f8ff)!important;
+}
+body #view-schedule .schedule-ref-row:nth-child(4n+1):not(.current) .schedule-ref-card{
+  background-image:linear-gradient(110deg,#fff 35%,#f4f0ff)!important;
+}
+body #view-schedule .schedule-ref-row:nth-child(4n+3):not(.current) .schedule-ref-card{
+  background-image:linear-gradient(110deg,#fff 35%,#eef8ff)!important;
+}
+body #view-schedule .schedule-ref-break-card{
+  background-image:linear-gradient(110deg,#f8faff,#f3f1ff)!important;
+}
+body #view-schedule .schedule-ref-days button.active{
+  background-image:linear-gradient(135deg,#526ff0,#734cdb)!important;
+  color:#fff!important;
+  box-shadow:0 5px 14px rgba(80,69,172,.16);
+}
+body .roster-ref-topbar{
+  background-image:linear-gradient(115deg,#f0f6ff,#f5efff 58%,#edf9f6)!important;
+}
+body #view-roster .leadership-card{
+  box-shadow:0 7px 22px rgba(74,77,142,.055);
+}
+body #view-roster .roster-person-card:nth-child(3n+1){
+  background-image:linear-gradient(110deg,#fff 45%,#f3f0ff)!important;
+}
+body #view-roster .roster-person-card:nth-child(3n+2){
+  background-image:linear-gradient(110deg,#fff 45%,#eef7ff)!important;
+}
+body #view-roster .roster-person-card:nth-child(3n){
+  background-image:linear-gradient(110deg,#fff 45%,#eef9f6)!important;
+}
+body #view-roster .roster-profile-tools{
+  background-image:linear-gradient(120deg,#eef5ff,#f4efff 58%,#edf9f6)!important;
+  border-color:#dde4f2!important;
+}
+body #admin-settings-modal>div{
+  background-image:linear-gradient(145deg,#ffffff 0%,#f8f7ff 50%,#f1f7ff 100%)!important;
+}
+body #admin-settings-modal .settings-reference-summary{
+  background-image:linear-gradient(110deg,rgba(255,255,255,.72),rgba(244,240,255,.72))!important;
+}
+body .app-drawer{
+  background-image:
+    radial-gradient(circle at 10% 0%,rgba(126,153,255,.16),transparent 34%),
+    radial-gradient(circle at 92% 18%,rgba(173,111,232,.14),transparent 30%),
+    linear-gradient(155deg,#fff 0%,#f7f5ff 58%,#f1f8ff 100%)!important;
+}
+body .drawer-head{
+  margin:0 0 8px;
+  padding:12px!important;
+  border:1px solid #e3e4f3;
+  border-radius:16px;
+  background-image:linear-gradient(120deg,#edf4ff,#f2ebff 55%,#e9f8f5)!important;
+}
+body .drawer-nav-section>button>i{
+  background-image:linear-gradient(135deg,#e7efff,#eadfff 58%,#e3f6f3)!important;
+  color:#5c4dce;
+}
+body .drawer-nav-section>button:hover{
+  background-image:linear-gradient(110deg,#eef4ff,#f1ebff)!important;
+}
+body .drawer-install-action{
+  background-image:linear-gradient(120deg,#edf4ff,#eee6ff 60%,#e9f8f5)!important;
+  border:1px solid #dedff2!important;
+}
+body .drawer-install-action:not(.is-installed)>i{
+  background-image:linear-gradient(135deg,#5c78f4,#7548df)!important;
+  color:#fff!important;
+  box-shadow:0 5px 15px rgba(84,63,185,.18);
+}
+body .drawer-beta-card{
+  background-image:linear-gradient(125deg,#fff8ed,#f7efff 58%,#eef7ff)!important;
+  box-shadow:0 8px 22px rgba(90,72,158,.055);
+}
+body .drawer-beta-head span{
+  background-image:linear-gradient(110deg,#6c54db,#8960dc)!important;
+  color:#fff;
+}
+body .drawer-beta-head i{color:#7652d6}
+body .help-navigation-panel{
+  background-image:linear-gradient(160deg,#fff 0%,#faf8ff 55%,#f3f8ff 100%)!important;
+}
+body .help-navigation-hero{
+  background-image:linear-gradient(120deg,#edf4ff,#f3ecff 58%,#eaf8f5)!important;
+}
+body .help-navigation-hero>i{
+  background-image:linear-gradient(135deg,#5575f1,#754bdf)!important;
+  color:#fff;
+}
+body .help-navigation-grid article:nth-child(3n+1){
+  background-image:linear-gradient(120deg,#fff,#f2f6ff)!important;
+}
+body .help-navigation-grid article:nth-child(3n+2){
+  background-image:linear-gradient(120deg,#fff,#f4efff)!important;
+}
+body .help-navigation-grid article:nth-child(3n){
+  background-image:linear-gradient(120deg,#fff,#edf9f6)!important;
+}
+body .help-navigation-grid article>i{
+  background-image:linear-gradient(135deg,#e6eeff,#eadfff)!important;
+  color:#6050cb;
+}
+body .help-navigation-tip{
+  background-image:linear-gradient(110deg,#f7f9ff,#f6f2ff)!important;
+}
+body .help-beta-note{
+  background-image:linear-gradient(115deg,#fff8ee,#f7f0ff)!important;
+}
