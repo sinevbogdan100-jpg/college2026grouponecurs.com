@@ -3120,33 +3120,36 @@ window.updateInstallButton = function() {
     const installed = isStandaloneApp() || nativeApp;
     button.classList.toggle('is-installed', installed);
     button.disabled = installed;
-    label.textContent = translateUI(installed ? 'Приложение установлено' : 'Установить приложение');
-    if (nativeApp) {
-        const version = getNativeVersionName();
-        hint.textContent = version ? translateUI('Версия') + ' ' + version : translateUI('Приложение установлено');
-        if (apkButton) apkButton.hidden = true;
-    } else {
-        hint.textContent = translateUI(installed ? 'SBP Information уже работает как приложение' : 'SBP Information на этом устройстве');
-        if (apkButton) apkButton.hidden = false;
+    label.textContent = translateUI(installed ? 'Приложение установлено' : 'Установить веб-приложение');
+    hint.textContent = translateUI(installed ? 'SBP Information уже работает как приложение' : 'Установить SBP Information');
+    if (apkButton) {
+        apkButton.hidden = nativeApp;
+        apkButton.disabled = true;
+        apkButton.setAttribute('aria-disabled', 'true');
     }
 };
 window.installSBPApp = async function() {
-    if (isNativeAndroidShell()) {
+    if (isNativeAndroidShell() || isStandaloneApp()) {
         showToast(translateUI('Приложение уже установлено'));
         window.updateInstallButton();
         return;
     }
-    if (isStandaloneApp()) {
-        showToast(translateUI('Приложение уже установлено'));
-        window.updateInstallButton();
+    if (!deferredInstallPrompt) {
+        showToast(translateUI('Установка пока недоступна'));
         return;
     }
-    if (isIOSDevice()) {
-        showToast(translateUI('На iPhone откройте «Поделиться» и выберите «На экран Домой»'));
-    } else {
-        showToast(translateUI('Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран»'));
-    }
+    const promptEvent = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    try {
+        await promptEvent.prompt();
+        await promptEvent.userChoice;
+    } catch (_) {}
+    window.updateInstallButton();
 };
+window.addEventListener('beforeinstallprompt', event => {
+    deferredInstallPrompt = event;
+    window.updateInstallButton();
+});
 window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
     window.updateInstallButton();
@@ -3167,7 +3170,6 @@ window.closeHelpNavigation=function(){
 
 window.openAppMenu=function(){
     window.refreshSupportNotifications?.();
-    if (!publicAndroidVersion) void loadPublicAndroidVersion();
     const x=document.getElementById('app-menu-drawer');
     x?.classList.remove('hidden');
     document.body.classList.add('modal-open');
