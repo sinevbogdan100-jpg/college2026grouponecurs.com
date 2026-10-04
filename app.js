@@ -1,3 +1,5 @@
+import { createArrivalTracker } from './notification-state.js?v=20261004-notification-alerts';
+import { createNotificationCenter } from './notification-center.js?v=20261004-notification-alerts';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-support-badges';
 import {
     createFirebaseServices,
@@ -16,7 +18,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261003-step18-3-recovery1";
+} from "./firebase.js?v=20261004-notification-alerts";
 
 import {
     getWeekTypeForDate,
@@ -41,10 +43,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection
 } from "./schedule.js?v=20261004-settings-reference";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-support-send";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-notification-alerts";
 
         
-window.__SITE_BUILD__ = 'step18.3-mobile-ui-polish2-2026-10-04';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
 window.__journalDateInitialized = false;
 console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
@@ -279,6 +281,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
 
         function applyAccessRoleFromUser(user) {
+            const previousContext = `${currentAccountLogin}:${currentAccessRole}`;
             const found = getAccountByUser(user);
             currentAccountLogin = found?.[0] || '';
             currentAccessRole = found?.[1]?.role || 'viewer';
@@ -286,6 +289,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             window.__toeRole = currentAccessRole;
             window.__toeLogin = currentAccountLogin;
             updateAdminUI();
+            if (previousContext !== `${currentAccountLogin}:${currentAccessRole}`) window.notificationAccountChanged?.();
         }
         window.__attendanceListenerActive = false;
         window.__firebaseDebug = window.__firebaseDebug || {init:false, auth:null};
@@ -1594,6 +1598,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             document.getElementById('admin-panel')?.classList.toggle('hidden', !isEditorRole());
             updateAdminUI();
             refreshSettingsSystem();
+            window.refreshNotificationSettings?.();
             clearInterval(settingsSystemTimer);
             settingsSystemTimer = setInterval(refreshSettingsSystem, 5000);
             document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === 'settings'));
@@ -1621,6 +1626,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             if (!password) { showToast('Введите пароль'); passwordInput?.focus(); return; }
             if (button) { button.disabled = true; button.textContent = 'Вход…'; }
             try {
+                await window.notificationAccountWillChange?.();
                 const credential = await signInWithEmailAndPassword(auth, account.email, password);
                 applyAccessRoleFromUser(credential.user);
                 if (currentAccessRole === 'viewer') throw new Error('У этой учётной записи нет прав редактора');
@@ -1869,6 +1875,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         window.adminLogout = async function() {
             try {
+                await window.notificationAccountWillChange?.();
                 if (auth) await signOut(auth);
                 applyAccessRoleFromUser(null);
                 if (auth) {
@@ -2950,6 +2957,7 @@ window.setInterfaceLanguage = function(lang) {
     updateAdminUI();
     updateBackupStatus();
     refreshSettingsSystem();
+    window.refreshNotificationSettings?.();
     applyKzTranslations();
 };
 function updateLanguageButtons() {
@@ -3153,7 +3161,19 @@ function renderHomeLatestNotification(){
 }
 function renderNotifications(){renderHomeLatestNotification();const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
 function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
-function subscribeNotifications(){if(!db||!auth?.currentUser||notificationsUnsubscribe)return;const ref=collection(db,...CLOUD_ROOT,'notifications');notificationsUnsubscribe=onSnapshot(ref,snap=>{notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));renderNotifications();renderHomeLatestNotification();updateNotificationBadge();},e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});}
+const eventArrivals=createArrivalTracker();
+function subscribeNotifications(){
+    if(!db||!auth?.currentUser||notificationsUnsubscribe)return;
+    const ref=collection(db,...CLOUD_ROOT,'notifications');
+    notificationsUnsubscribe=onSnapshot(ref,snap=>{
+        notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+        if(!snap.metadata?.fromCache){
+            const arrivals=eventArrivals.update(notificationsCache.map(item=>({id:item.id,count:1,item})));
+            arrivals.forEach(({item})=>{if(item.authorUid!==auth?.currentUser?.uid && (!item.author || item.author!==currentAccountLogin))notificationCenter.incoming({key:`event:${item.id}`,title:translateUI('Новое объявление'),body:item.title||translateUI('Центр событий'),kind:'events'});});
+        }
+        renderNotifications();renderHomeLatestNotification();updateNotificationBadge();
+    },e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});
+}
 window.openNotifications=function(){document.getElementById('notifications-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');document.getElementById('notification-admin-composer')?.classList.toggle('hidden',!canPublishNotifications());renderNotifications();setTimeout(markNotificationsRead,250);};
 window.closeNotifications=function(){document.getElementById('notifications-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
 let publishingNotification=false;
@@ -3167,7 +3187,7 @@ window.publishNotification=async function(){
     const button=document.getElementById('notification-publish-button');publishingNotification=true;if(button)button.disabled=true;
     const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
     try{
-        await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccountLogin||'Владелец',type:'announcement'});
+        await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccountLogin||'Владелец',authorUid:auth.currentUser.uid,type:'announcement'});
         if(titleField?.value.trim()===title)titleField.value='';if(textField?.value.trim()===text)textField.value='';
         showToast('Уведомление опубликовано');
     }catch(error){console.warn('publish notification',error);showToast(error.code==='permission-denied'?'Нет права публиковать уведомления':'Не удалось опубликовать уведомление');}
@@ -3188,6 +3208,8 @@ let supportNotificationsUnsubscribe=null;
 let supportNotificationsContext='';
 let supportThreadsCache=[];
 let supportReadCounts={};
+const supportArrivals=createArrivalTracker();
+let displayedSupportMessages=[];
 let supportRetryAfter=0;
 function supportContext(){return auth?.currentUser?.uid ? `${auth.currentUser.uid}:${isSupportStaff()?'staff':'visitor'}` : '';}
 function supportReadKey(){return `toe_support_read_v1:${supportNotificationsContext}`;}
@@ -3198,6 +3220,9 @@ function updateSupportBadge(){
     const unread=supportNotificationsContext===supportContext()?supportThreadsCache.reduce((total,thread)=>total+threadUnread(thread),0):0;
     badge.textContent=unread>99?'99+':String(unread);
     badge.classList.toggle('hidden',unread===0);
+    document.querySelectorAll('.support-menu-dot').forEach(dot=>dot.classList.toggle('hidden',unread===0));
+    const dialogBadge=document.getElementById('support-dialog-badge');
+    if(dialogBadge){const count=threadUnread(supportThreadsCache.find(thread=>thread.id===activeSupportThreadId)||{});dialogBadge.textContent=count>99?'99+':String(count);dialogBadge.classList.toggle('hidden',count===0);}
 }
 function markSupportThreadRead(id,messages){
     if(!isSupportOpen()||id!==activeSupportThreadId||supportNotificationsContext!==supportContext())return;
@@ -3221,7 +3246,7 @@ window.refreshSupportNotifications=function(){
     if(context!==supportNotificationsContext){
         supportNotificationsUnsubscribe?.();supportNotificationsUnsubscribe=null;
         supportUnsubscribe?.();supportUnsubscribe=null;activeSupportThreadId='';
-        supportNotificationsContext=context;supportThreadsCache=[];supportReadCounts={};supportRetryAfter=0;supportDrafts.clear();
+        supportNotificationsContext=context;supportThreadsCache=[];supportReadCounts={};supportRetryAfter=0;supportDrafts.clear();supportArrivals.reset();displayedSupportMessages=[];
         const draft=document.getElementById('support-text');if(draft)draft.value='';
         try{const saved=JSON.parse(localStorage.getItem(supportReadKey())||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))supportReadCounts=saved;}catch(_){}
         const box=document.getElementById('support-messages');if(box)box.innerHTML='';
@@ -3235,6 +3260,10 @@ window.refreshSupportNotifications=function(){
     supportNotificationsUnsubscribe=onSnapshot(ref,snapshot=>{
         if(context!==supportContext()||context!==supportNotificationsContext)return;
         supportThreadsCache=(staff?snapshot.docs.map(item=>({id:item.id,...item.data()})):(snapshot.exists()?[{id:snapshot.id,...snapshot.data()}]:[])).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+        if(!snapshot.metadata?.fromCache){
+            const arrivals=supportArrivals.update(supportThreadsCache.map(thread=>({id:thread.id,count:incomingSupportCount(thread.messages,staff),thread})));
+            arrivals.forEach(({id,count})=>notificationCenter.incoming({key:`support:${id}:${staff?'visitor':'staff'}:${count}`,title:translateUI(staff?'Новое обращение в поддержку':'Новый ответ поддержки'),body:translateUI('Откройте поддержку, чтобы прочитать сообщение'),kind:'support',threadId:staff?id:''}));
+        }
         updateSupportBadge();
         if(staff)renderSupportInbox();
     },error=>{
@@ -3247,7 +3276,7 @@ window.openSupport=async function(){
     document.getElementById('support-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');
     const inbox=document.getElementById('support-staff-inbox'), name=document.getElementById('support-name');
     if(isSupportStaff()) { if(name) name.classList.add('hidden'); if(inbox) inbox.classList.remove('hidden'); await loadSupportInbox(); }
-    else { if(name) name.classList.remove('hidden'); if(inbox) inbox.classList.add('hidden'); activeSupportThreadId=ownSupportThreadId(); subscribeSupportThread(activeSupportThreadId); }
+    else { if(name) name.classList.remove('hidden'); if(inbox) inbox.classList.add('hidden'); activeSupportThreadId=ownSupportThreadId(); subscribeSupportThread(activeSupportThreadId,true); }
     updateSupportRecipient();
 };
 window.closeSupport=function(){document.getElementById('support-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');supportUnsubscribe?.();supportUnsubscribe=null;};
@@ -3261,10 +3290,21 @@ window.openSupportThread=function(id){
     if(activeSupportThreadId&&field)supportDrafts.set(activeSupportThreadId,field.value);
     activeSupportThreadId=id;if(field)field.value=supportDrafts.get(id)||'';
     const box=document.getElementById('support-messages');if(box)box.innerHTML='';
-    updateSupportRecipient();subscribeSupportThread(id);loadSupportInbox();
+    updateSupportRecipient();subscribeSupportThread(id,true);loadSupportInbox();
 };
-function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id||(!isSupportStaff()&&id!==ownSupportThreadId()))return;if(supportUnsubscribe)supportUnsubscribe();const context=supportContext();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{if(context!==supportContext()||id!==activeSupportThreadId)return;const data=snap.exists()?snap.data():{};updateSupportRecipient();renderSupportMessages(data.messages||[]);markSupportThreadRead(id,data.messages||[]);},e=>console.warn('support',e));}
-function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString(interfaceLocale()):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
+function subscribeSupportThread(id,readOnOpen=false){
+    if(!db||!auth?.currentUser||!id||(!isSupportStaff()&&id!==ownSupportThreadId()))return;
+    if(supportUnsubscribe)supportUnsubscribe();const context=supportContext();
+    supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{
+        if(context!==supportContext()||id!==activeSupportThreadId)return;
+        const data=snap.exists()?snap.data():{};displayedSupportMessages=Array.isArray(data.messages)?data.messages:[];
+        updateSupportRecipient();renderSupportMessages(displayedSupportMessages);
+        // A new realtime reply must not disappear from the badge merely because
+        // the conversation was left open. Reading follows opening or interaction.
+        if(readOnOpen && !snap.metadata?.fromCache){markSupportThreadRead(id,displayedSupportMessages);readOnOpen=false;}
+    },e=>console.warn('support',e));
+}
+function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${escapeNotificationText(m.author|| (m.role==='staff'?'Поддержка':'Пользователь'))}</strong><p>${escapeNotificationText(m.text||'')}</p><span>${m.at?new Date(m.at).toLocaleString(interfaceLocale()):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
 window.sendSupportMessage=async function(){
     if(sendingSupportMessage)return;
     const field=document.getElementById('support-text'),text=field?.value.trim()||'';if(!text)return;
@@ -3277,7 +3317,7 @@ window.sendSupportMessage=async function(){
         if(staff&&!snap.exists()){showToast('Выберите обращение');return;}
         const data=snap.exists()?snap.data():{},messages=Array.isArray(data.messages)?[...data.messages]:[];
         const displayName=staff?(data.displayName||'Пользователь'):(document.getElementById('support-name')?.value.trim()||data.displayName||'Пользователь');
-        messages.push({text,author:staff?(currentAccountLogin||'Поддержка'):displayName,role:staff?'staff':'visitor',at:new Date().toISOString()});
+        messages.push({id:crypto.randomUUID(),senderUid:auth.currentUser.uid,text,author:staff?(currentAccountLogin||'Поддержка'):displayName,role:staff?'staff':'visitor',at:new Date().toISOString()});
         await setDoc(ref,{messages,updatedAt:new Date().toISOString(),displayName,ownerUid:staff?(data.ownerUid||id):auth.currentUser.uid},{merge:true});
         if(context===supportContext()){
             if(activeSupportThreadId===id&&field.value.trim()===text)field.value='';
@@ -3288,8 +3328,31 @@ window.sendSupportMessage=async function(){
     finally{sendingSupportMessage=false;updateSupportRecipient();}
 };
 
+const notificationCenter=createNotificationCenter({
+    getCloud:()=>({auth,db}),translate:translateUI,toast:showToast,
+    open:async data=>{if(data.kind==='support'){await window.openSupport();if(data.threadId&&isSupportStaff())window.openSupportThread(data.threadId);}else window.openNotifications();}
+});
+window.refreshNotificationSettings=()=>notificationCenter.render();
+window.notificationAccountChanged=()=>notificationCenter.refreshAccount();
+window.notificationAccountWillChange=()=>notificationCenter.detach();
+let notificationIdentity='';
+['support-messages','support-text'].forEach(id=>{
+    const element=document.getElementById(id);
+    ['pointerdown','keydown'].forEach(type=>element?.addEventListener(type,()=>markSupportThreadRead(activeSupportThreadId,displayedSupportMessages),{passive:true}));
+});
+const notificationDeepLink=new URL(location.href).searchParams;
+let pendingNotificationLink=notificationDeepLink.get('notification');
+
 // Запускаем новые realtime-модули после авторизации.
-setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();window.refreshSupportNotifications();},1200);
+setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();window.refreshSupportNotifications();
+    const identity=auth?.currentUser?.uid||'';
+    if(identity!==notificationIdentity){notificationIdentity=identity;notificationCenter.refreshAccount();}
+    if(pendingNotificationLink&&identity&&(pendingNotificationLink!=='support'||!isSupportStaff()||supportThreadsCache.length)){
+        const kind=pendingNotificationLink;pendingNotificationLink='';
+        if(kind==='support'){window.openSupport().then(()=>{const thread=notificationDeepLink.get('thread');if(thread&&isSupportStaff())window.openSupportThread(thread);});}else if(kind==='events')window.openNotifications();
+        const url=new URL(location.href);url.searchParams.delete('notification');url.searchParams.delete('thread');history.replaceState(null,'',url);
+    }
+},1200);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){window.refreshSupportNotifications();if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);}});
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();

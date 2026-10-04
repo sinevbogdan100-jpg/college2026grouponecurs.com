@@ -1,0 +1,11 @@
+{
+  "id": "./",
+  "name": "SBP GROUP — ТОЭ-26-9-1",
+  "short_name": "SBP GROUP",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#818cf8",
+  "icons": [{ "src": "icon.png", "sizes": "any", "type": "image/png", "purpose": "any" }]
+}

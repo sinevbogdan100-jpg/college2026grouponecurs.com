@@ -1,0 +1,118 @@
+const fs=require('fs');
+const vm=require('vm');
+const assert=require('assert/strict');
+const storage=new Map(),elements=new Map(),listeners=[],arrivals=[];
+const node=id=>{
+ if(!elements.has(id))elements.set(id,{textContent:'',innerHTML:'',value:'',scrollHeight:0,classList:{set:new Set(['support-modal','support-menu-badge','support-staff-inbox'].includes(id)?['hidden']:[]),contains(c){return this.set.has(c)},add(c){this.set.add(c)},remove(c){this.set.delete(c)},toggle(c,on){if(on)this.set.add(c);else this.set.delete(c)}},addEventListener(){},querySelectorAll(){return []}});
+ return elements.get(id);
+};
+const context={console,Date,Math,JSON,Number,String,Set,Map,Array,URL,crypto:require('crypto'),location:{href:'https://example.com/'},history:{replaceState(){}},createNotificationCenter(){return {incoming(item){arrivals.push(item)},render(){},refreshAccount(){},detach(){}}},currentAccessRole:'viewer',currentAccountLogin:'',allowSupport:false,visitorSupportId:'offline',db:{},auth:{currentUser:{uid:'visitor1'}},notificationsUnsubscribe:()=>{},supportUnsubscribe:null,CLOUD_ROOT:['toe_group','shared'],
+ document:{visibilityState:'visible',getElementById:node,querySelectorAll(){return []},addEventListener(){},body:{classList:{add(){},remove(){}}}},
+ localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+ canUseSupportStaff(){return context.allowSupport},collection:(_,...path)=>({type:'collection',id:path.at(-1),path}),doc:(_,...path)=>({type:'doc',id:path.at(-1),path}),
+ onSnapshot(ref,callback,error){const listener={ref,callback,error,closed:false};listeners.push(listener);return ()=>listener.closed=true;},
+ setInterval(){},subscribeNotifications(){},applyKzTranslations(){},translateUI:s=>s,interfaceLocale:()=> 'ru-RU',
+ escapeNotificationText:s=>String(s).replace(/</g,'&lt;'),showToast(){},window:{addEventListener(){}}
+};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('notification-state.js','utf8').replaceAll('export function','function'),context);
+vm.runInContext(fs.readFileSync('support-state.js','utf8').replaceAll('export function','function'),context);
+assert.equal(context.getSiteVersion('step18.8-version-support-badges-2026-10-04'),'18.8');
+assert.equal(context.getSiteVersion('step18.9-next-release'),'18.9');
+const visitorMsg={role:'visitor',text:'Вопрос'},staffMsg={role:'staff',text:'Ответ'};
+assert.equal(context.unreadSupportCount([visitorMsg,staffMsg],true),1);
+assert.equal(context.unreadSupportCount([visitorMsg,staffMsg],false),1);
+assert.equal(context.unreadSupportCount([staffMsg],false,1),0);
+assert.equal(context.unreadSupportCount([staffMsg,staffMsg],false,1),1);
+assert.equal(context.unreadSupportCount(null,false),0);
+const app=fs.readFileSync('app.js','utf8');
+vm.runInContext(app.slice(app.indexOf("let activeSupportThreadId='';")),context);
+const emit=(listener,threads)=>listener.callback(listener.ref.type==='collection'?{docs:threads.map(t=>({id:t.id,data:()=>t}))}:{id:listener.ref.id,exists:()=>!!threads.length,data:()=>threads[0]});
+const badge=node('support-menu-badge');
+assert.equal(listeners[0].ref.type,'doc');
+assert.equal(listeners[0].ref.id,'visitor1');
+emit(listeners[0],[{id:'visitor1',messages:[visitorMsg,staffMsg]}]);
+assert.equal(badge.textContent,'1');
+assert.equal(badge.classList.contains('hidden'),false);
+context.window.openSupport();
+emit(listeners.at(-1),[{id:'visitor1',messages:[visitorMsg,staffMsg]}]);
+assert.equal(badge.classList.contains('hidden'),true,'viewing reply marks it read');
+assert.equal(arrivals.length,0,'initial history makes no sound');
+emit(listeners[0],[{id:'visitor1',messages:[visitorMsg,staffMsg,staffMsg]}]);
+emit(listeners.at(-1),[{id:'visitor1',messages:[visitorMsg,staffMsg,staffMsg]}]);
+assert.equal(badge.textContent,'1','new reply is not auto-read by the open dialog');
+assert.equal(arrivals.at(-1).title,'Новый ответ поддержки');
+const arrivalCount=arrivals.length;emit(listeners[0],[{id:'visitor1',messages:[visitorMsg,staffMsg,staffMsg]}]);assert.equal(arrivals.length,arrivalCount,'repeated snapshots are silent');
+context.window.closeSupport();
+emit(listeners[0],[{id:'visitor1',messages:[visitorMsg,staffMsg,staffMsg]}]);
+assert.equal(badge.textContent,'1','new reply after closing is unread');
+node('support-modal').classList.remove('hidden');
+context.document.visibilityState='hidden';
+vm.runInContext("activeSupportThreadId='visitor1';markSupportThreadRead('visitor1',[{role:'staff'},{role:'staff'}]);",context);
+assert.equal(badge.textContent,'1','background tab does not mark read');
+context.document.visibilityState='visible';
+context.window.closeSupport();
+context.auth.currentUser={uid:'owner1'};context.currentAccessRole='owner';context.window.refreshSupportNotifications();
+assert.equal(listeners[0].closed,true,'old account listener stopped');
+const staffListener=listeners.at(-1);
+assert.equal(staffListener.ref.type,'collection');
+emit(staffListener,[{id:'a',messages:[visitorMsg,visitorMsg,staffMsg]},{id:'b',messages:[visitorMsg]}]);
+assert.equal(badge.textContent,'3','staff counts incoming messages across threads');
+context.window.openSupport();
+assert.equal(badge.textContent,'3','staff explicitly chooses a recipient before reading');
+context.window.openSupportThread('a');
+emit(listeners.at(-1),[{id:'a',messages:[visitorMsg,visitorMsg,staffMsg]}]);
+assert.equal(badge.textContent,'1','viewing one thread leaves other thread unread');
+context.window.closeSupport();
+context.currentAccessRole='admin';context.allowSupport=false;context.window.refreshSupportNotifications();
+assert.equal(staffListener.closed,true,'revoking support access stops collection listener');
+assert.equal(listeners.at(-1).ref.type,'doc','admin without support permission uses own thread only');
+assert.equal(badge.classList.contains('hidden'),true,'badge clears on role change');
+emit(staffListener,[{id:'secret',messages:[visitorMsg]}]);
+assert.equal(badge.classList.contains('hidden'),true,'late privileged snapshot is ignored');
+context.auth.currentUser=null;context.window.refreshSupportNotifications();
+assert.equal(badge.classList.contains('hidden'),true,'logout clears badge');
+context.auth.currentUser={uid:'visitor1'};context.currentAccessRole='viewer';context.window.refreshSupportNotifications();
+emit(listeners.at(-1),[{id:'visitor1',messages:[visitorMsg,staffMsg,staffMsg]}]);
+assert.equal(badge.textContent,'1','read cursor restored for same account');
+console.log('PASS: displayed version follows build; incoming counts, read/unread, background tabs, multiple threads, role revocation, stale snapshots, logout, and persistence.');
+
+(async()=>{
+ const writes=[],toasts=[];
+ context.console={warn(){}};context.showToast=message=>toasts.push(message);
+ context.canPublishNotifications=()=>context.currentAccessRole==='owner'||(context.currentAccessRole==='admin'&&context.allowNotifications);
+ context.setDoc=async(ref,data)=>writes.push({ref,data});
+ const records={a:{displayName:'Анна',ownerUid:'visitor-a',messages:[visitorMsg]},b:{displayName:'Богдан',ownerUid:'visitor-b',messages:[visitorMsg]}};
+ context.getDoc=async ref=>({exists:()=>!!records[ref.id],data:()=>records[ref.id]});
+ vm.runInContext(app.slice(app.indexOf('let publishingNotification='),app.indexOf("let activeSupportThreadId='';")),context);
+ context.auth.currentUser={uid:'owner1'};context.currentAccessRole='owner';context.currentAccountLogin='owner';context.window.refreshSupportNotifications();
+ node('notification-title').value='Объявление';node('notification-text').value='Завтра собрание';
+ await context.window.publishNotification();
+ assert.equal(writes.length,1);assert.equal(writes[0].ref.path.at(-2),'notifications');assert.equal(writes[0].data.author,'owner');
+ assert.equal(node('notification-text').value,'');assert.equal(node('notification-publish-button').disabled,false);
+ assert.equal(toasts.at(-1),'Уведомление опубликовано');
+ const before=writes.length;context.currentAccessRole='viewer';node('notification-text').value='Нельзя';await context.window.publishNotification();assert.equal(writes.length,before);
+ context.currentAccessRole='owner';emit(listeners.at(-1),Object.entries(records).map(([id,data])=>({id,...data})));
+ await context.window.openSupport();
+ assert.equal(node('support-send-button').disabled,true,'no implicit recipient');
+ context.window.openSupportThread('a');
+ assert.equal(node('support-active-thread').textContent,'Получатель: Анна');
+ node('support-text').value='Ответ Анне';await context.window.sendSupportMessage();
+ assert.equal(writes.at(-1).ref.id,'a');assert.equal(writes.at(-1).data.ownerUid,'visitor-a');assert.equal(writes.at(-1).data.messages.at(-1).author,'owner');assert.equal(writes.at(-1).data.messages.at(-1).text,'Ответ Анне');
+ assert.equal(node('support-text').value,'');
+ node('support-text').value='Черновик Анне';context.window.openSupportThread('b');assert.equal(node('support-text').value,'');node('support-text').value='Черновик Богдану';context.window.openSupportThread('a');assert.equal(node('support-text').value,'Черновик Анне');
+ let release;
+ context.getDoc=()=>new Promise(resolve=>release=resolve);
+ const pending=context.window.sendSupportMessage();
+ context.window.openSupportThread('b');assert.equal(node('support-text').value,'Черновик Богдану');
+ release({exists:()=>true,data:()=>records.a});await pending;
+ assert.equal(writes.at(-1).ref.id,'a','in-flight send remains bound to chosen recipient');
+ assert.equal(node('support-text').value,'Черновик Богдану','other recipient draft remains intact');
+ context.getDoc=async()=>({exists:()=>true,data:()=>records.b});context.setDoc=async()=>{throw {code:'permission-denied'}};
+ await context.window.sendSupportMessage();assert.equal(node('support-text').value,'Черновик Богдану');assert.equal(node('support-send-button').disabled,false);
+ node('notification-text').value='Сохранить при ошибке';await context.window.publishNotification();assert.equal(node('notification-text').value,'Сохранить при ошибке');assert.equal(node('notification-publish-button').disabled,false);
+ context.setDoc=async(ref,data)=>writes.push({ref,data});context.getDoc=()=>new Promise(resolve=>release=resolve);
+ const count=writes.length,pendingLogout=context.window.sendSupportMessage();context.auth.currentUser={uid:'visitor2'};context.currentAccessRole='viewer';context.window.refreshSupportNotifications();release({exists:()=>true,data:()=>records.b});await pendingLogout;assert.equal(writes.length,count,'logout cancels pending privileged send');
+ assert.equal(app.includes('currentAccessLogin'),false,'undefined login variable removed');
+ console.log('PASS: announcement publishing, author identity, permissions, exact support recipient, per-thread drafts, recipient-switch race, failure recovery, and logout during send. Firebase writes mocked.');
+})().catch(error=>{console.error(error);process.exitCode=1});

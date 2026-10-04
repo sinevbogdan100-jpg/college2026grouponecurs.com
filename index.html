@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.9-notifications-support-send-2026-10-04">
+    <meta name="app-build" content="step18.10-support-alerts-2026-10-04">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#818cf8">
+    <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-support-send">
+    <link rel="stylesheet" href="style.css?v=20261004-notification-alerts">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-shared-gradients">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -214,6 +217,17 @@
                     <p class="text-[9px] text-slate-400">Этот блок показывается только при наличии права «Резервные копии».</p>
                 </div></div>
           </details>
+          <details class="settings-reference-card" id="settings-notifications-section">
+            <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-regular fa-bell"></i></span><span class="settings-reference-copy"><strong>Уведомления</strong><small>Звук и уведомления на устройство</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
+            <div class="settings-reference-content notification-preferences">
+              <label class="notification-preference-row"><span><strong>Звук уведомлений</strong><small>Ответы поддержки и новые объявления</small></span><input id="notification-sound-toggle" type="checkbox"></label>
+              <button id="notification-sound-test" class="notification-setting-button" type="button"><i class="fa-solid fa-volume-low"></i> <span>Послушать звук</span></button>
+              <p>Уведомления на устройство включаются только с вашего разрешения</p>
+              <button id="notification-device-enable" class="notification-setting-button primary" type="button">Разрешить уведомления</button>
+              <button id="notification-device-disable" class="notification-setting-button" type="button" hidden>Отключить уведомления</button>
+              <p id="notification-device-status" role="status" data-i18n-skip></p>
+            </div>
+          </details>
           <details class="settings-reference-card" id="settings-system-section">
             <summary class="settings-reference-summary"><span class="settings-reference-icon"><i class="fa-solid fa-circle-info"></i></span><span class="settings-reference-copy"><strong>Система</strong><small>Версия и состояние синхронизации</small></span><i class="fa-solid fa-chevron-down settings-reference-chevron"></i></summary>
             <div class="settings-reference-content settings-system-grid"><span>Версия сайта</span><strong id="settings-build-version" data-i18n-skip></strong><span>Синхронизация</span><strong id="settings-sync-status"></strong></div>
@@ -232,7 +246,7 @@
 
     <div id="view-home" class="home-reference max-w-md mx-auto min-h-screen flex flex-col pb-20">
         <div class="app-mobile-topbar home-ref-topbar">
-            <button class="home-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <button class="home-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i><span class="support-menu-dot hidden" aria-hidden="true"></span></button>
             <div class="home-ref-page-title">Главная</div>
             <button class="home-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
                 <i class="fa-regular fa-bell"></i>
@@ -289,7 +303,7 @@
 
     <div id="view-tracker" class="hidden journal-reference-page min-h-screen">
         <div class="journal-ref-topbar">
-            <button class="journal-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <button class="journal-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i><span class="support-menu-dot hidden" aria-hidden="true"></span></button>
             <div class="journal-ref-title">
                 <h1>Журнал</h1>
                 <span>Посещаемость студентов</span>
@@ -411,7 +425,7 @@
 
     <div id="view-schedule" class="hidden schedule-reference-page min-h-screen">
         <div class="schedule-ref-topbar">
-            <button class="schedule-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i></button>
+            <button class="schedule-ref-topbtn" onclick="openAppMenu()" aria-label="Меню"><i class="fa-solid fa-bars"></i><span class="support-menu-dot hidden" aria-hidden="true"></span></button>
             <div class="schedule-ref-title"><h1>Расписание</h1><span id="schedule-group-name" class="hidden">ТОЭ-26-9-1</span></div>
             <button class="schedule-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
                 <i class="fa-regular fa-bell"></i>
@@ -620,7 +634,7 @@
 
     <div id="support-modal" class="app-overlay hidden" onclick="if(event.target===this) closeSupport()">
         <section class="sheet-panel support-panel">
-            <div class="sheet-head"><div><span class="eyebrow">Обратная связь</span><h2>Поддержка</h2></div><button onclick="closeSupport()"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="sheet-head"><div><span class="eyebrow">Обратная связь</span><h2>Поддержка <span id="support-dialog-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></h2></div><button onclick="closeSupport()"><i class="fa-solid fa-xmark"></i></button></div>
             <div class="support-intro">Можно сообщить о проблеме или предложить улучшение. Ответ владельца/администратора появится в этом диалоге и в уведомлениях.</div>
             <input id="support-name" class="support-input" placeholder="Ваше имя (необязательно)">
             <div id="support-staff-inbox" class="hidden support-staff-inbox"></div>
@@ -639,7 +653,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-support-send"></script>
+    <script type="module" src="app.js?v=20261004-notification-alerts"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
