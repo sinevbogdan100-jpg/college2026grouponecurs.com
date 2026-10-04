@@ -4006,3 +4006,44 @@ button[onclick="openAppMenu()"]{position:relative}
 .support-menu-dot{position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:#ef4444;border:2px solid white}
 .support-menu-dot.hidden{display:none!important}
 #support-dialog-badge{vertical-align:middle;margin-left:5px}
+
+
+/* ===== NOTIFICATION ADMIN ACTIONS — step18.11 ===== */
+.notification-item-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.notification-item-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex:0 0 auto;
+}
+.notification-delete-button{
+  width:28px;
+  height:28px;
+  border:1px solid #fecaca;
+  border-radius:9px;
+  background:#fff7f7;
+  color:#dc2626;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease,opacity .16s ease;
+}
+.notification-delete-button:hover{
+  background:#fee2e2;
+  border-color:#fca5a5;
+  transform:translateY(-1px);
+}
+.notification-delete-button:disabled,
+.notification-delete-button.is-busy{
+  opacity:.45;
+  cursor:wait;
+  transform:none;
+}
+.notification-delete-button i{
+  font-size:11px;
+}
