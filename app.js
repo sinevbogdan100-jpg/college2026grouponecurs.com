@@ -48,7 +48,7 @@ import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startIn
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
 window.__journalDateInitialized = false;
-console.info('[SBP GROUP] build', window.__SITE_BUILD__);
+console.info('[SBP Information] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
         const firebaseDiag = { events: [], init: false, auth: null, read: null, write: null, realtime: null, error: null };
         function diagLog(message, data) {
