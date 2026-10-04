@@ -4477,3 +4477,26 @@ button[onclick="openAppMenu()"]{position:relative}
   .schedule-change-route,.home-change-route{gap:5px}
   #view-schedule .schedule-ref-meta.changed-meta{grid-template-columns:1fr!important}
 }
+
+
+/* ===== DIRECT WEB INSTALL + ANDROID SOON — step18.30 ===== */
+.drawer-apk-action.is-coming-soon{
+  cursor:default!important;
+  opacity:.72;
+  filter:saturate(.72);
+  box-shadow:none!important;
+}
+.drawer-apk-action.is-coming-soon:hover{
+  transform:none!important;
+}
+.drawer-apk-action.is-coming-soon>i{
+  background-image:linear-gradient(135deg,#8b96ab,#77849b)!important;
+  box-shadow:none!important;
+}
+.drawer-apk-action.is-coming-soon .drawer-install-copy small{
+  color:#7f899d!important;
+  font-weight:750;
+}
+#menu-install-button:not(.is-installed){
+  cursor:pointer;
+}
