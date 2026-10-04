@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-exact-icon-v3';
+const CACHE_NAME = 'sbp-shell-20261004-force-publish-v4';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
@@ -16,8 +16,10 @@ const CORE_ASSETS = [
   './notification-center.js?v=20261004-performance-v1',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
-  './icon.png?v=20261004-exact-icon-v3',
-  './manifest.webmanifest'
+  './sbp-information-icon-20261004-v4.png',
+  './sbp-information-favicon-20261004-v4.png',
+  './sbp-information-apple-20261004-v4.png',
+  './manifest.webmanifest?v=20261004-force-publish-v4'
 ];
 
 self.addEventListener('install', event => {
@@ -104,8 +106,8 @@ self.addEventListener('push', event => {
     payload ||= { title: 'SBP Information', body: 'Новое уведомление', key: 'toe-new', kind: 'events' };
     await self.registration.showNotification(payload.title || 'SBP Information', {
       body: payload.body || '',
-      icon: './icon.png?v=20261004-exact-icon-v3',
-      badge: './icon.png?v=20261004-exact-icon-v3',
+      icon: './sbp-information-icon-20261004-v4.png',
+      badge: './sbp-information-icon-20261004-v4.png',
       tag: payload.key || 'toe-new',
       silent: false,
       renotify: true,
