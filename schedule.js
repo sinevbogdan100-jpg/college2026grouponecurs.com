@@ -1,7 +1,7 @@
 import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-settings-reference";
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261003-step18-3-recovery1";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-settings-reference";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261003-step18-3-recovery1";
+import { dbGet, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 
@@ -1036,15 +1036,18 @@ export function startSchedulePolling() {
             console.warn('Schedule fallback sync error', e);
         }
     };
-    pollSchedule();
-    schedulePollTimer = setInterval(pollSchedule, 2500);
+    // Realtime listener is the primary path. A lightweight server read remains only as a safety net.
+    schedulePollTimer = setInterval(() => {
+        if (document.visibilityState === 'visible') void pollSchedule();
+    }, 30000);
 }
 
 
 let scheduleReferenceClockTimer = null;
 if (typeof window !== 'undefined') {
     scheduleReferenceClockTimer = window.setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
         const view = document.getElementById('view-schedule');
         if (view && !view.classList.contains('hidden')) renderSchedule(currentScheduleDay);
-    }, 15000);
+    }, 30000);
 }
