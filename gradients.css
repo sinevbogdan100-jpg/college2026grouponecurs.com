@@ -388,3 +388,26 @@ body #view-schedule .schedule-ref-number{
 body #view-schedule .schedule-ref-row.current .schedule-ref-number{
   background-image:linear-gradient(135deg,#52cf87,#2ebd70)!important;
 }
+
+
+/* Final schedule geometry wins over earlier decorative gradient rules. */
+body #view-schedule .schedule-ref-row .schedule-ref-card{
+  width:auto;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:4px 8px 4px 0;
+  padding:10px 12px;
+  overflow:hidden;
+}
+@media(max-width:420px){
+  body #view-schedule .schedule-ref-row .schedule-ref-card{
+    margin:4px 4px 4px 0;
+    padding:10px;
+  }
+}
+@media(max-width:350px){
+  body #view-schedule .schedule-ref-row .schedule-ref-card{
+    padding:9px;
+  }
+}
