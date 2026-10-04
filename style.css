@@ -4418,3 +4418,13 @@ button[onclick="openAppMenu()"]{position:relative}
   margin-top:1px;
   color:#6b52d8;
 }
+
+
+/* ===== NATIVE ANDROID APP / UPDATE UI — step18.25 ===== */
+.drawer-apk-action{margin-top:6px;background-image:linear-gradient(120deg,#edf8f2,#eef5ff 58%,#f1edff)!important;border:1px solid #dfe8e5!important}
+.drawer-apk-action>i{background-image:linear-gradient(135deg,#43c07a,#2eaa68)!important;color:#fff!important;box-shadow:0 5px 15px rgba(45,165,103,.16)}
+.native-app-update{position:fixed;z-index:2147483000;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);width:min(560px,calc(100% - 20px));display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid rgba(112,84,214,.18);border-radius:17px;background:linear-gradient(120deg,rgba(255,255,255,.98),rgba(243,239,255,.98) 58%,rgba(237,247,255,.98));box-shadow:0 16px 44px rgba(45,45,92,.18);backdrop-filter:blur(18px)}
+.native-app-update-icon{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#5c74ef,#7749df);color:#fff;font-size:15px}
+.native-app-update-copy{min-width:0}.native-app-update-copy strong{display:block;color:#1c2944;font-size:11px;line-height:1.25}.native-app-update-copy span{display:block;margin-top:3px;color:#737f98;font-size:8.5px;line-height:1.35}
+.native-app-update-actions{display:flex;gap:6px;align-items:center}.native-app-update-actions button{min-height:34px;padding:0 10px;border:0;border-radius:10px;font-size:9px;font-weight:800}.native-app-update-actions .update-primary{background:linear-gradient(135deg,#5a72ef,#7448dd);color:#fff}.native-app-update-actions .update-later{background:#f0f2f7;color:#6e7890}
+@media(max-width:520px){.native-app-update{grid-template-columns:38px minmax(0,1fr);padding:10px}.native-app-update-icon{width:36px;height:36px}.native-app-update-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.native-app-update-actions button{min-height:38px}}

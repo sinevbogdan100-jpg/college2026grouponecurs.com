@@ -1,5 +1,4 @@
 name: Android shell
-
 on:
   workflow_dispatch:
   push:
@@ -7,41 +6,48 @@ on:
     paths:
       - "android-shell/**"
       - ".github/workflows/android-shell.yml"
-
+permissions:
+  contents: write
 jobs:
   build-debug:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: android-shell
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-
       - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-
       - name: Cache Android debug keystore
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
           key: sbp-information-android-debug-keystore-v1
-
       - name: Build debug APK
+        working-directory: android-shell
         run: gradle :app:assembleDebug --stacktrace
-
-      - name: Upload APK
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sbp-information-android-debug
+          name: sbp-information-android-v2
           path: android-shell/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish current APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION_CODE=$(grep -oP 'versionCode\s+\K[0-9]+' android-shell/app/build.gradle | head -1)
+          VERSION_NAME=$(grep -oP 'versionName\s+"\K[^"]+' android-shell/app/build.gradle | head -1)
+          TAG="android-v${VERSION_CODE}"
+          cp android-shell/app/build/outputs/apk/debug/app-debug.apk SBP-Information-latest.apk
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" SBP-Information-latest.apk --clobber
+            gh release edit "$TAG" --title "SBP Information ${VERSION_NAME}" --notes "Актуальная тестовая Android-версия SBP Information." --latest
+          else
+            gh release create "$TAG" SBP-Information-latest.apk --title "SBP Information ${VERSION_NAME}" --notes "Актуальная тестовая Android-версия SBP Information." --latest
+          fi

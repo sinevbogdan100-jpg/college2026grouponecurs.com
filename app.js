@@ -43,7 +43,7 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection
 } from "./schedule.js?v=20261004-performance-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-ui-polish-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-native-shell-v2";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -2993,6 +2993,71 @@ updateLanguageButtons();
 
 let deferredInstallPrompt = null;
 
+const ANDROID_APK_URL = 'https://github.com/sinevbogdan100-jpg/college2026grouponecurs.com/releases/latest/download/SBP-Information-latest.apk';
+const APP_VERSION_URL = 'app-version.json';
+let publicAndroidVersion = null;
+
+function isNativeAndroidShell() {
+    try { return !!window.SBPAndroid && window.SBPAndroid.isNativeApp(); }
+    catch (_) { return false; }
+}
+function getNativeVersionCode() {
+    try { return Number(window.SBPAndroid?.getVersionCode?.() || 0); }
+    catch (_) { return 0; }
+}
+function getNativeVersionName() {
+    try { return String(window.SBPAndroid?.getVersionName?.() || ''); }
+    catch (_) { return ''; }
+}
+function openAndroidDownload(url = ANDROID_APK_URL) {
+    const target = String(url || ANDROID_APK_URL);
+    if (isNativeAndroidShell()) {
+        try { window.SBPAndroid.openUpdate(target); return; } catch (_) {}
+    }
+    window.location.href = target;
+}
+window.downloadLatestAndroidApp = function() {
+    openAndroidDownload(publicAndroidVersion?.apkUrl || ANDROID_APK_URL);
+};
+function renderNativeAppUpdate(info) {
+    if (!isNativeAndroidShell() || !info) return;
+    document.getElementById('native-app-update')?.remove();
+    const banner = document.createElement('aside');
+    banner.id = 'native-app-update';
+    banner.className = 'native-app-update';
+    banner.innerHTML = '<span class="native-app-update-icon"><i class="fa-solid fa-rotate"></i></span><div class="native-app-update-copy"><strong></strong><span></span></div><div class="native-app-update-actions"><button type="button" class="update-primary"></button><button type="button" class="update-later"></button></div>';
+    banner.querySelector('.native-app-update-copy strong').textContent = translateUI('Доступно обновление приложения');
+    const version = info.versionName || String(info.versionCode || '');
+    banner.querySelector('.native-app-update-copy span').textContent = translateUI('Новая версия SBP Information готова к установке.') + (version ? ' ' + translateUI('Версия') + ': ' + version : '');
+    const update = banner.querySelector('.update-primary');
+    const later = banner.querySelector('.update-later');
+    update.textContent = translateUI('Обновить');
+    later.textContent = translateUI('Позже');
+    update.addEventListener('click', () => {
+        showToast(translateUI('Открываем страницу обновления'));
+        openAndroidDownload(info.apkUrl || ANDROID_APK_URL);
+    });
+    later.addEventListener('click', () => banner.remove());
+    document.body.appendChild(banner);
+}
+async function loadPublicAndroidVersion() {
+    try {
+        const url = new URL(APP_VERSION_URL, location.href);
+        url.searchParams.set('_', Date.now().toString());
+        const response = await fetch(url.href, { cache: 'no-store' });
+        if (!response.ok) return;
+        const info = await response.json();
+        publicAndroidVersion = info;
+        const versionEl = document.getElementById('menu-apk-version');
+        if (versionEl) versionEl.textContent = translateUI('Актуальная версия') + ': ' + (info.versionName || info.versionCode || '—');
+        window.updateInstallButton?.();
+        if (isNativeAndroidShell() && Number(info.versionCode || 0) > getNativeVersionCode()) renderNativeAppUpdate(info);
+    } catch (error) {
+        console.warn('android app version check', error);
+    }
+}
+setTimeout(loadPublicAndroidVersion, 900);
+
 function isStandaloneApp() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -3003,14 +3068,28 @@ window.updateInstallButton = function() {
     const button = document.getElementById('menu-install-button');
     const label = document.getElementById('menu-install-label');
     const hint = document.getElementById('menu-install-hint');
+    const apkButton = document.getElementById('menu-apk-download-button');
     if (!button || !label || !hint) return;
-    const installed = isStandaloneApp();
+    const nativeApp = isNativeAndroidShell();
+    const installed = isStandaloneApp() || nativeApp;
     button.classList.toggle('is-installed', installed);
     button.disabled = installed;
     label.textContent = translateUI(installed ? 'Приложение установлено' : 'Установить приложение');
-    hint.textContent = translateUI(installed ? 'SBP Information уже работает как приложение' : 'SBP Information на этом устройстве');
+    if (nativeApp) {
+        const version = getNativeVersionName();
+        hint.textContent = version ? translateUI('Версия') + ' ' + version : translateUI('Приложение установлено');
+        if (apkButton) apkButton.hidden = true;
+    } else {
+        hint.textContent = translateUI(installed ? 'SBP Information уже работает как приложение' : 'SBP Information на этом устройстве');
+        if (apkButton) apkButton.hidden = false;
+    }
 };
 window.installSBPApp = async function() {
+    if (isNativeAndroidShell()) {
+        showToast(translateUI('Приложение уже установлено'));
+        window.updateInstallButton();
+        return;
+    }
     if (isStandaloneApp()) {
         showToast(translateUI('Приложение уже установлено'));
         window.updateInstallButton();

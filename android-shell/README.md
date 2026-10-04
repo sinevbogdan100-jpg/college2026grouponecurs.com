@@ -1,37 +1,9 @@
 # SBP Information — Android shell
 
-Native Android launcher for the existing SBP Information web application.
+Version 0.2 uses a native Android WebView instead of a Custom Tab / TWA. This removes the browser/site toolbar completely while the live website remains the single source of truth for UI, Firebase data and RU/KZ localization.
 
-## Architecture
+The activity opens the site with launch=1 only on the first native opening. The website removes that flag immediately, so ordinary refreshes do not replay the launch animation.
 
-The shell uses a Trusted Web Activity (TWA), not a duplicated WebView copy. The live web app remains the single source of truth for UI, Firebase data, RU/KZ localization, service worker, and Web Push.
+The website exposes app-version.json. The Android bridge exposes the installed version. When the website reports a higher versionCode, the app shows an RU/KZ update banner.
 
-Live URL:
-
-https://sinevbogdan100-jpg.github.io/college2026grouponecurs.com/
-
-Android application id:
-
-com.sbpinformation.toe2691
-
-## Launch screen
-
-Android requires a system launch frame before web content can execute. The shell intentionally uses:
-
-- no visible splash logo;
-- no splash text;
-- a transparent Android 12+ splash icon;
-- the same purple/blue background family as the in-app launch animation.
-
-This makes the required OS frame visually merge into the animated launch screen in index.html.
-
-## Trusted verification
-
-For the TWA to stay fully fullscreen, the website must contain a valid
-/.well-known/assetlinks.json entry for the final Android signing certificate.
-
-Do not commit a production signing keystore to this public repository.
-After the release key is created, add its SHA-256 certificate fingerprint to
-the website assetlinks file and sign all future Android releases with the same key.
-
-Until that final signing link is configured, debug builds are for shell testing only.
+The GitHub Actions workflow publishes SBP-Information-latest.apk to the latest GitHub Release.

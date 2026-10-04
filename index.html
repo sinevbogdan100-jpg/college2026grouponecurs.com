@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.24-launch-only-on-open-2026-10-04">
+    <meta name="app-build" content="step18.25-native-shell-v2-2026-10-04">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-force-publish-v4">
@@ -12,12 +12,19 @@
     <script>
       (() => {
         try {
-          const params = new URLSearchParams(location.search);
-          const fromAndroidShell = params.get('source') === 'android-app';
-          const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || fromAndroidShell;
+          const url = new URL(location.href);
+          const fromAndroidShell = url.searchParams.get('source') === 'android-app';
+          const nativeLaunch = fromAndroidShell && url.searchParams.get('launch') === '1';
+          const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
           const navEntry = performance.getEntriesByType?.('navigation')?.[0];
           const isReload = navEntry?.type === 'reload' || performance.navigation?.type === 1;
-          if (standalone && !isReload) document.documentElement.classList.add('sbp-app-launch');
+          if (nativeLaunch || (!fromAndroidShell && standalone && !isReload)) {
+            document.documentElement.classList.add('sbp-app-launch');
+          }
+          if (fromAndroidShell && url.searchParams.has('launch')) {
+            url.searchParams.delete('launch');
+            history.replaceState(null, '', url.pathname + url.search + url.hash);
+          }
         } catch (_) {}
       })();
     </script>
@@ -110,14 +117,14 @@
     <link rel="icon" type="image/png" sizes="192x192" href="sbp-information-favicon-20261004-v4.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-ui-polish-v1">
+    <link rel="stylesheet" href="style.css?v=20261004-native-shell-v2">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-ui-polish-v1">
     <link rel="stylesheet" href="responsive-fit.css?v=20261004-layout-fit-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261004-ui-polish-v1">
+    <link rel="modulepreload" href="app.js?v=20261004-native-shell-v2">
     <link rel="modulepreload" href="firebase.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261004-performance-v1">
@@ -760,6 +767,13 @@
                         <small id="menu-install-hint" data-i18n-skip>SBP Information на этом устройстве</small>
                     </span>
                 </button>
+                <button id="menu-apk-download-button" class="drawer-install-action drawer-apk-action" type="button" onclick="downloadLatestAndroidApp()">
+                    <i class="fa-brands fa-android"></i>
+                    <span class="drawer-install-copy">
+                        <strong id="menu-apk-label">Скачать Android-приложение</strong>
+                        <small id="menu-apk-version" data-i18n-skip>Проверяем актуальную версию…</small>
+                    </span>
+                </button>
             </div>
 
             <div class="drawer-beta-card">
@@ -839,7 +853,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-ui-polish-v1"></script>
+    <script type="module" src="app.js?v=20261004-native-shell-v2"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
