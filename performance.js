@@ -15,7 +15,7 @@
   const warm = () => {
     if (navigator.connection?.saveData) return;
     [
-      './notification-center.js?v=20261004-performance-v1',
+      './notification-center.js?v=20261004-console-fixes-v1',
       './notification-state.js?v=20261004-performance-v1',
       './support-state.js?v=20261004-performance-v1'
     ].forEach(url => fetch(url, { cache: 'force-cache', priority: 'low' }).catch(() => {}));

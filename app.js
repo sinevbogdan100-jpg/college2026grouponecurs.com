@@ -1,5 +1,5 @@
 import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
-import { createNotificationCenter } from './notification-center.js?v=20261004-performance-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261004-console-fixes-v1';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
 import {
     createFirebaseServices,
@@ -18,7 +18,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261004-performance-v1";
+} from "./firebase.js?v=20261004-console-fixes-v1";
 
 import {
     getWeekTypeForDate,

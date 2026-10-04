@@ -1,4 +1,4 @@
-import { firebaseConfig } from './firebase.js?v=20261004-performance-v1';
+import { callCloudFunction } from './firebase.js?v=20261004-console-fixes-v1';
 
 const SOUND_KEY = 'toe_notification_sound_v1';
 const DEVICE_KEY = 'toe_device_notifications_v1';
@@ -7,6 +7,7 @@ const DELIVERY_KEY = 'toe_notification_deliveries_v1';
 export function createNotificationCenter({ getCloud, translate, toast, open }) {
   let audio, registration, configuration, registeredContext = '', busy = false;
   let statusOverride = '';
+  let audioUnlockedByGesture = false;
   const read = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
   const write = (key, value) => { try { localStorage.setItem(key, value); } catch (_) {} };
   const soundEnabled = () => read(SOUND_KEY) === '1';
@@ -35,8 +36,10 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
     if (status) status.textContent = translate(statusOverride || text);
   }
 
-  async function unlockAudio() {
+  async function unlockAudio(fromUserGesture = false) {
     if (!soundEnabled()) return;
+    if (fromUserGesture) audioUnlockedByGesture = true;
+    if (!audioUnlockedByGesture) return;
     try {
       const Audio = window.AudioContext || window.webkitAudioContext;
       if (!Audio) return;
@@ -46,8 +49,8 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
   }
 
   async function chime() {
-    if (!soundEnabled()) return;
-    await unlockAudio();
+    if (!soundEnabled() || !audioUnlockedByGesture) return;
+    await unlockAudio(false);
     if (!audio || audio.state !== 'running') return;
     const now = audio.currentTime;
     [660, 880].forEach((frequency, index) => {
@@ -69,17 +72,8 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
   }
 
   async function call(name, data = {}) {
-    const user = getCloud().auth?.currentUser;
-    if (!user) throw new Error('auth');
-    const token = await user.getIdToken();
-    const response = await fetch(`https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/${name}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ data }), signal: AbortSignal.timeout(10000)
-    });
-    if (!response.ok) throw new Error('push-server-unavailable');
-    const result = await response.json();
-    if (result.error) throw new Error(result.error.status || 'push-server-unavailable');
-    return result.result || result.data;
+    if (!getCloud().auth?.currentUser) throw new Error('auth');
+    return await callCloudFunction(name, data);
   }
 
   function publicKey(value) {
@@ -162,8 +156,7 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
           const sw = await worker();
           await sw.showNotification(title, {
             body,
-            icon: './sbp-information-icon-20261004-v4.png',
-            badge: './sbp-information-icon-20261004-v4.png',
+            icon: './sbp-information-icon.svg',
             tag: key,
             silent: false,
             renotify: true,
@@ -180,16 +173,19 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
   }
 
   document.getElementById('notification-sound-toggle')?.addEventListener('change', async event => {
-    write(SOUND_KEY, event.target.checked ? '1' : '0'); if (event.target.checked) await chime(); render();
+    write(SOUND_KEY, event.target.checked ? '1' : '0');
+    if (event.target.checked) { await unlockAudio(true); await chime(); }
+    render();
   });
   document.getElementById('notification-sound-test')?.addEventListener('click', async () => {
     if (!soundEnabled()) { toast('Сначала включите звук уведомлений'); return; }
+    await unlockAudio(true);
     await chime();
   });
   document.getElementById('notification-device-enable')?.addEventListener('click', enableDevice);
   document.getElementById('notification-device-disable')?.addEventListener('click', disableDevice);
-  document.addEventListener('pointerdown', unlockAudio, { passive: true });
-  document.addEventListener('keydown', unlockAudio);
+  document.addEventListener('pointerdown', () => { void unlockAudio(true); }, { passive: true, once: true });
+  document.addEventListener('keydown', () => { void unlockAudio(true); }, { once: true });
   document.addEventListener('visibilitychange', render);
   window.addEventListener('storage', render);
   if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', event => {

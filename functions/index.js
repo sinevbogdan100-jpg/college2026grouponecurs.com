@@ -13,18 +13,26 @@ const privateKey = defineSecret('VAPID_PRIVATE_KEY');
 const subject = defineString('VAPID_SUBJECT');
 const deviceCollection = 'toe_push_devices';
 const region = 'us-central1';
+const callableOptions = {
+  region,
+  cors: [
+    'https://sinevbogdan100-jpg.github.io',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000'
+  ]
+};
 
 function requireUser(request) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first');
   return request.auth;
 }
 
-exports.getPushConfiguration = onCall({ region }, request => {
+exports.getPushConfiguration = onCall(callableOptions, request => {
   requireUser(request);
   return { vapidPublicKey: publicKey.value() };
 });
 
-exports.registerPushDevice = onCall({ region }, async request => {
+exports.registerPushDevice = onCall(callableOptions, async request => {
   const user = requireUser(request), subscription = request.data?.subscription;
   if (!validSubscription(subscription)) throw new HttpsError('invalid-argument', 'Invalid push subscription');
   const id = subscriptionId(subscription.endpoint);
@@ -36,7 +44,7 @@ exports.registerPushDevice = onCall({ region }, async request => {
   return { registered: true };
 });
 
-exports.unregisterPushDevice = onCall({ region }, async request => {
+exports.unregisterPushDevice = onCall(callableOptions, async request => {
   const user = requireUser(request), endpoint = request.data?.endpoint;
   if (typeof endpoint !== 'string' || endpoint.length > 4096) throw new HttpsError('invalid-argument', 'Invalid endpoint');
   const ref = db.collection(deviceCollection).doc(subscriptionId(endpoint));

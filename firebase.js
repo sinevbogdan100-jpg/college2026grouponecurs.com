@@ -9,6 +9,7 @@ import {
     browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
 
 // Единая конфигурация Firebase проекта группы.
 export const firebaseConfig = {
@@ -21,11 +22,21 @@ export const firebaseConfig = {
     measurementId: "G-V88BPGYH33"
 };
 
+let functionsService = null;
+
 export function createFirebaseServices() {
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    return { app, auth, db };
+    functionsService = getFunctions(app, 'us-central1');
+    return { app, auth, db, functions: functionsService };
+}
+
+export async function callCloudFunction(name, data = {}) {
+    if (!functionsService) throw new Error('functions-not-initialized');
+    const callable = httpsCallable(functionsService, name, { timeout: 10000 });
+    const response = await callable(data);
+    return response?.data;
 }
 
 export {

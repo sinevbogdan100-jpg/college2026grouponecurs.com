@@ -1,26 +1,25 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-schedule-change-v1';
+const CACHE_NAME = 'sbp-shell-20261004-console-fixes-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261004-schedule-change-v1',
+  './app.js?v=20261004-console-fixes-v1',
   './style.css?v=20261004-schedule-change-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
   './responsive-fit.css?v=20261004-speed-v1',
-  './firebase.js?v=20261004-performance-v1',
+  './firebase.js?v=20261004-console-fixes-v1',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
   './schedule.js?v=20261004-schedule-change-v1',
   './i18n.js?v=20261004-schedule-change-v1',
-  './notification-center.js?v=20261004-performance-v1',
+  './notification-center.js?v=20261004-console-fixes-v1',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
-  './sbp-information-icon-20261004-v4.png',
-  './sbp-information-favicon-20261004-v4.png',
-  './sbp-information-apple-20261004-v4.png',
-  './manifest.webmanifest?v=20261004-force-publish-v4'
+  './sbp-information-icon.svg?v=20261004-console-fixes-v1',
+  './tailwind-local.css?v=20261004-console-fixes-v1',
+  './manifest.webmanifest?v=20261004-console-fixes-v1'
 ];
 
 self.addEventListener('install', event => {
@@ -112,8 +111,8 @@ self.addEventListener('push', event => {
     payload ||= { title: 'SBP Information', body: 'Новое уведомление', key: 'toe-new', kind: 'events' };
     await self.registration.showNotification(payload.title || 'SBP Information', {
       body: payload.body || '',
-      icon: './sbp-information-icon-20261004-v4.png',
-      badge: './sbp-information-icon-20261004-v4.png',
+      icon: './sbp-information-icon.svg',
+      
       tag: payload.key || 'toe-new',
       silent: false,
       renotify: true,
