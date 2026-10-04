@@ -1,6 +1,6 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-settings-reference";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-performance-v1";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
-import { getWeekTypeForDate } from "./utils.js?v=20261004-settings-reference";
+import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
