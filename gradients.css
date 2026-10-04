@@ -257,3 +257,134 @@ body .help-navigation-tip{
 body .help-beta-note{
   background-image:linear-gradient(115deg,#fff8ee,#f7f0ff)!important;
 }
+
+
+/* ===== VISUAL POLISH — step18.21 ===== */
+/* Journal: richer status badges + softly layered student rows */
+body #view-tracker .status-head{
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 12px rgba(79,76,145,.08);
+}
+body #view-tracker .status-head.present{
+  background-image:linear-gradient(135deg,#dff8ec,#c8f0e3)!important;
+  color:#0d8f58!important;
+}
+body #view-tracker .status-head.sick{
+  background-image:linear-gradient(135deg,#ffe8ed,#ffd9e4)!important;
+  color:#c9425b!important;
+}
+body #view-tracker .status-head.excused{
+  background-image:linear-gradient(135deg,#e7f0ff,#dbe8ff)!important;
+  color:#2c63d7!important;
+}
+body #view-tracker .status-head.unexcused{
+  background-image:linear-gradient(135deg,#fff1dc,#ffe3bd)!important;
+  color:#c87508!important;
+}
+body #view-tracker .status-head.late{
+  background-image:linear-gradient(135deg,#efe8ff,#dfd2ff)!important;
+  color:#6940dc!important;
+}
+body #view-tracker .journal-ref-row{
+  background-image:linear-gradient(112deg,#ffffff 0%,#f8f9ff 52%,#f3f0ff 100%)!important;
+  transition:background-position .25s ease,box-shadow .2s ease,border-color .2s ease;
+}
+body #view-tracker .journal-ref-row:nth-child(even){
+  background-image:linear-gradient(112deg,#ffffff 0%,#f4f9ff 52%,#edf8f5 100%)!important;
+}
+body #view-tracker .journal-ref-row:hover{
+  background-image:linear-gradient(112deg,#f9fbff 0%,#f0ecff 55%,#edf9f6 100%)!important;
+  box-shadow:inset 3px 0 0 rgba(102,78,220,.16);
+}
+body #view-tracker .journal-status-btn.present{
+  background-image:linear-gradient(135deg,#ecfaf4,#dff5ea)!important;
+}
+body #view-tracker .journal-status-btn.sick{
+  background-image:linear-gradient(135deg,#fff1f4,#ffe5eb)!important;
+}
+body #view-tracker .journal-status-btn.excused{
+  background-image:linear-gradient(135deg,#edf4ff,#dfeaff)!important;
+}
+body #view-tracker .journal-status-btn.unexcused{
+  background-image:linear-gradient(135deg,#fff6e8,#ffe9c9)!important;
+}
+body #view-tracker .journal-status-btn.late{
+  background-image:linear-gradient(135deg,#f4efff,#e8deff)!important;
+}
+body #view-tracker .journal-status-btn.selected.present{
+  background-image:linear-gradient(135deg,#35c982,#18aa69)!important;
+}
+body #view-tracker .journal-status-btn.selected.sick{
+  background-image:linear-gradient(135deg,#f47a8d,#e24e68)!important;
+}
+body #view-tracker .journal-status-btn.selected.excused{
+  background-image:linear-gradient(135deg,#5d92f7,#3f73df)!important;
+}
+body #view-tracker .journal-status-btn.selected.unexcused{
+  background-image:linear-gradient(135deg,#f7b457,#e18a22)!important;
+}
+body #view-tracker .journal-status-btn.selected.late{
+  background-image:linear-gradient(135deg,#8d69f3,#7049dc)!important;
+}
+
+/* Home: make the study-day schedule and latest notification feel part of the same gradient system */
+body #view-home .home-ref-today-head{
+  background-image:linear-gradient(120deg,#f0f6ff,#f5efff 58%,#edf9f6)!important;
+}
+body #view-home .home-ref-lesson-card{
+  background-image:linear-gradient(110deg,#ffffff 0%,#f6f8ff 58%,#f3efff 100%)!important;
+}
+body #view-home .home-ref-lesson-card:nth-child(even){
+  background-image:linear-gradient(110deg,#ffffff 0%,#f2f8ff 58%,#edf9f6 100%)!important;
+}
+body #view-home .home-ref-lesson-card.current{
+  background-image:linear-gradient(110deg,#f7f2ff 0%,#eee6ff 54%,#edf6ff 100%)!important;
+  box-shadow:0 8px 20px rgba(91,67,177,.07);
+}
+body #view-home .home-ref-lesson-number{
+  background-image:linear-gradient(135deg,#e9efff,#eadfff 58%,#e5f6f3)!important;
+  color:#5848c8!important;
+  box-shadow:0 5px 14px rgba(77,69,161,.08);
+}
+body #view-home .home-ref-break-card{
+  background-image:linear-gradient(110deg,#fbfcff,#f5f3ff 58%,#eff9f7)!important;
+}
+body #view-home .home-ref-break-card.current{
+  background-image:linear-gradient(110deg,#fff8ec,#fff0df 55%,#f7efff)!important;
+}
+body #view-home .home-ref-break-icon{
+  background-image:linear-gradient(135deg,#e7efff,#eadfff 58%,#e5f6f3)!important;
+  color:#6250ce!important;
+}
+body #view-home .home-ref-notification-card{
+  background-image:linear-gradient(115deg,#ffffff 0%,#f3f6ff 52%,#f3edff 100%)!important;
+  border-color:#e1e4f2!important;
+  box-shadow:0 7px 20px rgba(77,73,148,.055)!important;
+}
+body #view-home .home-ref-notification-card:hover{
+  background-image:linear-gradient(115deg,#f9fbff 0%,#edf2ff 52%,#eee7ff 100%)!important;
+}
+body #view-home .home-ref-notification-icon{
+  background-image:linear-gradient(135deg,#e6edff,#dfd4ff 58%,#e5f7f3)!important;
+  color:#5b45d3!important;
+}
+body #view-home .home-ref-notification-empty{
+  background-image:linear-gradient(115deg,#ffffff,#f5f3ff 60%,#eff8f6)!important;
+}
+
+/* Schedule: keep gradients while preserving a clean, fully contained card geometry */
+body #view-schedule .schedule-ref-row:not(.current) .schedule-ref-card{
+  background-image:linear-gradient(112deg,#ffffff 0%,#f7f8ff 62%,#f3efff 100%)!important;
+}
+body #view-schedule .schedule-ref-row:nth-child(even):not(.current) .schedule-ref-card{
+  background-image:linear-gradient(112deg,#ffffff 0%,#f2f8ff 62%,#edf8f5 100%)!important;
+}
+body #view-schedule .schedule-ref-row.current .schedule-ref-card{
+  background-image:linear-gradient(112deg,#f0fff5,#e9f8f0 56%,#eef5ff 100%)!important;
+}
+body #view-schedule .schedule-ref-number{
+  background-image:linear-gradient(135deg,#e7eeff,#e8ddff 58%,#e2f5f1)!important;
+}
+body #view-schedule .schedule-ref-row.current .schedule-ref-number{
+  background-image:linear-gradient(135deg,#52cf87,#2ebd70)!important;
+}
