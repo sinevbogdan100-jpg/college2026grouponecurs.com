@@ -3159,8 +3159,70 @@ function renderHomeLatestNotification(){
         <span class="home-ref-notification-time">${time}</span>
     </button>`;
 }
-function renderNotifications(){renderHomeLatestNotification();const box=document.getElementById('notifications-list');if(!box)return;const read=getReadNotificationIds();if(!notificationsCache.length){box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';return;}box.innerHTML=notificationsCache.map(n=>{const unread=!read.has(n.id);return `<article class="notification-item ${unread?'unread':''}"><div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div><div class="notification-item-body"><div class="notification-item-head"><strong>${escapeNotificationText(n.title||'Объявление')}</strong><span>${notificationTimeLabel(n.createdAt)}</span></div><p>${escapeNotificationText(n.text||'')}</p>${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}</div></article>`;}).join('');applyKzTranslations(box);}
+function renderNotifications(){
+    renderHomeLatestNotification();
+    const box=document.getElementById('notifications-list');
+    if(!box)return;
+    const read=getReadNotificationIds();
+    if(!notificationsCache.length){
+        box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';
+        return;
+    }
+    const canDelete=canPublishNotifications();
+    box.innerHTML=notificationsCache.map(n=>{
+        const unread=!read.has(n.id);
+        const deleteButton=canDelete
+            ? `<button class="notification-delete-button" type="button" data-notification-id="${encodeURIComponent(n.id)}" title="Удалить уведомление" aria-label="Удалить уведомление"><i class="fa-regular fa-trash-can"></i></button>`
+            : '';
+        return `<article class="notification-item ${unread?'unread':''}">
+            <div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div>
+            <div class="notification-item-body">
+                <div class="notification-item-head">
+                    <strong>${escapeNotificationText(n.title||'Объявление')}</strong>
+                    <div class="notification-item-actions"><span>${notificationTimeLabel(n.createdAt)}</span>${deleteButton}</div>
+                </div>
+                <p>${escapeNotificationText(n.text||'')}</p>
+                ${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}
+            </div>
+        </article>`;
+    }).join('');
+    if(canDelete){
+        box.querySelectorAll('.notification-delete-button').forEach(button=>{
+            button.addEventListener('click',()=>deleteNotification(decodeURIComponent(button.dataset.notificationId||''),button));
+        });
+    }
+    applyKzTranslations(box);
+}
 function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
+const deletingNotifications=new Set();
+async function deleteNotification(notificationId,button){
+    const id=String(notificationId||'');
+    if(!id||deletingNotifications.has(id))return;
+    if(!canPublishNotifications()){showToast('Нет права удалять уведомления');return;}
+    if(!db||!auth?.currentUser){showToast('Нет подключения к облаку');return;}
+    const item=notificationsCache.find(n=>n.id===id);
+    const label=item?.title||'это уведомление';
+    if(!window.confirm(`Удалить «${label}»? Уведомление исчезнет у всех пользователей.`))return;
+    deletingNotifications.add(id);
+    if(button){button.disabled=true;button.classList.add('is-busy');}
+    try{
+        await deleteDoc(doc(db,...CLOUD_ROOT,'notifications',id));
+        notificationsCache=notificationsCache.filter(n=>n.id!==id);
+        const read=getReadNotificationIds();
+        read.delete(id);
+        saveReadNotificationIds(read);
+        renderNotifications();
+        updateNotificationBadge();
+        showToast('Уведомление удалено');
+    }catch(error){
+        console.warn('delete notification',error);
+        showToast(error.code==='permission-denied'?'Нет права удалять уведомления':'Не удалось удалить уведомление');
+    }finally{
+        deletingNotifications.delete(id);
+        if(button?.isConnected){button.disabled=false;button.classList.remove('is-busy');}
+    }
+}
+window.deleteNotification=deleteNotification;
 const eventArrivals=createArrivalTracker();
 function subscribeNotifications(){
     if(!db||!auth?.currentUser||notificationsUnsubscribe)return;
