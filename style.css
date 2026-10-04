@@ -4047,3 +4047,205 @@ button[onclick="openAppMenu()"]{position:relative}
 .notification-delete-button i{
   font-size:11px;
 }
+
+
+/* ===== GLOBAL MENU / HELP / INSTALL — step18.20 ===== */
+.app-drawer{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.drawer-nav-section{
+  display:grid;
+  gap:4px;
+  margin:6px 0 14px;
+}
+.drawer-section-label{
+  padding:6px 10px 5px;
+  font-size:8px;
+  line-height:1;
+  font-weight:850;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#929bb1;
+}
+.drawer-nav-section>button{
+  width:100%;
+  min-height:44px;
+  border:0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:13px;
+  background:transparent;
+  color:#4d566f;
+  font-size:12px;
+  font-weight:700;
+  text-align:left;
+}
+.drawer-nav-section>button:hover{
+  background:#f5f3ff;
+  color:var(--brand);
+}
+.drawer-nav-section>button>i{
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f2f3f8;
+}
+.drawer-install-action{
+  align-items:center!important;
+}
+.drawer-install-copy{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.drawer-install-copy strong{
+  font-size:11px;
+  line-height:1.25;
+}
+.drawer-install-copy small{
+  color:#8993aa;
+  font-size:8px;
+  line-height:1.35;
+  font-weight:550;
+}
+.drawer-install-action.is-installed{
+  opacity:.68;
+  cursor:default;
+}
+.drawer-beta-card{
+  margin:12px 3px 0;
+  padding:13px;
+  border:1px solid #e6e0ff;
+  border-radius:16px;
+}
+.drawer-beta-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:7px;
+}
+.drawer-beta-head span{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  padding:0 8px;
+  border-radius:99px;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.drawer-beta-head i{font-size:13px}
+.drawer-beta-card p{
+  margin:0;
+  color:#535d77;
+  font-size:9px;
+  line-height:1.5;
+  font-weight:650;
+}
+.drawer-beta-card small{
+  display:block;
+  margin-top:7px;
+  color:#7f89a0;
+  font-size:8px;
+  line-height:1.5;
+}
+.help-navigation-panel{
+  max-height:92vh;
+  overscroll-behavior:contain;
+}
+.help-navigation-hero{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  margin-bottom:12px;
+  border:1px solid #e4e6f5;
+  border-radius:17px;
+}
+.help-navigation-hero>i{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  border-radius:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+}
+.help-navigation-hero strong,
+.help-navigation-hero span{display:block}
+.help-navigation-hero strong{font-size:12px;color:#1c2944}
+.help-navigation-hero span{margin-top:3px;font-size:9px;line-height:1.45;color:#758198}
+.help-navigation-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.help-navigation-grid article{
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:12px;
+  border:1px solid #e8eaf2;
+  border-radius:15px;
+}
+.help-navigation-grid article>i{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+}
+.help-navigation-grid article strong,
+.help-navigation-grid article span{display:block}
+.help-navigation-grid article strong{font-size:10px;color:#25314d}
+.help-navigation-grid article span{margin-top:3px;font-size:8px;line-height:1.45;color:#7a859b}
+.help-navigation-tip{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-top:9px;
+  padding:11px 12px;
+  border:1px solid #e4e8f2;
+  border-radius:14px;
+}
+.help-navigation-tip>i{
+  width:30px;
+  flex:0 0 30px;
+  text-align:center;
+  padding-top:2px;
+}
+.help-navigation-tip strong,
+.help-navigation-tip span{display:block}
+.help-navigation-tip strong{font-size:10px;color:#25314d}
+.help-navigation-tip span{margin-top:2px;font-size:8.5px;line-height:1.45;color:#748097}
+.help-beta-note{
+  display:grid;
+  gap:4px;
+  margin-top:12px;
+  padding:12px 13px;
+  border-radius:15px;
+  border:1px solid #eadfff;
+}
+.help-beta-note strong{font-size:10px}
+.help-beta-note span{font-size:8.5px;line-height:1.5;color:#747d94}
+@media(max-width:480px){
+  .help-navigation-grid{grid-template-columns:1fr}
+  .app-drawer{width:min(88vw,350px)}
+}
+@media(min-width:768px){
+  .help-navigation-panel{width:min(760px,calc(100% - 40px));border-radius:24px;margin:0 auto 18px}
+}
