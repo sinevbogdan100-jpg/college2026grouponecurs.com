@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-settings-reference";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-performance-v1";
 // Общие независимые функции проекта.
 // Здесь нет доступа к Firebase и состоянию журнала.
 
