@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-ui-polish-v1';
+const CACHE_NAME = 'sbp-shell-20261004-ui-polish-v2';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
