@@ -1,0 +1,146 @@
+/* Desktop sizing only. Keep the explicit Phone layout and all mobile CSS intact. */
+@media (min-width: 768px) {
+  body:not(.layout-phone) {
+    --desktop-content-width: 1440px;
+    font-size: 16px;
+  }
+  body:not(.layout-phone) :is(#view-home.home-reference, #view-tracker.journal-reference-page, #view-schedule.schedule-reference-page, #view-roster) {
+    width: 100% !important;
+    max-width: var(--desktop-content-width) !important;
+    margin-inline: auto !important;
+    padding: 80px clamp(20px, 3vw, 48px) 48px !important;
+  }
+  body:not(.layout-phone) .bottom-nav {
+    min-width: 0;
+    width: max-content !important;
+    max-width: calc(100% - 32px);
+    gap: 8px !important;
+    padding: 6px !important;
+  }
+  body:not(.layout-phone) .bottom-nav button { min-height: 46px !important; padding: 0 20px !important; font-size: 15px !important; gap: 10px !important; }
+  body:not(.layout-phone) .bottom-nav button i { font-size: 19px !important; }
+  body:not(.layout-phone) :is(.home-ref-topbar, .journal-ref-topbar, .schedule-ref-topbar) { min-height: 74px !important; height: auto !important; grid-template-columns: 52px minmax(0, 1fr) 52px !important; margin-bottom: 18px !important; }
+  body:not(.layout-phone) :is(.home-ref-page-title, .journal-ref-title h1, .schedule-ref-title h1, #view-roster h1) { font-size: 32px !important; line-height: 1.2 !important; }
+  body:not(.layout-phone) :is(.home-ref-topbtn, .journal-ref-topbtn, .schedule-ref-topbtn) { width: 52px !important; height: 52px !important; font-size: 24px !important; }
+  body:not(.layout-phone) .journal-ref-title span { font-size: 15px !important; }
+
+  /* Home: larger group information, lessons, breaks, and notifications. */
+  body:not(.layout-phone) #view-home .home-ref-shell { gap: 22px !important; }
+  body:not(.layout-phone) #view-home .home-ref-group-card { min-height: 120px !important; padding: 24px !important; gap: 22px; }
+  body:not(.layout-phone) #view-home .home-ref-group-icon { width: 72px; height: 72px; flex-basis: 72px; font-size: 32px !important; }
+  body:not(.layout-phone) #view-home .home-ref-group-copy #group-name { font-size: 36px !important; line-height: 1.2 !important; }
+  body:not(.layout-phone) #view-home .home-ref-student-line { font-size: 17px !important; }
+  body:not(.layout-phone) #view-home .home-ref-roles { gap: 16px; }
+  body:not(.layout-phone) #view-home .home-ref-role-card { grid-template-columns: 52px minmax(0, 1fr); min-height: 112px; gap: 14px; padding: 20px 16px; align-items: center; }
+  body:not(.layout-phone) #view-home .home-ref-role-card > .leader-profile-avatar { width: 52px; height: 52px; flex-basis: 52px; font-size: 22px !important; }
+  body:not(.layout-phone) #view-home .home-ref-role-card > div > span { font-size: 15px !important; line-height: 1.4; }
+  body:not(.layout-phone) #view-home .home-ref-role-card > div > strong { font-size: 18px !important; line-height: 1.4; }
+  body:not(.layout-phone) #view-home .home-ref-today-head { min-height: 96px; padding: 22px; }
+  body:not(.layout-phone) #view-home #home-reference-title { font-size: 28px; }
+  body:not(.layout-phone) #view-home .home-ref-date strong { font-size: 17px !important; }
+  body:not(.layout-phone) #view-home .home-ref-date span { font-size: 15px !important; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-row { min-height: 108px; grid-template-columns: 58px minmax(0, 1fr) 200px; gap: 16px; padding: 18px 22px; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-number { width: 54px; height: 54px; font-size: 24px; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-main strong { font-size: 21px !important; line-height: 1.35; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-main span { font-size: 16px !important; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-meta { grid-template-columns: minmax(0, 1fr) 70px; gap: 12px; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-meta span { font-size: 14px !important; }
+  body:not(.layout-phone) #view-home .home-ref-lesson-meta strong { font-size: 16px !important; overflow-wrap: anywhere; }
+  body:not(.layout-phone) #view-home .home-ref-progress-row { padding: 12px 22px 18px; }
+  body:not(.layout-phone) #view-home :is(.home-ref-progress-labels span, .home-ref-progress-labels strong, .home-ref-progress-percent) { font-size: 14px !important; }
+  body:not(.layout-phone) #view-home .home-ref-progress { height: 10px; }
+  body:not(.layout-phone) #view-home .home-ref-break-card { min-height: 86px; padding: 16px 22px; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 16px; }
+  body:not(.layout-phone) #view-home .home-ref-break-icon { width: 48px; height: 48px; font-size: 22px; }
+  body:not(.layout-phone) #view-home .home-ref-break-main strong { font-size: 18px !important; }
+  body:not(.layout-phone) #view-home :is(.home-ref-break-main span, .home-ref-break-duration) { font-size: 15px !important; }
+  body:not(.layout-phone) #view-home .home-ref-section-head { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  body:not(.layout-phone) #view-home .home-ref-section-head h2 { font-size: 23px; }
+  body:not(.layout-phone) #view-home .home-ref-section-head button { font-size: 14px !important; min-height: 40px; }
+  body:not(.layout-phone) #view-home .home-ref-notification-card { padding: 20px !important; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; }
+  body:not(.layout-phone) #view-home .home-ref-notification-copy strong { font-size: 17px !important; }
+  body:not(.layout-phone) #view-home :is(.home-ref-notification-copy > span, .home-ref-notification-time, .home-ref-notification-empty, .home-ref-empty) { font-size: 15px !important; line-height: 1.5; }
+  body:not(.layout-phone) #view-home .home-ref-notification-time { grid-column: 2; }
+
+  /* Journal: use the available width without squeezing names or status controls. */
+  body:not(.layout-phone) #view-tracker .journal-section-tabs { padding: 6px; margin-bottom: 20px; }
+  body:not(.layout-phone) #view-tracker .journal-section-tabs button { min-height: 52px; font-size: 17px !important; }
+  body:not(.layout-phone) #view-tracker .journal-ref-datebar { padding: 16px; gap: 12px; grid-template-columns: 50px minmax(0, 1fr) 50px auto auto; margin-bottom: 20px; }
+  body:not(.layout-phone) #view-tracker :is(.journal-ref-arrow, .journal-ref-date-trigger, .journal-ref-calendar-btn, .journal-ref-today-btn) { height: 50px; font-size: 16px !important; }
+  body:not(.layout-phone) #view-tracker .journal-ref-editor { padding: 20px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-controls { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin-bottom: 16px; }
+  body:not(.layout-phone) #view-tracker :is(.journal-ref-admin-hint, .journal-ref-save) { font-size: 14px !important; line-height: 1.5; }
+  body:not(.layout-phone) #view-tracker .journal-ref-admin-hint { padding: 14px 16px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-edit-tools button { height: 46px; font-size: 15px !important; padding-inline: 16px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-table { overflow-x: auto; }
+  body:not(.layout-phone) #view-tracker :is(.journal-ref-head, .journal-ref-row) { grid-template-columns: 32px minmax(150px, 1fr) repeat(5, 46px) minmax(100px, 190px); gap: 8px; min-width: 640px; padding-inline: 14px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-head { min-height: 58px; font-size: 14px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-head .status-head { width: 40px; height: 36px; font-size: 15px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-row { min-height: 78px; padding-block: 12px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-index { font-size: 15px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-person { grid-template-columns: 46px minmax(0, 1fr); gap: 14px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-person :is(.student-profile-avatar, .journal-ref-avatar) { width: 46px; height: 46px; flex-basis: 46px; font-size: 20px; }
+  body:not(.layout-phone) #view-tracker .journal-ref-person strong { font-size: 17px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+  body:not(.layout-phone) #view-tracker .journal-status-btn { width: 46px; height: 46px; font-size: 16px !important; border-radius: 11px; }
+  body:not(.layout-phone) #view-tracker :is(.journal-ref-note, .journal-ref-note-view) { height: 46px; font-size: 14px !important; padding-inline: 12px; }
+  body:not(.layout-phone) #view-tracker .journal-inline-actions { padding: 20px; margin-top: 20px; }
+  body:not(.layout-phone) #view-tracker :is(.journal-inline-actions h2, .journal-ref-panel-head h2) { font-size: 20px; }
+  body:not(.layout-phone) #view-tracker .journal-inline-actions button { min-height: 50px; font-size: 15px !important; }
+  body:not(.layout-phone) #view-tracker .journal-ref-panel { padding: 20px; }
+  body:not(.layout-phone) #view-tracker :is(.journal-ref-panel-head span, .journal-group-tiles span, .journal-group-meta, .assessment-detail-name span, .assessment-history-date span, .assessment-history-row > b, .assessment-empty) { font-size: 14px !important; line-height: 1.45; }
+  body:not(.layout-phone) #view-tracker .journal-group-tiles > div { min-height: 84px; padding: 14px 8px; }
+  body:not(.layout-phone) #view-tracker .journal-group-tiles strong { font-size: 26px; }
+  body:not(.layout-phone) #view-tracker .assessment-list-panel { overflow-x: auto; }
+  body:not(.layout-phone) #view-tracker :is(.assessment-list-head, .assessment-student-row) { grid-template-columns: minmax(200px, 1.5fr) 80px repeat(5, 54px) 74px; gap: 10px; min-width: 720px; font-size: 14px !important; }
+  body:not(.layout-phone) #view-tracker .assessment-student-row { min-height: 76px; padding-block: 12px; }
+  body:not(.layout-phone) #view-tracker .assessment-student-main { gap: 14px; }
+  body:not(.layout-phone) #view-tracker .assessment-student-main .student-profile-avatar { width: 46px; height: 46px; flex-basis: 46px; }
+  body:not(.layout-phone) #view-tracker .assessment-student-main strong { font-size: 17px; white-space: normal; overflow-wrap: anywhere; }
+  body:not(.layout-phone) #view-tracker .assessment-percent { font-size: 20px; }
+  body:not(.layout-phone) #view-tracker :is(.assessment-detail-name h2, #assessment-detail-percent) { font-size: 26px; }
+  body:not(.layout-phone) #view-tracker .assessment-detail-stats > div { min-height: 86px; padding: 15px 8px; }
+  body:not(.layout-phone) #view-tracker .assessment-detail-stats span { font-size: 13px !important; }
+  body:not(.layout-phone) #view-tracker .assessment-detail-stats strong { font-size: 26px; }
+  body:not(.layout-phone) #view-tracker .assessment-history-date strong { font-size: 16px; }
+  body:not(.layout-phone) #view-tracker .assessment-history-row { padding: 16px; }
+  body:not(.layout-phone) #view-tracker .assessment-back-btn { min-height: 44px; font-size: 15px !important; }
+
+  /* Group: clear leadership cards and larger student profiles. */
+  body:not(.layout-phone) #view-roster > div:first-child { padding: 20px 24px !important; gap: 16px; }
+  body:not(.layout-phone) #view-roster > div:first-child > span { font-size: 16px !important; }
+  body:not(.layout-phone) #view-roster > div:first-child button { width: 48px; height: 48px; }
+  body:not(.layout-phone) #view-roster > div:first-child button i { font-size: 19px !important; }
+  body:not(.layout-phone) #view-roster .group-leadership-grid { gap: 18px; padding: 0 !important; margin-bottom: 26px; }
+  body:not(.layout-phone) #view-roster .leadership-card { min-height: 160px; padding: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  body:not(.layout-phone) #view-roster .leadership-card > .leader-profile-avatar { width: 64px; height: 64px; flex-basis: 64px; margin-bottom: 12px; }
+  body:not(.layout-phone) #view-roster .leader-profile-avatar i { width: auto; height: auto; margin: 0; background: transparent; font-size: 26px !important; }
+  body:not(.layout-phone) #view-roster .leadership-card > span { font-size: 15px; line-height: 1.4; }
+  body:not(.layout-phone) #view-roster .leadership-card > strong { font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
+  body:not(.layout-phone) #view-roster .roster-profile-tools { padding: 20px 24px; margin-bottom: 20px; }
+  body:not(.layout-phone) #view-roster .roster-profile-tools strong { font-size: 19px; }
+  body:not(.layout-phone) #view-roster .roster-profile-tools span { font-size: 15px; line-height: 1.5; }
+  body:not(.layout-phone) #view-roster .roster-profile-tools > button { min-height: 48px; font-size: 16px !important; }
+  body:not(.layout-phone) #roster-container { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; }
+  body:not(.layout-phone) #view-roster .roster-person-card { min-height: 90px; padding: 18px 20px; gap: 16px; margin: 0 !important; }
+  body:not(.layout-phone) #view-roster .roster-person-main { flex: 1; gap: 16px; }
+  body:not(.layout-phone) #view-roster .roster-profile-avatar { width: 52px !important; height: 52px !important; flex-basis: 52px !important; font-size: 22px; }
+  body:not(.layout-phone) #view-roster .roster-person-text strong { font-size: 17px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+  body:not(.layout-phone) #view-roster .roster-person-text span { display: block; margin-top: 5px; font-size: 14px; }
+  body:not(.layout-phone) #view-roster .roster-person-actions { flex-shrink: 0; gap: 8px; }
+  body:not(.layout-phone) #view-roster .roster-person-actions button { width: 46px; height: 46px; font-size: 18px !important; }
+
+  /* Bring the remaining desktop labels and settings up to the same readable scale. */
+  body:not(.layout-phone) #view-schedule :is(.schedule-ref-date-copy > span, .schedule-live-today span:not(.schedule-live-icon), .schedule-live-state span, .schedule-ref-state, .schedule-ref-change, .schedule-ref-break-card > b, .schedule-ref-admin-hint, .schedule-ref-empty span) { font-size: 14px !important; line-height: 1.4 !important; }
+  body:not(.layout-phone) #view-schedule :is(.schedule-ref-date-copy strong, .schedule-ref-meta span, .schedule-ref-break-card strong, .schedule-ref-break-card time) { font-size: 16px !important; }
+  body:not(.layout-phone) #admin-settings-modal .settings-reference-page { max-width: 680px !important; padding: 28px !important; }
+  body:not(.layout-phone) #admin-settings-modal .settings-reference-summary { min-height: 76px; gap: 16px; }
+  body:not(.layout-phone) #admin-settings-modal .settings-reference-summary strong { font-size: 19px; }
+  body:not(.layout-phone) #admin-settings-modal :is(.settings-reference-copy small, .settings-reference-status, .settings-group-form label > span, .settings-group-count, .settings-group-icon-row, .settings-reference-content p) { font-size: 15px !important; line-height: 1.5; }
+  body:not(.layout-phone) #admin-settings-modal .settings-group-form input:not([type="file"]) { height: 50px; font-size: 16px !important; }
+}
+
+@media (min-width: 1100px) {
+  body:not(.layout-phone) #view-home .home-ref-shell { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); align-items: start; }
+  body:not(.layout-phone) #view-home :is(.home-ref-group-card, .home-ref-roles) { grid-column: 1 / -1; }
+  body:not(.layout-phone) #view-home .home-ref-notifications { padding-top: 0; }
+  body:not(.layout-phone) #roster-container { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
