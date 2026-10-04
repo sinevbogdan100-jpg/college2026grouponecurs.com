@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.19-settings-auto-close-2026-10-04">
+    <meta name="app-build" content="step18.20-global-menu-gradient-2026-10-04">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-force-publish-v4">
@@ -13,13 +13,13 @@
     <link rel="icon" type="image/png" sizes="192x192" href="sbp-information-favicon-20261004-v4.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-performance-v1">
+    <link rel="stylesheet" href="style.css?v=20261004-global-menu-v1">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
-    <link rel="stylesheet" href="gradients.css?v=20261004-shared-gradients">
+    <link rel="stylesheet" href="gradients.css?v=20261004-global-menu-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261004-settings-auto-close-v1">
+    <link rel="modulepreload" href="app.js?v=20261004-global-menu-v1">
     <link rel="modulepreload" href="firebase.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261004-performance-v1">
@@ -478,8 +478,8 @@
         <div id="schedule-container" class="schedule-ref-timeline"></div>
     </div>
 
-    <div id="view-roster" class="hidden min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
-        <div class="flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+    <div id="view-roster" class="hidden roster-reference-page min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
+        <div class="roster-ref-topbar flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
             <div class="flex items-center space-x-3">
                 <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
                     <i class="fa-solid fa-house text-xs"></i>
@@ -620,12 +620,74 @@
 
     <div id="app-menu-drawer" class="app-overlay hidden" onclick="if(event.target===this) closeAppMenu()">
         <aside class="app-drawer">
-            <div class="drawer-head"><div><strong>ТОЭ-26-9-1</strong><span>Информация группы</span></div><button onclick="closeAppMenu()"><i class="fa-solid fa-xmark"></i></button></div>
-            <button onclick="closeAppMenu();switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
-            <button id="menu-support-button" onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span><span id="support-menu-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></button>
-            <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
+            <div class="drawer-head">
+                <div><strong>SBP Information</strong><span>Информация группы</span></div>
+                <button onclick="closeAppMenu()" aria-label="Закрыть меню"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="drawer-nav-section">
+                <div class="drawer-section-label">Навигация</div>
+                <button onclick="closeAppMenu();switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
+                <button onclick="closeAppMenu();switchView('tracker')"><i class="fa-solid fa-book-open"></i><span>Журнал</span></button>
+                <button onclick="closeAppMenu();switchView('schedule')"><i class="fa-regular fa-calendar-days"></i><span>Расписание</span></button>
+                <button onclick="closeAppMenu();switchView('roster')"><i class="fa-solid fa-user-group"></i><span>Группа</span></button>
+            </div>
+
+            <div class="drawer-nav-section">
+                <div class="drawer-section-label">Сервис</div>
+                <button id="menu-support-button" onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span><span id="support-menu-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></button>
+                <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
+                <button onclick="closeAppMenu();openHelpNavigation()"><i class="fa-regular fa-circle-question"></i><span>Помощь и навигация</span></button>
+                <button id="menu-install-button" class="drawer-install-action" type="button" onclick="installSBPApp()">
+                    <i class="fa-solid fa-arrow-down-to-line"></i>
+                    <span class="drawer-install-copy">
+                        <strong id="menu-install-label" data-i18n-skip>Установить приложение</strong>
+                        <small id="menu-install-hint" data-i18n-skip>SBP Information на этом устройстве</small>
+                    </span>
+                </button>
+            </div>
+
+            <div class="drawer-beta-card">
+                <div class="drawer-beta-head"><span>БЕТА-ВЕРСИЯ</span><i class="fa-solid fa-flask"></i></div>
+                <p>SBP Information находится в стадии тестирования. Возможны ошибки, временная недоступность и потеря локальных данных.</p>
+                <small>Безопасность и сохранность данных не гарантируются. Не используйте пароль, который применяете в других сервисах, и сохраняйте резервные копии важных данных.</small>
+            </div>
+
             <div class="drawer-note">Сообщения поддержки и важные объявления доступны через колокольчик.</div>
         </aside>
+    </div>
+
+    <div id="help-navigation-modal" class="app-overlay hidden" onclick="if(event.target===this) closeHelpNavigation()">
+        <section class="sheet-panel help-navigation-panel">
+            <div class="sheet-head">
+                <div><span class="eyebrow">SBP Information</span><h2>Помощь и навигация</h2></div>
+                <button onclick="closeHelpNavigation()" aria-label="Закрыть помощь"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="help-navigation-hero">
+                <i class="fa-regular fa-compass"></i>
+                <div><strong>Как пользоваться сайтом и приложением</strong><span>Короткая памятка по основным разделам и настройкам.</span></div>
+            </div>
+
+            <div class="help-navigation-grid">
+                <article><i class="fa-solid fa-house"></i><div><strong>Главная</strong><span>Общая информация о группе, ближайшие занятия и последние уведомления.</span></div></article>
+                <article><i class="fa-solid fa-book-open"></i><div><strong>Журнал</strong><span>Посещаемость студентов, выбор даты, примечания, статистика и отчёты.</span></div></article>
+                <article><i class="fa-regular fa-calendar-days"></i><div><strong>Расписание</strong><span>Пары по дням, текущая неделя, числитель и знаменатель, изменения занятий.</span></div></article>
+                <article><i class="fa-solid fa-user-group"></i><div><strong>Группа</strong><span>Состав группы, профили студентов, куратор, староста и заместитель.</span></div></article>
+                <article><i class="fa-solid fa-gear"></i><div><strong>Настройки</strong><span>Здесь меняются язык RU/KZ, вид телефона или компьютера, уведомления и доступные параметры.</span></div></article>
+                <article><i class="fa-regular fa-comments"></i><div><strong>Поддержка</strong><span>Сообщите о проблеме или предложите улучшение. Ответ появится в диалоге и центре событий.</span></div></article>
+                <article><i class="fa-regular fa-bell"></i><div><strong>Центр событий</strong><span>Колокольчик показывает объявления, важные изменения и ответы поддержки.</span></div></article>
+                <article><i class="fa-solid fa-cloud-arrow-down"></i><div><strong>Установка приложения</strong><span>В меню нажмите «Установить приложение». Если кнопка браузера недоступна, появится подсказка для вашего устройства.</span></div></article>
+            </div>
+
+            <div class="help-navigation-tip"><i class="fa-solid fa-language"></i><div><strong>Где поменять язык?</strong><span>Откройте «Настройки» → «Язык интерфейса» и выберите русский или қазақша.</span></div></div>
+            <div class="help-navigation-tip"><i class="fa-solid fa-mobile-screen-button"></i><div><strong>Сайт и приложение синхронизированы</strong><span>Изменения из облака применяются на телефоне, компьютере и в установленной PWA-версии.</span></div></div>
+
+            <div class="help-beta-note">
+                <strong>Бета-версия</strong>
+                <span>Сервис тестируется и предоставляется без гарантий бесперебойной работы, безопасности или сохранности данных. Для важных данных используйте резервные копии.</span>
+            </div>
+        </section>
     </div>
 
     <div id="notifications-modal" class="app-overlay hidden" onclick="if(event.target===this) closeNotifications()">
@@ -661,7 +723,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-settings-auto-close-v1"></script>
+    <script type="module" src="app.js?v=20261004-global-menu-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
