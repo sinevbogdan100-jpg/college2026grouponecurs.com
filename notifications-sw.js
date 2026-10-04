@@ -1,5 +1,5 @@
 // SBP GROUP PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-performance-v1';
+const CACHE_NAME = 'sbp-shell-20261004-purple-icon-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
@@ -103,8 +103,8 @@ self.addEventListener('push', event => {
     payload ||= { title: 'SBP GROUP', body: 'Новое уведомление', key: 'toe-new', kind: 'events' };
     await self.registration.showNotification(payload.title || 'SBP GROUP', {
       body: payload.body || '',
-      icon: './icon.png',
-      badge: './icon.png',
+      icon: './icon.png?v=20261004-purple-v1',
+      badge: './icon.png?v=20261004-purple-v1',
       tag: payload.key || 'toe-new',
       silent: false,
       renotify: true,
