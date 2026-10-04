@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sbpinformation.toe2691",
+      "sha256_cert_fingerprints": [
+        "03:8A:8A:24:3E:4F:D0:14:E8:0E:5B:12:CD:F8:22:02:D4:44:3A:B7:C8:8F:35:E2:EA:65:EE:70:3B:0F:FD:FB"
+      ]
+    }
+  }
+]
