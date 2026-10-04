@@ -653,24 +653,25 @@ export function renderSchedule(dayKey = currentScheduleDay) {
         list
     ]);
     if (renderKey === lastScheduleRenderKey) return;
-    lastScheduleRenderKey = renderKey;
 
     renderScheduleSummary(entries, selectedDate);
     renderScheduleDayHeading(selectedDate);
-    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
 
     if (adminCanEdit) {
         const hint = document.createElement('div');
         hint.className = 'schedule-ref-admin-hint';
         hint.innerHTML = '<i class="fa-solid fa-pen-to-square"></i><span>Режим администратора: пары можно изменять, удалять и переставлять.</span>';
-        container.appendChild(hint);
+        fragment.appendChild(hint);
     }
 
     if (!entries.length) {
         const empty = document.createElement('div');
         empty.className = 'schedule-ref-empty';
         empty.innerHTML = '<i class="fa-regular fa-calendar-xmark"></i><strong>Пар нет</strong><span>На выбранный день расписание пустое.</span>';
-        container.appendChild(empty);
+        fragment.appendChild(empty);
+        container.replaceChildren(fragment);
+        lastScheduleRenderKey = renderKey;
         return;
     }
 
@@ -725,7 +726,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                     <button onclick="openScheduleEditor(${entry.index})" title="Изменить"><i class="fa-solid fa-pen"></i><span>Изменить</span></button>
                 </div>
             </div>`;
-        container.appendChild(row);
+        fragment.appendChild(row);
 
         const next = entries[position + 1];
         if (!entry.range || !next?.range || next.range.start <= entry.range.end) return;
@@ -749,8 +750,10 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                 <time><i class="fa-regular fa-clock"></i>${scheduleClock(start)} – ${scheduleClock(end)}</time>
                 ${currentBreak ? '<b><i class="fa-solid fa-circle"></i> Идёт</b>' : pastBreak ? '<b class="done"><i class="fa-solid fa-circle-check"></i> Завершена</b>' : ''}
             </div>`;
-        container.appendChild(breakRow);
+        fragment.appendChild(breakRow);
     });
+    container.replaceChildren(fragment);
+    lastScheduleRenderKey = renderKey;
 }
 
 function getCurrentScheduleList() {

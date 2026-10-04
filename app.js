@@ -42,7 +42,7 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-speed-v1";
+} from "./schedule.js?v=20261004-speed-v2";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-native-shell-v2";
 
         
@@ -2248,7 +2248,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         function renderRosterList() {
             const container = document.getElementById('roster-container');
             if (!container) return;
-            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             const info = getGroupInfo();
             const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
             if(rc) rc.textContent=info.curator||'—';
@@ -2268,8 +2268,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         <button type="button" onclick="openStudentProfileEditor(${index})" title="Редактировать профиль" aria-label="Редактировать профиль ${escapeStudentText(record.name)}"><i class="fa-regular fa-pen-to-square"></i></button>
                         <button type="button" class="danger" onclick="removeStudent(${index})" title="Удалить" aria-label="Удалить ${escapeStudentText(record.name)}"><i class="fa-regular fa-trash-can"></i></button>
                     </div>` : ''}`;
-                container.appendChild(item);
+                fragment.appendChild(item);
             });
+            container.replaceChildren(fragment);
         }
 
         let studentProfileEditIndex = -1;
@@ -2645,7 +2646,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 return;
             }
             lastJournalRenderKey = renderKey;
-            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             const defs = [
                 ['present', 'П', 'Присутствует'],
                 ['sick', 'Б', 'Болеет'],
@@ -2684,8 +2685,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     </div>
                     ${buttons}
                     ${noteControl}`;
-                container.appendChild(row);
+                fragment.appendChild(row);
             });
+
+            container.replaceChildren(fragment);
 
             const marked = counts.present + counts.late + counts.sick + counts.excused + counts.unexcused;
             const attending = counts.present + counts.late;
