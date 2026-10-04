@@ -43,7 +43,7 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection
 } from "./schedule.js?v=20261004-performance-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-performance-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-global-menu-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -2979,6 +2979,7 @@ window.setInterfaceLanguage = function(lang) {
     updateBackupStatus();
     refreshSettingsSystem();
     window.refreshNotificationSettings?.();
+    window.updateInstallButton?.();
     applyKzTranslations();
 };
 function updateLanguageButtons() {
@@ -2990,7 +2991,80 @@ function updateLanguageButtons() {
 startInterfaceTranslations();
 updateLanguageButtons();
 
-window.openAppMenu=function(){window.refreshSupportNotifications?.();const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
+let deferredInstallPrompt = null;
+
+function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+window.updateInstallButton = function() {
+    const button = document.getElementById('menu-install-button');
+    const label = document.getElementById('menu-install-label');
+    const hint = document.getElementById('menu-install-hint');
+    if (!button || !label || !hint) return;
+    const installed = isStandaloneApp();
+    button.classList.toggle('is-installed', installed);
+    button.disabled = installed;
+    label.textContent = translateUI(installed ? 'Приложение установлено' : 'Установить приложение');
+    hint.textContent = translateUI(installed ? 'SBP Information уже работает как приложение' : 'SBP Information на этом устройстве');
+};
+window.installSBPApp = async function() {
+    if (isStandaloneApp()) {
+        showToast(translateUI('Приложение уже установлено'));
+        window.updateInstallButton();
+        return;
+    }
+    if (deferredInstallPrompt) {
+        const promptEvent = deferredInstallPrompt;
+        deferredInstallPrompt = null;
+        try {
+            await promptEvent.prompt();
+            const choice = await promptEvent.userChoice;
+            showToast(translateUI(choice?.outcome === 'accepted' ? 'Установка приложения началась' : 'Установка отменена'));
+        } catch (_) {
+            showToast(translateUI('Не удалось открыть установку приложения'));
+        }
+        window.updateInstallButton();
+        return;
+    }
+    if (isIOSDevice()) {
+        showToast(translateUI('На iPhone откройте «Поделиться» и выберите «На экран Домой»'));
+    } else {
+        showToast(translateUI('Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран»'));
+    }
+};
+window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    window.updateInstallButton();
+});
+window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    window.updateInstallButton();
+    showToast(translateUI('Приложение установлено'));
+});
+window.matchMedia('(display-mode: standalone)').addEventListener?.('change', window.updateInstallButton);
+
+window.openHelpNavigation=function(){
+    window.closeAppMenu?.();
+    document.getElementById('help-navigation-modal')?.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    applyKzTranslations();
+};
+window.closeHelpNavigation=function(){
+    document.getElementById('help-navigation-modal')?.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+};
+
+window.openAppMenu=function(){
+    window.refreshSupportNotifications?.();
+    const x=document.getElementById('app-menu-drawer');
+    x?.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    window.updateInstallButton();
+};
 window.closeAppMenu=function(){document.getElementById('app-menu-drawer')?.classList.add('hidden');document.body.classList.remove('modal-open');};
 window.showJournalTab=function(tab){
     activeJournalTab=tab==='stats'?'stats':'editor';
