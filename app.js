@@ -43,7 +43,7 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection
 } from "./schedule.js?v=20261004-schedule-change-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-schedule-change-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-direct-install-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
