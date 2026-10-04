@@ -1,3 +1,4 @@
+import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-support-badges';
 import {
     createFirebaseServices,
     signInAnonymously,
@@ -1577,7 +1578,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function refreshSettingsSystem() {
             const version = document.getElementById('settings-build-version');
-            if (version) version.textContent = '18.5';
+            if (version) version.textContent = getSiteVersion(document.querySelector('meta[name="app-build"]')?.content);
             const sync = document.getElementById('settings-sync-status');
             if (sync) sync.textContent = translateUI(isCloudConnected ? 'Подключено к облаку' : 'Нет подключения к облаку');
         }
@@ -1863,6 +1864,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
             try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
             // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
             setTimeout(ensureMainViewVisible, 0);
+            window.refreshSupportNotifications?.();
         }
 
         window.adminLogout = async function() {
@@ -2959,7 +2961,7 @@ function updateLanguageButtons() {
 startInterfaceTranslations();
 updateLanguageButtons();
 
-window.openAppMenu=function(){const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
+window.openAppMenu=function(){window.refreshSupportNotifications?.();const x=document.getElementById('app-menu-drawer');x?.classList.remove('hidden');document.body.classList.add('modal-open');};
 window.closeAppMenu=function(){document.getElementById('app-menu-drawer')?.classList.add('hidden');document.body.classList.remove('modal-open');};
 window.showJournalTab=function(tab){
     activeJournalTab=tab==='stats'?'stats':'editor';
@@ -3158,22 +3160,77 @@ window.publishNotification=async function(){if(!canPublishNotifications()){showT
 let activeSupportThreadId='';
 function isSupportStaff(){return currentAccessRole==='owner'||(currentAccessRole==='admin'&&canUseSupportStaff());}
 function ownSupportThreadId(){return auth?.currentUser?.uid || visitorSupportId;}
+let supportNotificationsUnsubscribe=null;
+let supportNotificationsContext='';
+let supportThreadsCache=[];
+let supportReadCounts={};
+let supportRetryAfter=0;
+function supportContext(){return auth?.currentUser?.uid ? `${auth.currentUser.uid}:${isSupportStaff()?'staff':'visitor'}` : '';}
+function supportReadKey(){return `toe_support_read_v1:${supportNotificationsContext}`;}
+function isSupportOpen(){const modal=document.getElementById('support-modal');return !!modal&&!modal.classList.contains('hidden')&&document.visibilityState==='visible';}
+function threadUnread(thread){return unreadSupportCount(thread.messages,isSupportStaff(),supportReadCounts[thread.id]);}
+function updateSupportBadge(){
+    const badge=document.getElementById('support-menu-badge');if(!badge)return;
+    const unread=supportNotificationsContext===supportContext()?supportThreadsCache.reduce((total,thread)=>total+threadUnread(thread),0):0;
+    badge.textContent=unread>99?'99+':String(unread);
+    badge.classList.toggle('hidden',unread===0);
+}
+function markSupportThreadRead(id,messages){
+    if(!isSupportOpen()||id!==activeSupportThreadId||supportNotificationsContext!==supportContext())return;
+    supportReadCounts[id]=incomingSupportCount(messages,isSupportStaff());
+    try{localStorage.setItem(supportReadKey(),JSON.stringify(supportReadCounts));}catch(_){}
+    updateSupportBadge();
+    if(isSupportStaff())renderSupportInbox();
+}
+function renderSupportInbox(){
+    const inbox=document.getElementById('support-staff-inbox');if(!inbox||!isSupportStaff())return;
+    inbox.innerHTML=supportThreadsCache.length?'<div class="support-inbox-title">Обращения</div>'+supportThreadsCache.map(thread=>{
+        const unread=threadUnread(thread),id=escapeNotificationText(thread.id);
+        return `<button data-support-thread="${id}" class="support-thread-btn ${thread.id===activeSupportThreadId?'active':''}"><strong>${escapeNotificationText(thread.displayName||'Пользователь')}${unread?`<span class="support-unread-badge" data-i18n-skip>${unread>99?'99+':unread}</span>`:''}</strong><span>${thread.updatedAt?new Date(thread.updatedAt).toLocaleString(interfaceLocale()):''}</span><p>${escapeNotificationText((thread.messages?.at(-1)?.text||'').slice(0,80))}</p></button>`;
+    }).join(''):'<div class="empty-state">Обращений пока нет.</div>';
+    inbox.querySelectorAll('[data-support-thread]').forEach(button=>button.addEventListener('click',()=>window.openSupportThread(button.dataset.supportThread)));
+    applyKzTranslations(inbox);
+    if(isSupportOpen()&&supportThreadsCache.length&&!activeSupportThreadId)window.openSupportThread(supportThreadsCache[0].id);
+}
+window.refreshSupportNotifications=function(){
+    const context=supportContext();
+    if(context!==supportNotificationsContext){
+        supportNotificationsUnsubscribe?.();supportNotificationsUnsubscribe=null;
+        supportUnsubscribe?.();supportUnsubscribe=null;activeSupportThreadId='';
+        supportNotificationsContext=context;supportThreadsCache=[];supportReadCounts={};supportRetryAfter=0;
+        try{const saved=JSON.parse(localStorage.getItem(supportReadKey())||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))supportReadCounts=saved;}catch(_){}
+        const box=document.getElementById('support-messages');if(box)box.innerHTML='';
+        document.getElementById('support-active-thread')?.classList.add('hidden');
+        updateSupportBadge();
+        if(isSupportOpen())window.openSupport();
+    }
+    if(!db||!context||supportNotificationsUnsubscribe||Date.now()<supportRetryAfter)return;
+    const staff=isSupportStaff();
+    const ref=staff?collection(db,...CLOUD_ROOT,'support'):doc(db,...CLOUD_ROOT,'support',ownSupportThreadId());
+    supportNotificationsUnsubscribe=onSnapshot(ref,snapshot=>{
+        if(context!==supportContext()||context!==supportNotificationsContext)return;
+        supportThreadsCache=(staff?snapshot.docs.map(item=>({id:item.id,...item.data()})):(snapshot.exists()?[{id:snapshot.id,...snapshot.data()}]:[])).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+        updateSupportBadge();
+        if(staff)renderSupportInbox();
+    },error=>{
+        if(context!==supportNotificationsContext)return;
+        console.warn('support notifications',error);supportNotificationsUnsubscribe=null;supportThreadsCache=[];supportRetryAfter=Date.now()+10000;updateSupportBadge();
+    });
+};
 window.openSupport=async function(){
+    window.refreshSupportNotifications();
     document.getElementById('support-modal')?.classList.remove('hidden');document.body.classList.add('modal-open');
     const inbox=document.getElementById('support-staff-inbox'), name=document.getElementById('support-name');
     if(isSupportStaff()) { if(name) name.classList.add('hidden'); if(inbox) inbox.classList.remove('hidden'); await loadSupportInbox(); }
     else { if(name) name.classList.remove('hidden'); if(inbox) inbox.classList.add('hidden'); activeSupportThreadId=ownSupportThreadId(); subscribeSupportThread(activeSupportThreadId); }
 };
-window.closeSupport=function(){document.getElementById('support-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');};
+window.closeSupport=function(){document.getElementById('support-modal')?.classList.add('hidden');document.body.classList.remove('modal-open');supportUnsubscribe?.();supportUnsubscribe=null;};
 async function loadSupportInbox(){
-    const inbox=document.getElementById('support-staff-inbox'); if(!inbox||!db)return;
-    try{const snap=await getDocs(collection(db,...CLOUD_ROOT,'support')); const threads=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
-      inbox.innerHTML=threads.length?`<div class="support-inbox-title">Обращения</div>`+threads.map(t=>`<button class="support-thread-btn ${t.id===activeSupportThreadId?'active':''}" onclick="openSupportThread('${t.id}')"><strong>${t.displayName||'Пользователь'}</strong><span>${t.updatedAt?new Date(t.updatedAt).toLocaleString(interfaceLocale()):''}</span><p>${(t.messages?.at(-1)?.text||'').slice(0,80)}</p></button>`).join(''):'<div class="empty-state">Обращений пока нет.</div>';
-      if(threads.length&&!activeSupportThreadId) openSupportThread(threads[0].id);
-    }catch(e){console.warn('support inbox',e);inbox.innerHTML='<div class="empty-state">Не удалось загрузить обращения.</div>';}
+    window.refreshSupportNotifications();renderSupportInbox();
+    if(activeSupportThreadId&&!supportUnsubscribe)subscribeSupportThread(activeSupportThreadId);
 }
 window.openSupportThread=function(id){activeSupportThreadId=id;document.getElementById('support-active-thread')?.classList.remove('hidden');subscribeSupportThread(id);loadSupportInbox();};
-function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id)return;if(supportUnsubscribe)supportUnsubscribe();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{const data=snap.exists()?snap.data():{};const active=document.getElementById('support-active-thread');if(active&&isSupportStaff())active.textContent=`Диалог: ${data.displayName||'Пользователь'}`;renderSupportMessages(data.messages||[]);},e=>console.warn('support',e));}
+function subscribeSupportThread(id){if(!db||!auth?.currentUser||!id||(!isSupportStaff()&&id!==ownSupportThreadId()))return;if(supportUnsubscribe)supportUnsubscribe();const context=supportContext();supportUnsubscribe=onSnapshot(doc(db,...CLOUD_ROOT,'support',id),snap=>{if(context!==supportContext()||id!==activeSupportThreadId)return;const data=snap.exists()?snap.data():{};const active=document.getElementById('support-active-thread');if(active&&isSupportStaff())active.textContent=`Диалог: ${data.displayName||'Пользователь'}`;renderSupportMessages(data.messages||[]);markSupportThreadRead(id,data.messages||[]);},e=>console.warn('support',e));}
 function renderSupportMessages(msgs){const box=document.getElementById('support-messages');if(!box)return;box.innerHTML=msgs.length?msgs.map(m=>`<div class="support-msg ${m.role==='staff'?'staff':'visitor'}"><strong>${m.author|| (m.role==='staff'?'Поддержка':'Пользователь')}</strong><p>${m.text||''}</p><span>${m.at?new Date(m.at).toLocaleString(interfaceLocale()):''}</span></div>`).join(''):'<div class="empty-state">Диалог пока пуст. Напишите первое сообщение.</div>';box.scrollTop=box.scrollHeight;}
 window.sendSupportMessage=async function(){
     const text=document.getElementById('support-text').value.trim();if(!text)return;
@@ -3183,4 +3240,7 @@ window.sendSupportMessage=async function(){
 };
 
 // Запускаем новые realtime-модули после авторизации.
-setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();},1200);
+setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();window.refreshSupportNotifications();},1200);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){window.refreshSupportNotifications();if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);}});
+window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
+window.refreshSupportNotifications();

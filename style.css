@@ -3976,3 +3976,15 @@ body.group-info-edit-mode .admin-inline-edit:hover,body.group-info-edit-mode .ad
   .settings-group-form label:not(.student-photo-upload){grid-template-columns:1fr;gap:5px}
   #admin-settings-modal .settings-device-options button{gap:7px;padding:9px 6px}
 }
+
+/* Incoming support messages, in the drawer and per conversation. */
+.support-unread-badge{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-width:22px;min-height:22px;padding:2px 7px;border-radius:999px;
+  background:#dc2626;color:#fff;font-size:12px !important;line-height:18px;
+  font-weight:750;box-shadow:0 2px 7px rgba(220,38,38,.18);
+}
+.support-unread-badge.hidden{display:none !important}
+#menu-support-button .support-unread-badge{margin-left:auto;color:#fff !important}
+#support-staff-inbox .support-thread-btn strong{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#support-staff-inbox .support-thread-btn .support-unread-badge{color:#fff !important;font-size:12px !important}

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP GROUP</title>
-    <meta name="app-build" content="step18.7-shared-gradients-2026-10-04">
+    <meta name="app-build" content="step18.8-version-support-badges-2026-10-04">
     <link rel="icon" type="image/png" href="icon.png?v=20261003-step15">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261004-settings-reference">
+    <link rel="stylesheet" href="style.css?v=20261004-support-badges">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-shared-gradients">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -600,7 +600,7 @@
         <aside class="app-drawer">
             <div class="drawer-head"><div><strong>ТОЭ-26-9-1</strong><span>Информация группы</span></div><button onclick="closeAppMenu()"><i class="fa-solid fa-xmark"></i></button></div>
             <button onclick="closeAppMenu();switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
-            <button onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span></button>
+            <button id="menu-support-button" onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span><span id="support-menu-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></button>
             <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
             <div class="drawer-note">Сообщения поддержки и важные объявления доступны через колокольчик.</div>
         </aside>
@@ -639,7 +639,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-settings-reference"></script>
+    <script type="module" src="app.js?v=20261004-support-badges"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -695,5 +695,3 @@
 
 </body>
 </html>
-
-
