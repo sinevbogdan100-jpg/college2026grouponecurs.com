@@ -1,6 +1,6 @@
-import { createArrivalTracker } from './notification-state.js?v=20261004-notification-alerts';
-import { createNotificationCenter } from './notification-center.js?v=20261004-notification-alerts';
-import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-support-badges';
+import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261004-performance-v1';
+import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
 import {
     createFirebaseServices,
     signInAnonymously,
@@ -18,7 +18,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261004-notification-alerts";
+} from "./firebase.js?v=20261004-performance-v1";
 
 import {
     getWeekTypeForDate,
@@ -30,8 +30,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261004-settings-reference";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261003-step18-3-recovery1";
+} from "./utils.js?v=20261004-performance-v1";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
 import {
     configureSchedule,
     loadScheduleData,
@@ -42,8 +42,8 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-settings-reference";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-notification-alerts";
+} from "./schedule.js?v=20261004-performance-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-performance-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -579,7 +579,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 }
             };
             poll();
-            attendancePollTimer = setInterval(poll, 2500);
+            attendancePollTimer = setInterval(() => { if (document.visibilityState === 'visible') void poll(); }, 30000);
             window.__attendanceFallbackActive = true;
         }
 
@@ -777,8 +777,6 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // При каждом новом входе/обновлении страницы журнал открывается на текущей
-            // рабочей дате. После ручного выбора другой даты она не меняется сама.
             const todayStr = getCurrentDateStr();
             const effectiveTodayStr = isWeekendDate(todayStr) ? getLastWorkingDate(todayStr) : todayStr;
             const datePicker = document.getElementById('date-picker');
@@ -790,44 +788,53 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 window.__journalDateInitialized = true;
             }
 
-            // Сначала сразу показываем интерфейс и список группы.
+            // FAST BOOT: local data and the last opened screen are restored before any network wait.
+            const savedDay = localStorage.getItem('toe_current_schedule_day');
+            const savedWeek = localStorage.getItem('toe_schedule_week_type');
+            const savedView = localStorage.getItem('toe_current_view');
+            restoreScheduleSelection(savedDay, savedWeek);
+
+            await Promise.allSettled([
+                loadAttendanceForDate(effectiveTodayStr),
+                loadScheduleData()
+            ]);
+
             try {
                 renderGroupInfo();
                 renderRosterList();
-                renderApp();
-            } catch (e) {
-                console.warn('Не удалось сразу отрисовать список группы', e);
-            }
-
-            // Облачное/резервное сохранение запускаем отдельно.
-            try { await initFirebase(); } catch (e) { console.warn('Firebase init skipped', e); }
-            try { await loadScheduleData(); } catch (e) { console.warn('Schedule load skipped', e); }
-            try {
-                renderRosterList();
-            } catch (e) {
-                console.warn('Повторная отрисовка списка группы не удалась', e);
-            }
-            try {
-                const savedDay = localStorage.getItem('toe_current_schedule_day');
-                const savedWeek = localStorage.getItem('toe_schedule_week_type');
-                const savedView = localStorage.getItem('toe_current_view');
-                restoreScheduleSelection(savedDay, savedWeek);
+                renderApp(true);
                 syncScheduleToToday();
-                if (savedView && ['home','tracker','roster','schedule'].includes(savedView)) {
-                    switchView(savedView, true);
-                } else {
-                    renderSchedule(getCurrentScheduleDay());
+                renderSchedule(getCurrentScheduleDay());
+                if (savedView && ['home','tracker','roster','schedule'].includes(savedView)) switchView(savedView, true);
+                else {
+                    switchView('home', true);
                     restoreScrollPosition('home');
                 }
-            } catch(e) {
-                renderSchedule(getCurrentScheduleDay());
+            } catch (e) {
+                console.warn('Быстрая локальная отрисовка частично пропущена', e);
+                ensureMainViewVisible();
             }
+
             ensureMainViewVisible();
             updateHomeWeekBanner();
             updateHomeTodayCard();
-            setInterval(updateHomeTodayCard, 15000);
-        });
+            setInterval(() => {
+                if (document.visibilityState === 'visible') updateHomeTodayCard();
+            }, 30000);
 
+            // CLOUD BOOT: Firebase and realtime listeners connect in parallel without blocking the UI.
+            queueMicrotask(async () => {
+                try {
+                    await initFirebase();
+                    renderGroupInfo();
+                    renderRosterList();
+                    renderApp(true);
+                    renderSchedule(getCurrentScheduleDay());
+                } catch (e) {
+                    console.warn('Firebase init skipped', e);
+                }
+            });
+        });
 
 
 
@@ -1209,7 +1216,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function startGroupInfoPolling() {
             if (groupInfoPollTimer) clearInterval(groupInfoPollTimer);
-            groupInfoPollTimer = setInterval(() => { void pollGroupInfoOnce(); }, 5000);
+            groupInfoPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollGroupInfoOnce(); }, 30000);
         }
 
         function subscribeToGroupInfo() {
@@ -1348,7 +1355,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function startStudentsPolling() {
             if (studentsPollTimer) clearInterval(studentsPollTimer);
-            studentsPollTimer = setInterval(() => { void pollStudentsOnce(); }, 5000);
+            studentsPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollStudentsOnce(); }, 30000);
         }
 
         function subscribeToStudents() {
@@ -1719,7 +1726,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         function startAdminPermissionsPolling() {
             if (adminPermissionsPollTimer) clearInterval(adminPermissionsPollTimer);
-            adminPermissionsPollTimer = setInterval(() => { void pollAdminPermissionsOnce(); }, 5000);
+            adminPermissionsPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollAdminPermissionsOnce(); }, 30000);
         }
 
         function subscribeToAdminPermissions() {
@@ -1923,7 +1930,9 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
 
         window.addEventListener('beforeunload', saveCurrentScrollPosition);
 
+        let currentVisibleView = '';
         window.switchView = function(viewName, fromReload = false) {
+            if (currentVisibleView === viewName && !fromReload) return;
             saveCurrentScrollPosition();
             try { localStorage.setItem('toe_current_view', viewName); } catch(e) {}
 
@@ -1947,6 +1956,7 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
                 syncScheduleToToday();
                 renderSchedule(getCurrentScheduleDay());
             }
+            currentVisibleView = viewName;
             restoreScrollPosition(viewName);
         };
 
@@ -2599,16 +2609,22 @@ console.info('[SBP GROUP] build', window.__SITE_BUILD__);
         }
         window.renderJournalScoreCard = renderJournalScoreCard;
 
-        function renderApp() {
+        let lastJournalRenderKey = '';
+        function renderApp(force = false) {
             const container = document.getElementById('students-container');
             if (!container) return;
             const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase();
-            container.innerHTML = '';
-
             const counts = { present: 0, late: 0, sick: 0, excused: 0, unexcused: 0 };
             const selectedDate = document.getElementById('date-picker')?.value || getCurrentDateStr();
             const journalStudents = getStudentsForDate(selectedDate);
             const editable = canEditJournal();
+            const renderKey = JSON.stringify([selectedDate, searchVal, editable, currentLang(), activeJournalTab, journalStudents, attendanceState, attendanceNotes]);
+            if (!force && renderKey === lastJournalRenderKey) {
+                if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
+                return;
+            }
+            lastJournalRenderKey = renderKey;
+            container.innerHTML = '';
             const defs = [
                 ['present', 'П', 'Присутствует'],
                 ['sick', 'Б', 'Болеет'],
