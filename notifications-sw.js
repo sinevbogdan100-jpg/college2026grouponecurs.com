@@ -16,6 +16,7 @@ const CORE_ASSETS = [
   './notification-center.js?v=20261004-performance-v1',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
+  './icon.png?v=20261004-purple-v1',
   './manifest.webmanifest'
 ];
 
