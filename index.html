@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.23-app-launch-animation-2026-10-04">
+    <meta name="app-build" content="step18.24-launch-only-on-open-2026-10-04">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-force-publish-v4">
@@ -12,8 +12,12 @@
     <script>
       (() => {
         try {
-          const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-          if (standalone) document.documentElement.classList.add('sbp-app-launch');
+          const params = new URLSearchParams(location.search);
+          const fromAndroidShell = params.get('source') === 'android-app';
+          const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || fromAndroidShell;
+          const navEntry = performance.getEntriesByType?.('navigation')?.[0];
+          const isReload = navEntry?.type === 'reload' || performance.navigation?.type === 1;
+          if (standalone && !isReload) document.documentElement.classList.add('sbp-app-launch');
         } catch (_) {}
       })();
     </script>
