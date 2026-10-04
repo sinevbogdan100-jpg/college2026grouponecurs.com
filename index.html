@@ -4,11 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.22-layout-fit-2026-10-04">
+    <meta name="app-build" content="step18.23-app-launch-animation-2026-10-04">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-force-publish-v4">
     <meta name="theme-color" content="#818cf8">
+    <script>
+      (() => {
+        try {
+          const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+          if (standalone) document.documentElement.classList.add('sbp-app-launch');
+        } catch (_) {}
+      })();
+    </script>
+    <style>
+      #sbp-launch-animation{display:none}
+      html.sbp-app-launch #sbp-launch-animation{
+        position:fixed;
+        inset:0;
+        z-index:2147483647;
+        display:block;
+        overflow:hidden;
+        pointer-events:none;
+        background:
+          radial-gradient(circle at 18% 22%,rgba(156,119,255,.72),transparent 34%),
+          radial-gradient(circle at 82% 30%,rgba(91,196,255,.58),transparent 38%),
+          radial-gradient(circle at 48% 88%,rgba(115,86,231,.62),transparent 40%),
+          linear-gradient(145deg,#5d48cf 0%,#7658e8 34%,#667eea 68%,#7fc9ee 100%);
+        opacity:1;
+        transform:scale(1);
+        transition:opacity .28s ease,transform .36s cubic-bezier(.2,.7,.2,1);
+      }
+      html.sbp-app-launch #sbp-launch-animation::before,
+      html.sbp-app-launch #sbp-launch-animation::after{
+        content:"";
+        position:absolute;
+        inset:-28%;
+        border-radius:42%;
+        filter:blur(34px);
+        will-change:transform,opacity;
+      }
+      html.sbp-app-launch #sbp-launch-animation::before{
+        background:
+          conic-gradient(from 35deg,
+            transparent 0 12%,
+            rgba(255,255,255,.30) 18%,
+            transparent 30% 48%,
+            rgba(191,229,255,.30) 57%,
+            transparent 70% 100%);
+        animation:sbpLaunchSpin 1.15s cubic-bezier(.2,.72,.18,1) both;
+      }
+      html.sbp-app-launch #sbp-launch-animation::after{
+        inset:-10% -35%;
+        background:linear-gradient(105deg,
+          transparent 16%,
+          rgba(255,255,255,.08) 31%,
+          rgba(255,255,255,.56) 47%,
+          rgba(202,238,255,.22) 57%,
+          transparent 74%);
+        transform:translateX(-48%) rotate(-9deg);
+        animation:sbpLaunchSweep .92s cubic-bezier(.22,.78,.18,1) .04s both;
+      }
+      #sbp-launch-animation .sbp-launch-orb{
+        position:absolute;
+        width:54vmax;
+        height:54vmax;
+        left:50%;
+        top:50%;
+        border-radius:50%;
+        transform:translate(-50%,-50%) scale(.18);
+        background:radial-gradient(circle,rgba(255,255,255,.38) 0%,rgba(232,225,255,.18) 32%,transparent 67%);
+        filter:blur(9px);
+        animation:sbpLaunchPulse .95s cubic-bezier(.16,.8,.24,1) both;
+      }
+      #sbp-launch-animation.is-leaving{
+        opacity:0!important;
+        transform:scale(1.035)!important;
+      }
+      @keyframes sbpLaunchSpin{
+        0%{transform:rotate(-24deg) scale(.82);opacity:.34}
+        60%{opacity:1}
+        100%{transform:rotate(72deg) scale(1.08);opacity:.72}
+      }
+      @keyframes sbpLaunchSweep{
+        0%{transform:translateX(-58%) rotate(-9deg);opacity:0}
+        18%{opacity:.92}
+        100%{transform:translateX(58%) rotate(-9deg);opacity:0}
+      }
+      @keyframes sbpLaunchPulse{
+        0%{transform:translate(-50%,-50%) scale(.12);opacity:.22}
+        58%{opacity:.74}
+        100%{transform:translate(-50%,-50%) scale(1.28);opacity:0}
+      }
+      @media(prefers-reduced-motion:reduce){
+        html.sbp-app-launch #sbp-launch-animation::before,
+        html.sbp-app-launch #sbp-launch-animation::after,
+        #sbp-launch-animation .sbp-launch-orb{animation-duration:.18s!important}
+      }
+    </style>
     <link rel="apple-touch-icon" href="sbp-information-apple-20261004-v4.png">
     <link rel="icon" type="image/png" sizes="192x192" href="sbp-information-favicon-20261004-v4.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,6 +140,23 @@
 
 </head>
 <body class="min-h-screen text-slate-800 antialiased font-sans bg-slate-50">
+    <div id="sbp-launch-animation" aria-hidden="true"><span class="sbp-launch-orb"></span></div>
+    <script>
+      (() => {
+        if (!document.documentElement.classList.contains('sbp-app-launch')) return;
+        const splash = document.getElementById('sbp-launch-animation');
+        if (!splash) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const visibleFor = reduced ? 180 : 920;
+        window.setTimeout(() => {
+          splash.classList.add('is-leaving');
+          window.setTimeout(() => {
+            splash.remove();
+            document.documentElement.classList.remove('sbp-app-launch');
+          }, reduced ? 90 : 340);
+        }, visibleFor);
+      })();
+    </script>
 
 <!-- Диагностика Firebase: временный диагностический режим -->
 <div id="firebase-diagnostic-panel" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
