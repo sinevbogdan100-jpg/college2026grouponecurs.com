@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-performance-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-schedule-change-v1";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
@@ -12,7 +12,8 @@ let dependencies = {
     updateBackupStatus: () => {},
     setRealtimeDiagnostic: () => {},
     setWriteDiagnostic: () => {},
-    diagLog: () => {}
+    diagLog: () => {},
+    publishScheduleChange: async () => false
 };
 
 export function configureSchedule(nextDependencies = {}) {
@@ -421,8 +422,15 @@ function collectScheduleItems() {
     return items;
 }
 
+const SCHEDULE_SUBJECT_SUGGESTIONS = Object.freeze([
+    'Физика','Иностранный язык','Физическая культура','История Казахстана','Всемирная история',
+    'Русский язык','Русский язык и литература','Русская литература','Математика','География',
+    'Графика и проектирование','Биология','Химия','Глобальные компетенции',
+    'Казахский язык и литература','Информатика','НВП','Классный час'
+]);
+
 function buildSubjectCatalog() {
-    const catalog = new Map();
+    const catalog = new Map(SCHEDULE_SUBJECT_SUGGESTIONS.map(subject => [subject, { subject, room:'', teacher:'' }]));
     collectScheduleItems().forEach(item => {
         const subject = String(item?.subject || '').trim();
         if (!subject) return;
@@ -521,7 +529,70 @@ function cloneScheduleItem(item = {}) {
         isClassHour: !!item.isClassHour,
         changeType: String(item.changeType || 'normal'),
         changeNote: String(item.changeNote || '').trim(),
-        cancelled: !!item.cancelled
+        cancelled: !!item.cancelled,
+        originalTime: String(item.originalTime || '').trim(),
+        originalSubject: String(item.originalSubject || '').trim(),
+        originalRoom: String(item.originalRoom || '').trim(),
+        originalTeacher: String(item.originalTeacher || '').trim(),
+        changeId: String(item.changeId || '').trim(),
+        changedAt: String(item.changedAt || '').trim()
+    };
+}
+
+function scheduleOriginalValue(item, field) {
+    const originalKey = 'original' + field.charAt(0).toUpperCase() + field.slice(1);
+    return String(item?.[originalKey] || item?.[field] || '').trim();
+}
+
+function scheduleChangeEvent(oldItem, newItem, index) {
+    if (!newItem || newItem.changeType === 'normal') return null;
+    const entries = buildScheduleEntries(getCurrentScheduleList());
+    const pairNumber = entries.find(entry => entry.index === index)?.number || String(index + 1);
+    const date = scheduleDateForDay(currentScheduleDay);
+    const ruDate = date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+    const kzDate = date.toLocaleDateString('kk-KZ',{weekday:'long',day:'numeric',month:'long'});
+    const oldSubject = scheduleOriginalValue(newItem,'subject') || oldItem?.subject || newItem.subject || 'Пара';
+    const oldRoom = scheduleOriginalValue(newItem,'room') || oldItem?.room || '';
+    const oldTeacher = scheduleOriginalValue(newItem,'teacher') || oldItem?.teacher || '';
+    const oldTime = scheduleOriginalValue(newItem,'time') || oldItem?.time || '';
+    const pairRu = pairNumber === 'КЧ' ? 'классный час' : pairNumber + ' пара';
+    const pairKz = pairNumber === 'КЧ' ? 'сынып сағаты' : pairNumber + '-сабақ';
+    let textRu = '';
+    let textKz = '';
+
+    if (newItem.cancelled || newItem.changeType === 'cancel') {
+        textRu = `${ruDate}, ${pairRu}: пары не будет — ${oldSubject}${oldTime ? ` (${oldTime})` : ''}.`;
+        textKz = `${kzDate}, ${pairKz}: сабақ болмайды — ${oldSubject}${oldTime ? ` (${oldTime})` : ''}.`;
+    } else if (['subject','replace'].includes(newItem.changeType) && oldSubject !== newItem.subject) {
+        textRu = `${ruDate}, ${pairRu}: замена — ${oldSubject} → ${newItem.subject}. Новый кабинет: ${newItem.room || 'не указан'}${newItem.teacher ? `. Преподаватель: ${newItem.teacher}` : ''}.`;
+        textKz = `${kzDate}, ${pairKz}: ауыстыру — ${oldSubject} → ${newItem.subject}. Жаңа кабинет: ${newItem.room || 'көрсетілмеген'}${newItem.teacher ? `. Оқытушы: ${newItem.teacher}` : ''}.`;
+    } else if (newItem.changeType === 'room') {
+        textRu = `${ruDate}, ${pairRu}: кабинет изменён — ${newItem.subject}: ${oldRoom || '—'} → ${newItem.room || '—'}.`;
+        textKz = `${kzDate}, ${pairKz}: кабинет өзгерді — ${newItem.subject}: ${oldRoom || '—'} → ${newItem.room || '—'}.`;
+    } else if (newItem.changeType === 'teacher') {
+        textRu = `${ruDate}, ${pairRu}: преподаватель изменён — ${newItem.subject}: ${oldTeacher || '—'} → ${newItem.teacher || '—'}.`;
+        textKz = `${kzDate}, ${pairKz}: оқытушы өзгерді — ${newItem.subject}: ${oldTeacher || '—'} → ${newItem.teacher || '—'}.`;
+    } else if (newItem.changeType === 'time') {
+        textRu = `${ruDate}, ${pairRu}: время изменено — ${newItem.subject}: ${oldTime || '—'} → ${newItem.time || '—'}.`;
+        textKz = `${kzDate}, ${pairKz}: уақыт өзгерді — ${newItem.subject}: ${oldTime || '—'} → ${newItem.time || '—'}.`;
+    } else {
+        textRu = `${ruDate}, ${pairRu}: расписание изменено — ${newItem.subject}.`;
+        textKz = `${kzDate}, ${pairKz}: сабақ кестесі өзгерді — ${newItem.subject}.`;
+    }
+
+    return {
+        id: newItem.changeId || `sch_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+        type: 'schedule_change',
+        changeType: newItem.changeType,
+        dayKey: currentScheduleDay,
+        weekType: currentScheduleWeekType,
+        date: date.toISOString().slice(0,10),
+        pairNumber,
+        title: pairNumber === 'КЧ' ? 'Изменение расписания · Классный час' : `Изменение расписания · ${pairNumber} пара`,
+        titleKz: pairNumber === 'КЧ' ? 'Сабақ кестесі өзгерді · Сынып сағаты' : `Сабақ кестесі өзгерді · ${pairNumber}-сабақ`,
+        text: textRu,
+        textKz,
+        createdAt: new Date().toISOString()
     };
 }
 
@@ -703,6 +774,19 @@ export function renderSchedule(dayKey = currentScheduleDay) {
         const changeHtml = changeNote
             ? `<div class="schedule-ref-change ${cancelled ? 'cancelled' : ''}"><i class="fa-solid ${cancelled ? 'fa-ban' : 'fa-triangle-exclamation'}"></i><span>${scheduleEscape(changeNote)}</span></div>`
             : '';
+        const originalSubject = scheduleOriginalValue(item,'subject') || item.subject || 'Занятие';
+        const isSubjectReplacement = !cancelled && ['subject','replace'].includes(item.changeType) && originalSubject !== item.subject;
+        const routeHtml = cancelled
+            ? `<div class="schedule-change-route cancelled"><span class="schedule-change-tag">${translateUI('Пары не будет')}</span><s>${scheduleEscape(originalSubject)}</s></div>`
+            : isSubjectReplacement
+                ? `<div class="schedule-change-route"><span class="schedule-change-from"><small>${translateUI('Было')}</small><s>${scheduleEscape(originalSubject)}</s></span><i class="fa-solid fa-arrow-right"></i><span class="schedule-change-tag">${translateUI('Замена')}</span></div>`
+                : (item.changeType && item.changeType !== 'normal' ? `<div class="schedule-change-route compact"><span class="schedule-change-tag">${scheduleEscape(translateUI(item.changeNote || 'Расписание изменено'))}</span></div>` : '');
+        const metaHtml = cancelled
+            ? `<div class="schedule-cancel-meta"><i class="fa-solid fa-ban"></i><span>${translateUI('Кабинет и преподаватель неактуальны')}</span></div>`
+            : `<div class="schedule-ref-meta ${isSubjectReplacement ? 'changed-meta' : ''}">
+                <span><small>${translateUI(isSubjectReplacement ? 'Новый кабинет' : 'Кабинет')}</small><b><i class="fa-solid fa-door-open"></i>${scheduleEscape(item.room || '—')}</b></span>
+                ${item.teacher ? `<span data-i18n-skip><small>${translateUI(isSubjectReplacement ? 'Новый преподаватель' : 'Преподаватель')}</small><b><i class="fa-solid fa-user-graduate"></i>${scheduleEscape(item.teacher)}</b></span>` : ''}
+            </div>`;
 
         row.innerHTML = `
             <div class="schedule-ref-rail">
@@ -714,11 +798,9 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                     <time>${scheduleEscape(item.time || '—')}</time>
                     ${stateBadge}
                 </div>
-                <strong class="schedule-ref-subject">${scheduleEscape(item.subject || 'Занятие')}</strong>
-                <div class="schedule-ref-meta">
-                    <span><i class="fa-solid fa-door-open"></i>${scheduleEscape(item.room || '—')}</span>
-                    ${item.teacher ? `<span data-i18n-skip><i class="fa-solid fa-user-graduate"></i>${scheduleEscape(item.teacher)}</span>` : ''}
-                </div>
+                ${routeHtml}
+                ${cancelled ? '' : `<span class="schedule-now-label">${isSubjectReplacement ? translateUI('Теперь') : ''}</span><strong class="schedule-ref-subject">${scheduleEscape(item.subject || 'Занятие')}</strong>`}
+                ${metaHtml}
                 ${changeHtml}
                 <div class="schedule-admin-actions">
                     <button onclick="moveScheduleLesson(${entry.index}, -1)" title="Поднять выше" ${entry.index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
@@ -799,6 +881,9 @@ window.saveScheduleLesson = async function() {
     const list=getCurrentScheduleList();
     if (!list) { showToast('Не удалось определить день расписания'); return; }
     const changeType = document.getElementById('edit-change-type')?.value || 'normal';
+    const oldItem = editingScheduleIndex >= 0 ? cloneScheduleItem(list[editingScheduleIndex]) : null;
+    const baseline = scheduleEditorOriginal || oldItem || {};
+    const changed = changeType !== 'normal';
     const item={
         time:document.getElementById('edit-time').value.trim(),
         breakDuration:restoreScheduleBreak(document.getElementById('edit-break').value),
@@ -809,20 +894,28 @@ window.saveScheduleLesson = async function() {
         changeType,
         changeNote:scheduleChangeNoteManuallyEdited ? (document.getElementById('edit-change-note')?.value.trim() || '') : buildScheduleChangeNote(changeType),
         cancelled:changeType === 'cancel',
-        changedAt: changeType === 'normal' ? '' : new Date().toISOString()
+        originalTime:changed ? (baseline.originalTime || baseline.time || '') : '',
+        originalSubject:changed ? (baseline.originalSubject || baseline.subject || '') : '',
+        originalRoom:changed ? (baseline.originalRoom || baseline.room || '') : '',
+        originalTeacher:changed ? (baseline.originalTeacher || baseline.teacher || '') : '',
+        changeId:changed ? `sch_${Date.now()}_${Math.random().toString(36).slice(2,7)}` : '',
+        changedAt:changed ? new Date().toISOString() : ''
     };
     if(!item.subject || !item.time){showToast('Укажите предмет и время');return;}
     if (changeType !== 'normal' && !item.changeNote) item.changeNote = buildScheduleChangeNote(changeType);
-    const oldItem = editingScheduleIndex >= 0 ? list[editingScheduleIndex] : null;
     if(editingScheduleIndex>=0) list[editingScheduleIndex]=item; else list.push(item);
+    const savedIndex = editingScheduleIndex >= 0 ? editingScheduleIndex : list.length - 1;
+    const changeEvent = scheduleChangeEvent(oldItem, item, savedIndex);
     try {
-        await saveScheduleData();
+        await saveScheduleData(changeEvent);
         window.closeScheduleEditor();
+        lastScheduleRenderKey = '';
         renderSchedule(currentScheduleDay);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = true;
         showToast(changeType === 'cancel' ? 'Отмена пары сохранена в облако' : 'Расписание сохранено в облако');
     } catch (e) {
         if (editingScheduleIndex >= 0) list[editingScheduleIndex] = oldItem; else list.pop();
+        lastScheduleRenderKey = '';
         renderSchedule(currentScheduleDay);
         console.error('Schedule save failed:', e);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = false;
@@ -881,7 +974,7 @@ function saveScheduleHistorySnapshot() {
     } catch (e) { console.warn('Не удалось сохранить историю расписания', e); }
 }
 
-export async function saveScheduleData(){
+export async function saveScheduleData(changeEvent = null){
     saveScheduleHistorySnapshot();
     const num = JSON.stringify(scheduleDataNumerator);
     const den = JSON.stringify(scheduleDataDenominator);
@@ -901,6 +994,7 @@ export async function saveScheduleData(){
         await setDoc(ref, {
             numerator: scheduleDataNumerator,
             denominator: scheduleDataDenominator,
+            lastChange: changeEvent || null,
             updatedAt
         }, { merge: false });
 
@@ -918,6 +1012,10 @@ export async function saveScheduleData(){
         if (window.__scheduleDebug) {
             window.__scheduleDebug.lastUpdatedAt = updatedAt;
             window.__scheduleDebug.lastSource = 'Firestore (подтверждено сервером)';
+        }
+        if (changeEvent) {
+            try { await dependencies.publishScheduleChange?.(changeEvent); }
+            catch (notifyError) { console.warn('Schedule notification publish failed', notifyError); }
         }
     } catch (e) {
         window.__scheduleLastSaveOk = false;

@@ -42,8 +42,8 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-speed-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-native-shell-v2";
+} from "./schedule.js?v=20261004-schedule-change-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-schedule-change-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -307,7 +307,34 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             updateBackupStatus: () => updateBackupStatus(),
             setRealtimeDiagnostic: (detail) => { firebaseDiag.realtime = { ok: true, detail }; },
             setWriteDiagnostic: (ok, detail) => { firebaseDiag.write = { ok, detail }; },
-            diagLog: (message, data) => diagLog(message, data)
+            diagLog: (message, data) => diagLog(message, data),
+            publishScheduleChange: async (event) => {
+                if (!event || !db || !auth?.currentUser) return false;
+                const id = `schedule_${event.id || Date.now()}`;
+                const payload = {
+                    title: event.title || 'Изменение расписания',
+                    titleKz: event.titleKz || 'Сабақ кестесі өзгерді',
+                    text: event.text || '',
+                    textKz: event.textKz || '',
+                    createdAt: event.createdAt || new Date().toISOString(),
+                    author: AUTH_ACCOUNTS[currentAccountLogin]?.label || 'Редактор расписания',
+                    authorUid: auth.currentUser.uid,
+                    type: 'schedule_change',
+                    changeId: event.id || '',
+                    changeType: event.changeType || '',
+                    date: event.date || '',
+                    pairNumber: event.pairNumber || ''
+                };
+                try {
+                    await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),payload);
+                    return true;
+                } catch (error) {
+                    console.warn('schedule notification',error);
+                    // The schedule itself is already saved. Do not roll it back only because
+                    // this account is not allowed to publish into the event center.
+                    return false;
+                }
+            }
         });
 
 
@@ -3222,20 +3249,28 @@ function homeBreakInfo(current,next){
 function renderHomeLessonCard(entry,nowMinutes){
     const {it,index,r}=entry;
     const floor=getFloorFromRoom(it.room);
-    const current=!!r&&nowMinutes>=r.start&&nowMinutes<r.end;
+    const cancelled=!!it.cancelled||it.changeType==='cancel';
+    const current=!cancelled&&!!r&&nowMinutes>=r.start&&nowMinutes<r.end;
     const remaining=current?r.end-nowMinutes:0;
     const progress=current?Math.max(1,Math.min(100,((nowMinutes-r.start)/(r.end-r.start))*100)):0;
-    return `<article class="home-ref-lesson-card ${current?'current':''}">
+    const originalSubject=String(it.originalSubject||it.subject||'Занятие');
+    const replacement=!cancelled&&['subject','replace'].includes(it.changeType)&&originalSubject!==it.subject;
+    const changeMain=cancelled
+        ? `<div class="home-change-route cancelled"><span>${translateUI('Пары не будет')}</span><s>${originalSubject}</s></div><span>${it.time||''}</span>`
+        : replacement
+            ? `<div class="home-change-route"><small>${translateUI('Было')}</small><s>${originalSubject}</s><span>${translateUI('Замена')}</span></div><small class="home-now-label">${translateUI('Теперь')}</small><strong>${it.subject||'Занятие'}</strong><span>${it.time||''}</span>`
+            : `<strong>${it.subject||'Занятие'}</strong><span>${it.time||''}</span>`;
+    const meta=cancelled
+        ? `<div class="home-cancel-meta"><i class="fa-solid fa-ban"></i><span>${translateUI('Кабинет неактуален')}</span></div>`
+        : `<div class="home-ref-lesson-meta ${replacement?'changed-meta':''}">
+            <div><span>${translateUI(replacement?'Новый кабинет':'Кабинет')}</span><strong>${it.room||'—'}</strong></div>
+            <div><span>${translateUI(replacement?'Новый этаж':'Этаж')}</span><strong>${floor||'—'}</strong></div>
+        </div>`;
+    return `<article class="home-ref-lesson-card ${current?'current':''} ${cancelled?'cancelled':''} ${replacement?'replacement':''}">
         <div class="home-ref-lesson-row">
             <div class="home-ref-lesson-number">${index+1}</div>
-            <div class="home-ref-lesson-main">
-                <strong>${it.subject||'Занятие'}</strong>
-                <span>${it.time||''}</span>
-            </div>
-            <div class="home-ref-lesson-meta">
-                <div><span>Кабинет</span><strong>${it.room||'—'}</strong></div>
-                <div><span>Этаж</span><strong>${floor||'—'}</strong></div>
-            </div>
+            <div class="home-ref-lesson-main">${changeMain}</div>
+            ${meta}
         </div>
         ${current?`<div class="home-ref-progress-row">
             <div class="home-ref-progress-labels"><strong>Идёт урок</strong><span>Осталось ${homeMinutesLabel(remaining)}</span></div>
@@ -3337,14 +3372,20 @@ function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.get
 function saveReadNotificationIds(ids){try{localStorage.setItem(NOTIFICATIONS_READ_KEY,JSON.stringify([...ids].slice(-500)));}catch(e){}}
 function notificationTimeLabel(value){if(!value)return '';const d=new Date(value);return Number.isNaN(d.getTime())?'':d.toLocaleString(interfaceLocale(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function escapeNotificationText(value){return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+function notificationTitleForLocale(item){
+    return currentLang()==='kz' && item?.titleKz ? item.titleKz : (item?.title || 'Объявление');
+}
+function notificationTextForLocale(item){
+    return currentLang()==='kz' && item?.textKz ? item.textKz : (item?.text || '');
+}
 function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
 function renderHomeLatestNotification(){
     const box=document.getElementById('home-latest-notification');
     if(!box)return;
     const n=notificationsCache[0];
     if(!n){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
-    const title=escapeNotificationText(n.title||'Объявление');
-    const body=escapeNotificationText(n.text||'');
+    const title=escapeNotificationText(notificationTitleForLocale(n));
+    const body=escapeNotificationText(notificationTextForLocale(n));
     const lower=(title+' '+body).toLowerCase();
     const icon=lower.includes('распис')?'fa-calendar-days':lower.includes('поддерж')?'fa-comments':'fa-bullhorn';
     let time='';
@@ -3377,10 +3418,10 @@ function renderNotifications(){
             <div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div>
             <div class="notification-item-body">
                 <div class="notification-item-head">
-                    <strong>${escapeNotificationText(n.title||'Объявление')}</strong>
+                    <strong>${escapeNotificationText(notificationTitleForLocale(n))}</strong>
                     <div class="notification-item-actions"><span>${notificationTimeLabel(n.createdAt)}</span>${deleteButton}</div>
                 </div>
-                <p>${escapeNotificationText(n.text||'')}</p>
+                <p>${escapeNotificationText(notificationTextForLocale(n))}</p>
                 ${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}
             </div>
         </article>`;
@@ -3430,7 +3471,7 @@ function subscribeNotifications(){
         notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
         if(!snap.metadata?.fromCache){
             const arrivals=eventArrivals.update(notificationsCache.map(item=>({id:item.id,count:1,item})));
-            arrivals.forEach(({item})=>{if(item.authorUid!==auth?.currentUser?.uid && (!item.author || item.author!==currentAccountLogin))notificationCenter.incoming({key:`event:${item.id}`,title:translateUI('Новое объявление'),body:item.title||translateUI('Центр событий'),kind:'events'});});
+            arrivals.forEach(({item})=>{if(item.authorUid!==auth?.currentUser?.uid && (!item.author || item.author!==currentAccountLogin)){const scheduleChange=item.type==='schedule_change';notificationCenter.incoming({key:`event:${item.id}`,title:scheduleChange?notificationTitleForLocale(item):translateUI('Новое объявление'),body:scheduleChange?notificationTextForLocale(item):notificationTitleForLocale(item),kind:'events'});}});
         }
         renderNotifications();renderHomeLatestNotification();updateNotificationBadge();
     },e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});

@@ -47,15 +47,20 @@ exports.unregisterPushDevice = onCall({ region }, async request => {
   return { removed: true };
 });
 
-function payloadFor(device, kind, key, threadId, staff = false) {
+function payloadFor(device, kind, key, threadId, staff = false, announcement = null) {
   const kz = device.language === 'kz';
+  const scheduleChange = kind === 'events' && announcement?.type === 'schedule_change';
   return {
     key, kind, threadId: staff ? threadId : '',
-    title: kind === 'events' ? (kz ? 'Жаңа хабарландыру' : 'Новое объявление')
-      : staff ? (kz ? 'Қолдауға жаңа өтініш' : 'Новое обращение в поддержку')
-        : (kz ? 'Қолдаудың жаңа жауабы' : 'Новый ответ поддержки'),
-    body: kind === 'events' ? (kz ? 'Оқиғалар орталығын ашыңыз' : 'Откройте центр событий')
-      : (kz ? 'Хабарламаны оқу үшін қолдауды ашыңыз' : 'Откройте поддержку, чтобы прочитать сообщение')
+    title: scheduleChange
+      ? (kz ? (announcement.titleKz || announcement.title) : announcement.title)
+      : kind === 'events' ? (kz ? 'Жаңа хабарландыру' : 'Новое объявление')
+        : staff ? (kz ? 'Қолдауға жаңа өтініш' : 'Новое обращение в поддержку')
+          : (kz ? 'Қолдаудың жаңа жауабы' : 'Новый ответ поддержки'),
+    body: scheduleChange
+      ? (kz ? (announcement.textKz || announcement.text) : announcement.text)
+      : kind === 'events' ? (kz ? 'Оқиғалар орталығын ашыңыз' : 'Откройте центр событий')
+        : (kz ? 'Хабарламаны оқу үшін қолдауды ашыңыз' : 'Откройте поддержку, чтобы прочитать сообщение')
   };
 }
 
@@ -93,7 +98,7 @@ exports.pushAnnouncement = onDocumentCreated({ ...triggerOptions, document: 'toe
   if (!announcement) return;
   const devices = await db.collection(deviceCollection).get();
   await deliver(devices.docs.filter(snapshot => snapshot.data().uid !== announcement.authorUid),
-    device => payloadFor(device, 'events', `event:${event.params.notificationId}`, ''));
+    device => payloadFor(device, 'events', `event:${event.params.notificationId}`, '', false, announcement));
 });
 
 exports.pushSupport = onDocumentWritten({ ...triggerOptions, document: 'toe_group/shared/support/{threadId}' }, async event => {

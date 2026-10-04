@@ -4428,3 +4428,52 @@ button[onclick="openAppMenu()"]{position:relative}
 .native-app-update-copy{min-width:0}.native-app-update-copy strong{display:block;color:#1c2944;font-size:11px;line-height:1.25}.native-app-update-copy span{display:block;margin-top:3px;color:#737f98;font-size:8.5px;line-height:1.35}
 .native-app-update-actions{display:flex;gap:6px;align-items:center}.native-app-update-actions button{min-height:34px;padding:0 10px;border:0;border-radius:10px;font-size:9px;font-weight:800}.native-app-update-actions .update-primary{background:linear-gradient(135deg,#5a72ef,#7448dd);color:#fff}.native-app-update-actions .update-later{background:#f0f2f7;color:#6e7890}
 @media(max-width:520px){.native-app-update{grid-template-columns:38px minmax(0,1fr);padding:10px}.native-app-update-icon{width:36px;height:36px}.native-app-update-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.native-app-update-actions button{min-height:38px}}
+
+
+/* ===== SCHEDULE CHANGE PRESENTATION — step18.27 ===== */
+.schedule-change-route,.home-change-route{
+  display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap;margin:5px 0 6px;
+}
+.schedule-change-route s,.home-change-route s{
+  color:#8993a8;text-decoration-thickness:1.5px;text-decoration-color:#e26074;font-weight:700;
+}
+.schedule-change-from{display:flex;align-items:center;gap:6px;min-width:0}
+.schedule-change-from small,.home-change-route small,.home-now-label,.schedule-now-label{
+  color:#8993aa;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+}
+.schedule-change-tag,.home-change-route>span{
+  display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:999px;
+  background:linear-gradient(135deg,#7355e6,#9670e8);color:#fff;font-size:8px;font-weight:850;
+}
+.schedule-change-route.cancelled .schedule-change-tag,.home-change-route.cancelled>span{
+  background:linear-gradient(135deg,#ef6578,#d94a61);
+}
+.schedule-change-route.cancelled,.home-change-route.cancelled{align-items:center}
+.schedule-now-label{display:block;margin-top:3px}
+#view-schedule .schedule-ref-meta.changed-meta,
+#view-home .home-ref-lesson-meta.changed-meta{
+  border:1px solid rgba(111,82,219,.12);border-radius:10px;padding:7px;
+  background:linear-gradient(120deg,rgba(242,246,255,.75),rgba(245,239,255,.82));
+}
+#view-schedule .schedule-ref-meta>span{display:flex!important;flex-direction:column;gap:3px}
+#view-schedule .schedule-ref-meta>span small{color:#8994a9;font-size:7.5px;font-weight:800;line-height:1.15}
+#view-schedule .schedule-ref-meta>span b{display:flex;align-items:flex-start;gap:5px;color:#35415a;font-size:9px;font-weight:700;line-height:1.3}
+.schedule-cancel-meta,.home-cancel-meta{
+  display:flex;align-items:center;gap:7px;margin-top:7px;padding:8px 9px;border-radius:10px;
+  background:#fff1f3;color:#b94155;font-size:8.5px;font-weight:700;
+}
+#view-schedule .schedule-ref-row.cancelled .schedule-ref-card{opacity:1!important;background:linear-gradient(112deg,#fff,#fff5f6)!important}
+#view-schedule .schedule-ref-row.cancelled .schedule-ref-subject{text-decoration:none!important}
+#view-home .home-ref-lesson-card.cancelled{
+  background:linear-gradient(110deg,#fff,#fff3f5)!important;
+}
+#view-home .home-ref-lesson-card.cancelled .home-ref-lesson-number{
+  background:linear-gradient(135deg,#ffe5ea,#ffd6df)!important;color:#bd4158!important;
+}
+#view-home .home-ref-lesson-card.replacement{
+  background:linear-gradient(110deg,#fff,#f6f2ff 58%,#edf6ff)!important;
+}
+@media(max-width:520px){
+  .schedule-change-route,.home-change-route{gap:5px}
+  #view-schedule .schedule-ref-meta.changed-meta{grid-template-columns:1fr!important}
+}
