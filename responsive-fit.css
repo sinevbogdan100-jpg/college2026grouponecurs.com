@@ -475,3 +475,61 @@
     flex-wrap:wrap!important;
   }
 }
+
+
+/* ===== SPEED + ROUNDED TOPS — step18.26 ===== */
+/* One consistent rounded top surface across every main section. */
+:is(
+  #view-home .home-ref-topbar,
+  #view-tracker .journal-ref-topbar,
+  #view-schedule .schedule-ref-topbar,
+  #view-roster .roster-ref-topbar
+){
+  border-radius:18px!important;
+  overflow:clip!important;
+  background-clip:padding-box!important;
+  isolation:isolate;
+}
+
+/* Keep the outer page edge clean on narrow screens as well. */
+@media(max-width:767px){
+  :is(
+    #view-home.home-reference,
+    #view-tracker.journal-reference-page,
+    #view-schedule.schedule-reference-page,
+    #view-roster.roster-reference-page
+  ){
+    overflow-x:clip;
+  }
+  #view-home .home-ref-topbar,
+  #view-tracker .journal-ref-topbar,
+  #view-schedule .schedule-ref-topbar{
+    padding-left:6px!important;
+    padding-right:6px!important;
+  }
+}
+
+/* Large lists are laid out/painted only when they approach the viewport. */
+#view-tracker .journal-ref-row,
+#view-roster .roster-person-card,
+#view-schedule .schedule-ref-row,
+#view-schedule .schedule-ref-break{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 64px;
+}
+
+/* The hidden views must never perform layout/paint work. */
+:is(#view-home,#view-tracker,#view-roster,#view-schedule).hidden{
+  display:none!important;
+  content-visibility:hidden;
+}
+
+/* Reduce expensive effects on low-power/data-saving devices while retaining the design. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}

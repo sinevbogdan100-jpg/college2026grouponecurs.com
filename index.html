@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.25-native-shell-v2-2026-10-04">
+    <meta name="app-build" content="step18.26-speed-rounding-2026-10-04">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-force-publish-v4">
@@ -115,21 +115,24 @@
     </style>
     <link rel="apple-touch-icon" href="sbp-information-apple-20261004-v4.png">
     <link rel="icon" type="image/png" sizes="192x192" href="sbp-information-favicon-20261004-v4.png">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20261004-native-shell-v2">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-ui-polish-v1">
-    <link rel="stylesheet" href="responsive-fit.css?v=20261004-layout-fit-v1">
+    <link rel="stylesheet" href="responsive-fit.css?v=20261004-speed-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261004-native-shell-v2">
+    <link rel="modulepreload" href="app.js?v=20261004-speed-v1">
     <link rel="modulepreload" href="firebase.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
-    <link rel="modulepreload" href="schedule.js?v=20261004-performance-v1">
-    <script async src="performance.js?v=20261004-performance-v1"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="modulepreload" href="schedule.js?v=20261004-speed-v1">
+    <script async src="performance.js?v=20261004-speed-v1"></script>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
     <script>
         tailwind.config = {
@@ -181,7 +184,7 @@
     <pre id="firebase-diagnostic-log" class="mt-3 p-3 rounded-xl bg-slate-950 text-slate-100 text-[10px] whitespace-pre-wrap overflow-auto max-h-64"></pre>
   </div>
 </div>
-<button onclick="openFirebaseDiagnostic()" title="Диагностика Firebase" class="fixed left-3 bottom-3 z-[90] w-9 h-9 rounded-full bg-slate-800 text-white text-sm shadow-lg opacity-80 hover:opacity-100">☁</button>
+<button id="firebase-diagnostic-toggle" hidden onclick="openFirebaseDiagnostic()" title="Диагностика Firebase" class="fixed left-3 bottom-3 z-[90] w-9 h-9 rounded-full bg-slate-800 text-white text-sm shadow-lg opacity-80 hover:opacity-100">☁</button>
 
 
     <!-- Настройки теперь открываются из нижней навигации -->
@@ -853,7 +856,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261004-native-shell-v2"></script>
+    <script type="module" src="app.js?v=20261004-speed-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -882,8 +885,8 @@
         <button data-nav="settings" onclick="openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
     </nav>
 
-<!-- РЕЖИМ «СИНХРОНИЗАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ» -->
-<link rel="stylesheet" href="realtime-debug.css?v=20261003-step18-3-recovery1">
+<!-- Диагностика realtime: загружается только с ?debug=1 -->
+<template id="realtime-debug-template">
 <button id="realtime-debug-toggle" title="Синхронизация в реальном времени">☁</button>
 <div id="realtime-debug-panel">
   <div class="rtd-title">Синхронизация в реальном времени</div>
@@ -905,7 +908,27 @@
   </div>
   <div id="rtd-log" class="rtd-log">Запуск режима…</div>
 </div>
-<script src="realtime-debug.js?v=20261003-step18-3-recovery1"></script>
+</template>
+<script>
+(() => {
+  const template = document.getElementById('realtime-debug-template');
+  if (!template) return;
+  const enabled = new URLSearchParams(location.search).get('debug') === '1';
+  if (!enabled) { template.remove(); return; }
+  document.body.appendChild(template.content.cloneNode(true));
+  template.remove();
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'realtime-debug.css?v=20261003-step18-3-recovery1';
+  css.onload = () => {
+    const script = document.createElement('script');
+    script.src = 'realtime-debug.js?v=20261003-step18-3-recovery1';
+    script.defer = true;
+    document.body.appendChild(script);
+  };
+  document.head.appendChild(css);
+})();
+</script>
 
 </body>
 </html>

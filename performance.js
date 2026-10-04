@@ -3,7 +3,11 @@
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register(SW_URL, { scope: './', updateViaCache: 'none' })
-      .then(registration => registration.update().catch(() => {}))
+      .then(registration => {
+        const update = () => registration.update().catch(() => {});
+        if ('requestIdleCallback' in window) requestIdleCallback(update, { timeout: 3500 });
+        else setTimeout(update, 2200);
+      })
       .catch(error => console.warn('PWA service worker registration skipped', error));
   }
 

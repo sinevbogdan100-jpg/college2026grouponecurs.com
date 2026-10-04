@@ -42,16 +42,18 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-performance-v1";
+} from "./schedule.js?v=20261004-speed-v1";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261004-native-shell-v2";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
 window.__journalDateInitialized = false;
+const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
 // ===== ВРЕМЕННАЯ ДИАГНОСТИКА FIREBASE =====
         const firebaseDiag = { events: [], init: false, auth: null, read: null, write: null, realtime: null, error: null };
         function diagLog(message, data) {
+            if (!FIREBASE_DIAGNOSTICS_ENABLED) return;
             const line = `[${new Date().toLocaleTimeString()}] ${message}${data ? "\n" + (typeof data === "string" ? data : JSON.stringify(data, null, 2)) : ""}`;
             firebaseDiag.events.push(line);
             console.log("[Firebase diagnostic]", message, data || "");
@@ -63,6 +65,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             return `<div class="p-2.5 rounded-xl bg-${color}-50 border border-${color}-100"><b>${label}:</b> ${ok === true ? '🟢 OK' : ok === false ? '🔴 ОШИБКА' : '🟡 НЕ ПРОВЕРЕНО'}${detail ? `<div class="mt-1 text-[10px] text-slate-600 break-words">${String(detail).replace(/</g,'&lt;')}</div>` : ''}</div>`;
         }
         function renderFirebaseDiagnostic() {
+            if (!FIREBASE_DIAGNOSTICS_ENABLED) return;
             const el = document.getElementById('firebase-diagnostic-status'); if (!el) return;
             el.innerHTML = [
               diagRow('Firebase SDK / инициализация', firebaseDiag.init, firebaseDiag.error),
@@ -75,7 +78,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
               diagRow('Путь расписания', true, 'toe_group / shared / schedule / main')
             ].join('');
         }
-        window.openFirebaseDiagnostic = function(){ const p=document.getElementById('firebase-diagnostic-panel'); if(p){p.classList.remove('hidden');p.classList.add('flex');renderFirebaseDiagnostic();} };
+        window.openFirebaseDiagnostic = function(){ if(!FIREBASE_DIAGNOSTICS_ENABLED)return; const p=document.getElementById('firebase-diagnostic-panel'); if(p){p.classList.remove('hidden');p.classList.add('flex');renderFirebaseDiagnostic();} };
+        if (FIREBASE_DIAGNOSTICS_ENABLED) queueMicrotask(() => { const t=document.getElementById('firebase-diagnostic-toggle'); if(t)t.hidden=false; });
         window.closeFirebaseDiagnostic = function(){ const p=document.getElementById('firebase-diagnostic-panel'); if(p){p.classList.add('hidden');p.classList.remove('flex');} };
         function updateCloudBadge(connected) {
             // В текущем дизайне отдельный badge не обязателен. Функция нужна, чтобы ошибка badge не отключала Firebase.
@@ -1607,7 +1611,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             refreshSettingsSystem();
             window.refreshNotificationSettings?.();
             clearInterval(settingsSystemTimer);
-            settingsSystemTimer = setInterval(refreshSettingsSystem, 5000);
+            settingsSystemTimer = setInterval(refreshSettingsSystem, 15000);
             document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === 'settings'));
         };
 
@@ -1873,8 +1877,12 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             loadGroupInfoToAdminForm();
             document.getElementById('settings-backups-section')?.classList.toggle('hidden', !backupsAllowed);
             document.getElementById('settings-logout')?.classList.toggle('hidden', !editor);
-            renderRosterList();
-            try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
+            const rosterView = document.getElementById('view-roster');
+            if (rosterView && !rosterView.classList.contains('hidden')) renderRosterList();
+            const scheduleView = document.getElementById('view-schedule');
+            if (scheduleView && !scheduleView.classList.contains('hidden')) {
+                try { renderSchedule(getCurrentScheduleDay()); } catch (_) {}
+            }
             // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
             setTimeout(ensureMainViewVisible, 0);
             window.refreshSupportNotifications?.();
@@ -1903,7 +1911,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         updateAdminUI();
         renderGroupInfo();
-        updateBackupStatus();
+        if ('requestIdleCallback' in window) requestIdleCallback(() => updateBackupStatus(), { timeout: 2200 });
+        else setTimeout(updateBackupStatus, 900);
 
         // Запоминаем не только открытый раздел, но и точное положение страницы.
         // Поэтому после перезагрузки каждый раздел возвращается туда, где его оставили.
@@ -1925,42 +1934,49 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let scrollSaveTimer = null;
         window.addEventListener('scroll', () => {
             clearTimeout(scrollSaveTimer);
-            scrollSaveTimer = setTimeout(saveCurrentScrollPosition, 80);
+            scrollSaveTimer = setTimeout(saveCurrentScrollPosition, 160);
         }, { passive: true });
 
         window.addEventListener('beforeunload', saveCurrentScrollPosition);
 
+        const mainViews = {
+            home: document.getElementById('view-home'),
+            tracker: document.getElementById('view-tracker'),
+            roster: document.getElementById('view-roster'),
+            schedule: document.getElementById('view-schedule')
+        };
+        const mainNavButtons = [...document.querySelectorAll('#bottom-nav button[data-nav]')];
+        const bottomNavElement = document.getElementById('bottom-nav');
         let currentVisibleView = '';
         window.switchView = function(viewName, fromReload = false) {
-            // Settings are an overlay, not a separate page. Any navigation action closes
-            // them first on desktop, mobile and installed PWA.
             const settingsModal = document.getElementById('admin-settings-modal');
             const settingsOpen = !!settingsModal && !settingsModal.classList.contains('hidden');
             if (settingsOpen) window.closeAdminSettings?.();
             if (currentVisibleView === viewName && !fromReload) return;
+            const targetView = mainViews[viewName] || mainViews.home;
+            if (!targetView) return;
+
             saveCurrentScrollPosition();
             try { localStorage.setItem('toe_current_view', viewName); } catch(e) {}
 
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-tracker').classList.add('hidden');
-            document.getElementById('view-roster').classList.add('hidden');
-            document.getElementById('view-schedule').classList.add('hidden');
+            Object.values(mainViews).forEach(view => view?.classList.add('hidden'));
+            mainNavButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.nav === viewName));
+            bottomNavElement?.classList.remove('hidden');
 
-            document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === viewName));
-            const bottomNav = document.getElementById('bottom-nav');
-            if (bottomNav) bottomNav.classList.toggle('hidden', false);
+            // Build expensive DOM while the target is still hidden: this avoids repeated
+            // layout/paint work during the actual visible transition.
             if (viewName === 'home') {
-                document.getElementById('view-home').classList.remove('hidden');
+                renderHomeDayTimeline();
             } else if (viewName === 'tracker') {
-                document.getElementById('view-tracker').classList.remove('hidden');
                 renderApp();
             } else if (viewName === 'roster') {
-                document.getElementById('view-roster').classList.remove('hidden');
+                renderRosterList();
             } else if (viewName === 'schedule') {
-                document.getElementById('view-schedule').classList.remove('hidden');
                 syncScheduleToToday();
                 renderSchedule(getCurrentScheduleDay());
             }
+
+            targetView.classList.remove('hidden');
             currentVisibleView = viewName;
             restoreScrollPosition(viewName);
         };
@@ -3056,7 +3072,7 @@ async function loadPublicAndroidVersion() {
         console.warn('android app version check', error);
     }
 }
-setTimeout(loadPublicAndroidVersion, 900);
+if (isNativeAndroidShell()) setTimeout(loadPublicAndroidVersion, 900);
 
 function isStandaloneApp() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -3139,6 +3155,7 @@ window.closeHelpNavigation=function(){
 
 window.openAppMenu=function(){
     window.refreshSupportNotifications?.();
+    if (!publicAndroidVersion) void loadPublicAndroidVersion();
     const x=document.getElementById('app-menu-drawer');
     x?.classList.remove('hidden');
     document.body.classList.add('modal-open');
@@ -3305,7 +3322,12 @@ function renderHomeDayTimeline(){
     box.innerHTML=html;
     applyKzTranslations(box);
 }
-setInterval(renderHomeDayTimeline,15000);setTimeout(renderHomeDayTimeline,250);
+const homeTimelineTimer = setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    const homeView = document.getElementById('view-home');
+    if (homeView && !homeView.classList.contains('hidden')) renderHomeDayTimeline();
+},30000);
+setTimeout(renderHomeDayTimeline,80);
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
 function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}
@@ -3579,8 +3601,11 @@ let notificationIdentity='';
 const notificationDeepLink=new URL(location.href).searchParams;
 let pendingNotificationLink=notificationDeepLink.get('notification');
 
-// Запускаем новые realtime-модули после авторизации.
-setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();window.refreshSupportNotifications();
+// Realtime listeners are primary. This small maintenance pass only reconnects
+// something that is missing; it does not poll Firestore on every tick.
+function syncRealtimeModules(){
+    if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNotifications();
+    window.refreshSupportNotifications();
     const identity=auth?.currentUser?.uid||'';
     if(identity!==notificationIdentity){notificationIdentity=identity;notificationCenter.refreshAccount();}
     if(pendingNotificationLink&&identity&&(pendingNotificationLink!=='support'||!isSupportStaff()||supportThreadsCache.length)){
@@ -3588,7 +3613,9 @@ setInterval(()=>{if(db&&auth?.currentUser&&!notificationsUnsubscribe)subscribeNo
         if(kind==='support'){window.openSupport().then(()=>{const thread=notificationDeepLink.get('thread');if(thread&&isSupportStaff())window.openSupportThread(thread);});}else if(kind==='events')window.openNotifications();
         const url=new URL(location.href);url.searchParams.delete('notification');url.searchParams.delete('thread');history.replaceState(null,'',url);
     }
-},1200);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){window.refreshSupportNotifications();if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);}});
+}
+const realtimeMaintenanceTimer=setInterval(()=>{if(document.visibilityState==='visible')syncRealtimeModules();},5000);
+queueMicrotask(syncRealtimeModules);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){syncRealtimeModules();if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);}});
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();

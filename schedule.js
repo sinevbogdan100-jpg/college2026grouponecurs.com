@@ -628,6 +628,7 @@ window.onScheduleChangeTypeChanged = function() {
     refreshScheduleChangeNote(true);
 };
 
+let lastScheduleRenderKey = '';
 export function renderSchedule(dayKey = currentScheduleDay) {
     const container = document.getElementById('schedule-container');
     if (!container) return;
@@ -640,13 +641,25 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     const selectedDate = scheduleDateForDay(currentScheduleDay);
     const liveState = scheduleCurrentState(entries);
     const isActualToday = liveState.type !== 'other-day';
-    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const adminCanEdit = sessionStorage.getItem('toe_can_schedule') === '1';
+    const renderKey = JSON.stringify([
+        currentScheduleDay,
+        currentScheduleWeekType,
+        selectedDate instanceof Date ? selectedDate.toISOString() : String(selectedDate),
+        Math.floor(now.getTime() / 60000),
+        adminCanEdit,
+        list
+    ]);
+    if (renderKey === lastScheduleRenderKey) return;
+    lastScheduleRenderKey = renderKey;
 
     renderScheduleSummary(entries, selectedDate);
     renderScheduleDayHeading(selectedDate);
     container.innerHTML = '';
 
-    if (sessionStorage.getItem('toe_can_schedule') === '1') {
+    if (adminCanEdit) {
         const hint = document.createElement('div');
         hint.className = 'schedule-ref-admin-hint';
         hint.innerHTML = '<i class="fa-solid fa-pen-to-square"></i><span>Режим администратора: пары можно изменять, удалять и переставлять.</span>';
@@ -1038,8 +1051,11 @@ export function startSchedulePolling() {
     };
     // Realtime listener is the primary path. A lightweight server read remains only as a safety net.
     schedulePollTimer = setInterval(() => {
-        if (document.visibilityState === 'visible') void pollSchedule();
-    }, 30000);
+        if (document.visibilityState !== 'visible') return;
+        // A healthy realtime listener already has fresher data than polling.
+        if (window.__scheduleListenerActive) return;
+        void pollSchedule();
+    }, 120000);
 }
 
 
@@ -1049,5 +1065,5 @@ if (typeof window !== 'undefined') {
         if (document.visibilityState !== 'visible') return;
         const view = document.getElementById('view-schedule');
         if (view && !view.classList.contains('hidden')) renderSchedule(currentScheduleDay);
-    }, 30000);
+    }, 60000);
 }

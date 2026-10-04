@@ -1,18 +1,18 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-native-shell-v2';
+const CACHE_NAME = 'sbp-shell-20261004-speed-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261004-native-shell-v2',
+  './app.js?v=20261004-speed-v1',
   './style.css?v=20261004-native-shell-v2',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261004-layout-fit-v1',
+  './responsive-fit.css?v=20261004-speed-v1',
   './firebase.js?v=20261004-performance-v1',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
-  './schedule.js?v=20261004-performance-v1',
+  './schedule.js?v=20261004-speed-v1',
   './i18n.js?v=20261004-native-shell-v2',
   './notification-center.js?v=20261004-performance-v1',
   './notification-state.js?v=20261004-performance-v1',
@@ -40,23 +40,28 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(names.filter(name => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME).map(name => caches.delete(name)));
+    if (self.registration.navigationPreload) {
+      try { await self.registration.navigationPreload.enable(); } catch (_) {}
+    }
     await self.clients.claim();
   })());
 });
 
 async function networkFirstNavigation(event) {
   const cache = await caches.open(CACHE_NAME);
-  const networkPromise = fetch(event.request, { cache: 'no-cache' }).then(async response => {
+  const networkPromise = (async () => {
+    const preloaded = await event.preloadResponse;
+    const response = preloaded || await fetch(event.request, { cache: 'no-cache' });
     if (response?.ok) {
       await cache.put('./index.html', response.clone());
       await cache.put('./', response.clone());
     }
     return response;
-  }).catch(() => null);
+  })().catch(() => null);
 
   const quickNetwork = await Promise.race([
     networkPromise,
-    new Promise(resolve => setTimeout(() => resolve(null), 700))
+    new Promise(resolve => setTimeout(() => resolve(null), 140))
   ]);
 
   if (quickNetwork) return quickNetwork;
