@@ -1,5 +1,5 @@
 import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
-import { createNotificationCenter } from './notification-center.js?v=20261004-console-fixes-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261004-console-fixes-v2';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
 import {
     createFirebaseServices,
@@ -3141,30 +3141,12 @@ window.installSBPApp = async function() {
         window.updateInstallButton();
         return;
     }
-    if (deferredInstallPrompt) {
-        const promptEvent = deferredInstallPrompt;
-        deferredInstallPrompt = null;
-        try {
-            await promptEvent.prompt();
-            const choice = await promptEvent.userChoice;
-            showToast(translateUI(choice?.outcome === 'accepted' ? 'Установка приложения началась' : 'Установка отменена'));
-        } catch (_) {
-            showToast(translateUI('Не удалось открыть установку приложения'));
-        }
-        window.updateInstallButton();
-        return;
-    }
     if (isIOSDevice()) {
         showToast(translateUI('На iPhone откройте «Поделиться» и выберите «На экран Домой»'));
     } else {
         showToast(translateUI('Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран»'));
     }
 };
-window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    window.updateInstallButton();
-});
 window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
     window.updateInstallButton();

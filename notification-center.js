@@ -1,5 +1,3 @@
-import { callCloudFunction } from './firebase.js?v=20261004-console-fixes-v1';
-
 const SOUND_KEY = 'toe_notification_sound_v1';
 const DEVICE_KEY = 'toe_device_notifications_v1';
 const DELIVERY_KEY = 'toe_notification_deliveries_v1';
@@ -71,72 +69,58 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
     return registration;
   }
 
-  async function call(name, data = {}) {
-    if (!getCloud().auth?.currentUser) throw new Error('auth');
-    return await callCloudFunction(name, data);
-  }
-
-  function publicKey(value) {
-    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from(binary, c => c.charCodeAt(0));
-  }
-
-  async function registerPush() {
-    const expected = context();
-    if (!expected || !deviceEnabled() || Notification.permission !== 'granted' || !configuration?.vapidPublicKey || !('PushManager' in window)) return;
-    const sw = await worker();
-    let subscription = await sw.pushManager.getSubscription();
-    subscription ||= await sw.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey(configuration.vapidPublicKey) });
-    if (context() !== expected || !deviceEnabled()) { await subscription.unsubscribe(); return; }
-    await call('registerPushDevice', { subscription: subscription.toJSON(), language: read('toe_ui_language') === 'kz' ? 'kz' : 'ru' });
-    if (context() !== expected || !deviceEnabled()) { await subscription.unsubscribe(); return; }
-    registeredContext = expected;
-    render();
-  }
-
+  // Remote Web Push backend is intentionally not contacted from the page until the
+  // Firebase callable functions are deployed. This keeps the production site free
+  // from failed CORS/preflight requests. Foreground event notifications still work.
   async function refreshAccount() {
-    registeredContext = ''; statusOverride = ''; render();
-    const expected = context();
-    if (!expected || !supported()) return;
-    try {
-      configuration = await call('getPushConfiguration');
-      if (context() === expected) await registerPush();
-    } catch (_) { configuration = null; }
+    registeredContext = '';
+    configuration = null;
+    if (deviceEnabled() && Notification.permission === 'granted') {
+      statusOverride = 'Включены, пока сайт открыт. Доставка при закрытом сайте ещё не подключена';
+    } else {
+      statusOverride = '';
+    }
     render();
   }
 
   async function detach() {
     registeredContext = '';
+    configuration = null;
     if (!supported()) return;
-    const sw = await worker();
-    const subscription = await sw.pushManager?.getSubscription();
-    if (subscription) {
-      try { await call('unregisterPushDevice', { endpoint: subscription.endpoint }); } catch (_) {}
-      await subscription.unsubscribe();
-    }
+    try {
+      const sw = await worker();
+      const subscription = await sw.pushManager?.getSubscription();
+      if (subscription) await subscription.unsubscribe();
+    } catch (_) {}
     render();
   }
 
   async function enableDevice() {
     if (busy || !supported()) return;
     if (ios() && !installed()) { render(); return; }
-    // Request directly from the click, before asynchronous registration/network calls.
-    const permissionRequest = Notification.requestPermission();
     busy = true; statusOverride = ''; render();
     try {
-      if (await permissionRequest === 'granted') {
-        write(DEVICE_KEY, '1'); await worker();
-        if (!configuration && context()) { try { configuration = await call('getPushConfiguration'); } catch (_) {} }
-        try { await registerPush(); } catch (_) { statusOverride = 'Не удалось подключить доставку при закрытом сайте. Уведомления работают, пока сайт открыт'; }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        write(DEVICE_KEY, '1');
+        await worker();
+        statusOverride = 'Включены, пока сайт открыт. Доставка при закрытом сайте ещё не подключена';
       }
-    } catch (_) { statusOverride = 'Не удалось включить уведомления. Проверьте настройки браузера'; }
-    finally { busy = false; render(); }
+    } catch (_) {
+      statusOverride = 'Не удалось включить уведомления. Проверьте настройки браузера';
+    } finally {
+      busy = false;
+      render();
+    }
   }
 
   async function disableDevice() {
     if (busy) return;
-    busy = true; write(DEVICE_KEY, '0'); statusOverride = ''; render();
-    try { await detach(); } catch (_) { statusOverride = 'Не удалось отключить подписку. Заблокируйте уведомления в настройках браузера'; }
+    busy = true;
+    write(DEVICE_KEY, '0');
+    statusOverride = '';
+    try { await detach(); }
+    catch (_) { statusOverride = 'Не удалось отключить подписку. Заблокируйте уведомления в настройках браузера'; }
     finally { busy = false; render(); }
   }
 
@@ -184,8 +168,6 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
   });
   document.getElementById('notification-device-enable')?.addEventListener('click', enableDevice);
   document.getElementById('notification-device-disable')?.addEventListener('click', disableDevice);
-  document.addEventListener('pointerdown', () => { void unlockAudio(true); }, { passive: true, once: true });
-  document.addEventListener('keydown', () => { void unlockAudio(true); }, { once: true });
   document.addEventListener('visibilitychange', render);
   window.addEventListener('storage', render);
   if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', event => {

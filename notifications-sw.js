@@ -1,10 +1,10 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261004-console-fixes-v1';
+const CACHE_NAME = 'sbp-shell-20261005-console-clean-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261004-console-fixes-v1',
+  './app.js?v=20261005-console-clean-v1',
   './style.css?v=20261004-schedule-change-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
@@ -14,7 +14,7 @@ const CORE_ASSETS = [
   './storage.js?v=20261004-performance-v1',
   './schedule.js?v=20261004-schedule-change-v1',
   './i18n.js?v=20261004-schedule-change-v1',
-  './notification-center.js?v=20261004-console-fixes-v1',
+  './notification-center.js?v=20261004-console-fixes-v2',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
   './sbp-information-icon.svg?v=20261004-console-fixes-v1',
