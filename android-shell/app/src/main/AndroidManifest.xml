@@ -11,7 +11,11 @@
         android:label="SBP Information"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="false">\n\n        <meta-data\n            android:name="asset_statements"\n            android:resource="@string/asset_statements" />
+        android:usesCleartextTraffic="false">
+
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
 
         <activity
             android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
