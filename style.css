@@ -4397,3 +4397,24 @@ button[onclick="openAppMenu()"]{position:relative}
     text-align:center;
   }
 }
+
+
+/* AI-assisted development note in the beta card */
+.drawer-ai-note{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin-top:10px;
+  padding:9px 10px;
+  border:1px solid rgba(125,100,210,.14);
+  border-radius:12px;
+  background:rgba(255,255,255,.54);
+  color:#666f87;
+  font-size:8px;
+  line-height:1.45;
+}
+.drawer-ai-note i{
+  flex:0 0 auto;
+  margin-top:1px;
+  color:#6b52d8;
+}
