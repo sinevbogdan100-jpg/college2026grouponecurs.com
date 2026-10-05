@@ -1283,6 +1283,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             // local/IndexedDB restore instead of leaving a blank or half-built page.
             showSectionLoading(initialView);
             switchView(initialView, true);
+            document.documentElement.removeAttribute('data-initial-view');
 
             await Promise.allSettled([
                 loadAttendanceForDate(effectiveTodayStr),
