@@ -2760,3 +2760,13 @@ body:has(.undo-action-bar:not(.hidden)) .app-update-bar:not(.hidden){
 :where(button,a,[role="button"],summary,input,select,textarea):focus:not(:focus-visible){
   outline:none!important;
 }
+
+/* step18.45 — Home polish + SBP branding */
+.drawer-app-brand-icon{width:34px;height:34px;border-radius:10px;object-fit:cover;flex:0 0 34px;box-shadow:0 5px 16px rgba(79,70,229,.20)}
+#view-home .home-ref-lesson-card{background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(245,243,255,.96) 56%,rgba(238,242,255,.96));}
+#view-home .home-ref-lesson-card.current{background:linear-gradient(135deg,rgba(238,242,255,.98),rgba(237,233,254,.98) 50%,rgba(224,231,255,.98));}
+#view-home .home-ref-lesson-card.replacement{background:linear-gradient(135deg,rgba(255,251,235,.98),rgba(254,243,199,.92) 48%,rgba(245,243,255,.96));}
+#view-home .home-change-route{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+#view-home .home-change-route span,#view-home .home-change-route s{max-width:100%;overflow-wrap:anywhere}
+#view-home .home-ref-lesson-main{min-width:0}
+@media(max-width:430px){#view-home .home-ref-lesson-row{align-items:start}#view-home .home-ref-lesson-meta{min-width:0}.drawer-app-brand-icon{width:32px;height:32px;flex-basis:32px}}
