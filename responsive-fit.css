@@ -568,3 +568,61 @@
     transition-duration:.01ms!important;
   }
 }
+
+
+/* ===== CENTERED SECTION TITLES — 2026-10-05 ===== */
+/* Journal uses equal side columns, so its title can stay exactly centered. */
+#view-tracker .journal-ref-title{
+  min-width:0!important;
+  text-align:center!important;
+  justify-self:stretch!important;
+}
+
+/* Roster keeps the Home button and student counter at the sides,
+   while the section name is anchored to the true visual center. */
+#view-roster .roster-ref-topbar{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  min-height:60px;
+}
+#view-roster .roster-ref-topbar > div{
+  min-width:44px!important;
+  display:flex!important;
+  align-items:center!important;
+}
+#view-roster .roster-ref-topbar h1{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  width:max-content;
+  max-width:calc(100% - 190px);
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  line-height:1.2!important;
+  pointer-events:none;
+}
+#view-roster .roster-ref-topbar > span{
+  position:relative;
+  z-index:1;
+  margin-left:auto;
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:420px){
+  #view-roster .roster-ref-topbar{
+    min-height:58px!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+  }
+  #view-roster .roster-ref-topbar h1{
+    max-width:calc(100% - 174px);
+  }
+}
