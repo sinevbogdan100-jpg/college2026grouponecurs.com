@@ -1540,3 +1540,172 @@
     font-size:10px;
   }
 }
+
+
+/* ===== LIGHTWEIGHT UI MOTION — step18.37 ===== */
+:root{
+  --ui-motion-fast:160ms;
+  --ui-motion-normal:210ms;
+  --ui-motion-ease:cubic-bezier(.22,.72,.28,1);
+}
+
+/* Main section switches: subtle enough to feel instant. */
+:is(
+  #view-home,
+  #view-tracker,
+  #view-schedule,
+  #view-roster
+).is-view-entering{
+  animation:uiViewEnter var(--ui-motion-normal) var(--ui-motion-ease) both;
+  will-change:opacity,transform;
+}
+
+/* Key surfaces arrive just after the page itself. */
+#view-home.is-view-entering :is(
+  .home-ref-group-card,
+  .home-ref-role-card,
+  .home-ref-today,
+  .home-ref-notifications
+),
+#view-tracker.is-view-entering :is(
+  .journal-section-tabs,
+  .journal-ref-datebar,
+  .journal-ref-editor,
+  .journal-assessment-view
+),
+#view-schedule.is-view-entering :is(
+  .schedule-ref-week-switch,
+  .schedule-ref-datebar,
+  .schedule-ref-days,
+  .schedule-ref-live,
+  .schedule-ref-row
+),
+#view-roster.is-view-entering :is(
+  .leadership-card,
+  .roster-profile-tools,
+  .roster-person-card
+){
+  animation:uiCardEnter var(--ui-motion-normal) var(--ui-motion-ease) both;
+  will-change:opacity,transform;
+}
+
+#view-home.is-view-entering .home-ref-group-card{animation-delay:18ms}
+#view-home.is-view-entering .home-ref-role-card:nth-child(1){animation-delay:28ms}
+#view-home.is-view-entering .home-ref-role-card:nth-child(2){animation-delay:42ms}
+#view-home.is-view-entering .home-ref-role-card:nth-child(3){animation-delay:56ms}
+#view-home.is-view-entering .home-ref-today{animation-delay:58ms}
+#view-home.is-view-entering .home-ref-notifications{animation-delay:72ms}
+
+#view-roster.is-view-entering .leadership-card:nth-child(1){animation-delay:26ms}
+#view-roster.is-view-entering .leadership-card:nth-child(2){animation-delay:40ms}
+#view-roster.is-view-entering .leadership-card:nth-child(3){animation-delay:54ms}
+
+/* Small content refresh used for a changed date, tab, day or week. */
+.ui-refreshing{
+  animation:uiContentRefresh 190ms var(--ui-motion-ease) both;
+  will-change:opacity,transform;
+}
+.ui-refreshing-soft{
+  animation:uiSoftRefresh var(--ui-motion-fast) ease-out both;
+}
+
+/* First visible rows get a tiny cascade, while long lists stay cheap. */
+#journal-editor-main.ui-refreshing .journal-ref-row,
+#schedule-container.ui-refreshing .schedule-ref-row{
+  animation:uiRowEnter 180ms var(--ui-motion-ease) both;
+}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(1),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(1){animation-delay:8ms}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(2),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(2){animation-delay:18ms}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(3),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(3){animation-delay:28ms}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(4),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(4){animation-delay:38ms}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(5),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(5){animation-delay:48ms}
+#journal-editor-main.ui-refreshing .journal-ref-row:nth-child(n+6),
+#schedule-container.ui-refreshing .schedule-ref-row:nth-child(n+6){animation-delay:54ms}
+
+#attendance-analytics.ui-refreshing > *,
+#journal-editor-main.ui-refreshing > :not(.mini-calendar),
+#schedule-container.ui-refreshing > :is(.schedule-ref-admin-hint,.schedule-ref-empty){
+  animation:uiCardEnter 185ms var(--ui-motion-ease) both;
+}
+
+/* Bottom navigation reacts quickly without bouncing the whole layout. */
+#bottom-nav button[data-nav]{
+  transition:
+    color var(--ui-motion-fast) ease,
+    background-color var(--ui-motion-fast) ease,
+    opacity var(--ui-motion-fast) ease,
+    transform 120ms ease!important;
+}
+#bottom-nav button[data-nav]:active{
+  transform:scale(.96)!important;
+}
+#bottom-nav button[data-nav] i{
+  transition:transform var(--ui-motion-fast) var(--ui-motion-ease),opacity var(--ui-motion-fast) ease;
+}
+#bottom-nav button[data-nav].active i{
+  transform:translateY(-1px) scale(1.045);
+}
+
+/* Frequently tapped segmented controls feel connected to the new content. */
+:is(
+  #view-tracker .journal-section-tabs button,
+  #view-schedule .schedule-ref-week-switch button,
+  #view-schedule .schedule-ref-days button
+){
+  transition:
+    background-color var(--ui-motion-fast) ease,
+    color var(--ui-motion-fast) ease,
+    border-color var(--ui-motion-fast) ease,
+    box-shadow var(--ui-motion-fast) ease,
+    transform 120ms ease!important;
+}
+:is(
+  #view-tracker .journal-section-tabs button,
+  #view-schedule .schedule-ref-week-switch button,
+  #view-schedule .schedule-ref-days button
+):active{
+  transform:scale(.975)!important;
+}
+
+@keyframes uiViewEnter{
+  from{opacity:.28;transform:translateY(6px) scale(.997)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes uiCardEnter{
+  from{opacity:.25;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes uiContentRefresh{
+  from{opacity:.52;transform:translateY(3px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes uiSoftRefresh{
+  from{opacity:.48}
+  to{opacity:1}
+}
+@keyframes uiRowEnter{
+  from{opacity:.35;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  :is(
+    #view-home,
+    #view-tracker,
+    #view-schedule,
+    #view-roster
+  ).is-view-entering,
+  .is-view-entering *,
+  .ui-refreshing,
+  .ui-refreshing *,
+  .ui-refreshing-soft{
+    animation:none!important;
+    transition:none!important;
+    transform:none!important;
+  }
+}
