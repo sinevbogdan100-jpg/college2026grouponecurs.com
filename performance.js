@@ -5,6 +5,11 @@
     history.replaceState(history.state, '', pageUrl.href);
   }
   const currentBuild = document.querySelector('meta[name="app-build"]')?.content || '';
+  const mobileFast = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
+  const saveData = navigator.connection?.saveData === true;
+  const updateCheckInterval = saveData ? 600000 : (mobileFast ? 300000 : 60000);
+  const initialUpdateDelay = mobileFast ? 8000 : 2500;
+  let lastPassiveCheckAt = 0;
   let registration = null;
   let waitingWorker = null;
   let dismissed = '';
@@ -36,8 +41,11 @@
     return page;
   }
 
-  async function checkForUpdate() {
+  async function checkForUpdate(force = false) {
     if (checking || busy || !navigator.onLine) return;
+    const now = Date.now();
+    if (!force && mobileFast && now - lastPassiveCheckAt < 120000) return;
+    lastPassiveCheckAt = now;
     checking = true;
     try {
       const page = await fetchPage();
@@ -164,10 +172,10 @@
       reg.addEventListener('updatefound', () => watchInstalling(reg.installing));
     }).catch(error => console.warn('PWA registration unavailable', error));
   }
-  setTimeout(checkForUpdate, 2500);
-  window.addEventListener('online', checkForUpdate);
+  setTimeout(checkForUpdate, initialUpdateDelay);
+  window.addEventListener('online', () => checkForUpdate(true));
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { dismissed = ''; checkForUpdate(); }
   });
-  window.setInterval(() => { if (document.visibilityState === 'visible') checkForUpdate(); }, 60000);
+  window.setInterval(() => { if (document.visibilityState === 'visible') checkForUpdate(); }, updateCheckInterval);
 })();
