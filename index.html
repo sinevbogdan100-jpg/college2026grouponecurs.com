@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.43-navigation-focus-fix-2026-10-05">
+    <meta name="app-build" content="step18.44-home-nextday-nav-reload-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-console-fixes-v1">
@@ -144,7 +144,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261005-navigation-focus-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261005-home-nextday-navreload-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261004-console-fixes-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261005-performance-v2">
@@ -954,7 +954,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261005-navigation-focus-v1"></script>
+    <script type="module" src="app.js?v=20261005-home-nextday-navreload-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -976,10 +976,10 @@
     </div>
 
     <nav id="bottom-nav" class="bottom-nav" aria-label="Навигация">
-        <button data-nav="home" onclick="switchView('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
-        <button data-nav="tracker" onclick="switchView('tracker')"><i class="fa-solid fa-book"></i><span>Журнал</span></button>
-        <button data-nav="schedule" onclick="switchView('schedule')"><i class="fa-regular fa-calendar-days"></i><span>Расписание</span></button>
-        <button data-nav="roster" onclick="switchView('roster')"><i class="fa-solid fa-user-group"></i><span>Группа</span></button>
+        <button data-nav="home" onclick="handleBottomNav('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
+        <button data-nav="tracker" onclick="handleBottomNav('tracker')"><i class="fa-solid fa-book"></i><span>Журнал</span></button>
+        <button data-nav="schedule" onclick="handleBottomNav('schedule')"><i class="fa-regular fa-calendar-days"></i><span>Расписание</span></button>
+        <button data-nav="roster" onclick="handleBottomNav('roster')"><i class="fa-solid fa-user-group"></i><span>Группа</span></button>
         <button data-nav="settings" onclick="openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
     </nav>
 
