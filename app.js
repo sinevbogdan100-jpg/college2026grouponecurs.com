@@ -2155,7 +2155,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             refreshSettingsSystem();
             window.refreshNotificationSettings?.();
             clearInterval(settingsSystemTimer);
-            settingsSystemTimer = setInterval(refreshSettingsSystem, 15000);
+            settingsSystemTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') refreshSettingsSystem();
+        }, 60000);
             document.querySelectorAll('#bottom-nav button[data-nav]').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === 'settings'));
         };
 
@@ -4598,8 +4600,17 @@ function syncRealtimeModules(){
         const url=new URL(location.href);url.searchParams.delete('notification');url.searchParams.delete('thread');history.replaceState(null,'',url);
     }
 }
-const realtimeMaintenanceTimer=setInterval(()=>{if(document.visibilityState==='visible')syncRealtimeModules();},5000);
+const realtimeMaintenanceTimer=setInterval(()=>{
+    if(document.visibilityState==='visible')syncRealtimeModules();
+},30000);
 queueMicrotask(syncRealtimeModules);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){syncRealtimeModules();if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);}});
+window.addEventListener('online',syncRealtimeModules);
+document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){
+        syncRealtimeModules();
+        refreshSettingsSystem();
+        if(isSupportOpen()&&activeSupportThreadId)subscribeSupportThread(activeSupportThreadId);
+    }
+});
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();
