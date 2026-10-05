@@ -767,18 +767,29 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const adminCanEdit = sessionStorage.getItem('toe_can_schedule') === '1';
+    const stateSignature = entries.map(entry => {
+        const item = entry.item || {};
+        if (item.cancelled) return 'cancelled';
+        if (!isActualToday || !entry.range) return 'normal';
+        if (nowMinutes >= entry.range.end) return 'past';
+        if (nowMinutes >= entry.range.start && nowMinutes < entry.range.end) return 'current';
+        return 'upcoming';
+    }).join('|');
     const renderKey = JSON.stringify([
         currentScheduleDay,
         currentScheduleWeekType,
         selectedDate instanceof Date ? selectedDate.toISOString() : String(selectedDate),
-        Math.floor(now.getTime() / 60000),
+        stateSignature,
         adminCanEdit,
         list
     ]);
-    if (renderKey === lastScheduleRenderKey) return;
 
+    // The live summary changes with the clock. The heavier lesson-card DOM only
+    // rebuilds when the data or a lesson state actually changes.
     renderScheduleSummary(entries, selectedDate);
     renderScheduleDayHeading(selectedDate);
+    if (renderKey === lastScheduleRenderKey) return;
+
     const fragment = document.createDocumentFragment();
 
     if (adminCanEdit) {
