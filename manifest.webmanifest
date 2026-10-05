@@ -9,9 +9,9 @@
   "theme_color": "#818cf8",
   "icons": [
     {
-      "src": "sbp-information-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "sbp-information-icon-20261004-v4.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
