@@ -2838,3 +2838,23 @@ body:has(.undo-action-bar:not(.hidden)) .app-update-bar:not(.hidden){
 .schedule-bell-btn-copy small{font-size:9px;line-height:1.25;color:#94a3b8}
 .schedule-bell-btn-arrow{font-size:10px;color:#a5b4fc}
 @media(max-width:480px){.schedule-bell-btn{margin-top:10px;padding:10px 12px;border-radius:16px}.schedule-bell-btn-icon{width:34px;height:34px;border-radius:11px}}
+
+/* Bell action: mobile layout follows schedule reference UI */
+@media (max-width:767px){
+  #view-schedule .schedule-bell-btn{
+    box-sizing:border-box!important;width:100%!important;max-width:none!important;
+    min-height:48px!important;margin:0 0 10px!important;padding:7px 10px!important;
+    gap:9px!important;border:0!important;border-radius:11px!important;
+    background:linear-gradient(145deg,#eef3ff,#f7f5ff)!important;
+    box-shadow:0 4px 15px rgba(32,49,82,.045)!important;
+  }
+  #view-schedule .schedule-bell-btn-icon{
+    width:34px!important;height:34px!important;border-radius:10px!important;
+    background:linear-gradient(145deg,#5b35ff,#3152f6)!important;
+    box-shadow:0 5px 13px rgba(70,66,246,.18)!important;
+  }
+  #view-schedule .schedule-bell-btn-copy{gap:1px!important}
+  #view-schedule .schedule-bell-btn-copy strong{font-size:10px!important;line-height:1.2!important;color:#111a35!important}
+  #view-schedule .schedule-bell-btn-copy small{font-size:8px!important;line-height:1.2!important;color:#677897!important}
+  #view-schedule .schedule-bell-btn-arrow{font-size:9px!important;color:#6d78a6!important;margin-right:2px}
+}
