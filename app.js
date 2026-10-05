@@ -3584,6 +3584,15 @@ function homeBreakInfo(current,next){
     if(!a||!b||b.start<=a.end)return null;
     return {start:a.end,end:b.start,duration:b.start-a.end};
 }
+function isHomeEntryCancelled(entry){
+    return !!entry?.it?.cancelled || entry?.it?.changeType === 'cancel';
+}
+function findNextActiveHomeEntry(entries,startIndex=0){
+    for(let i=Math.max(0,startIndex);i<entries.length;i++){
+        if(!isHomeEntryCancelled(entries[i])) return {entry:entries[i],index:i};
+    }
+    return null;
+}
 function homeTimeLabel(minutes){
     const safe=Math.max(0,Math.floor(Number(minutes)||0));
     const h=String(Math.floor(safe/60)).padStart(2,'0');
@@ -3739,7 +3748,7 @@ function renderHomeDayTimeline(){
     }
 
     const mins=now.getHours()*60+now.getMinutes();
-    let activeLesson=entries.findIndex(x=>mins>=x.r.start&&mins<x.r.end);
+    let activeLesson=entries.findIndex(x=>!isHomeEntryCancelled(x)&&mins>=x.r.start&&mins<x.r.end);
     let activeBreak=-1;
     for(let i=0;i<entries.length-1;i++){
         const info=homeBreakInfo(entries[i].it,entries[i+1].it);
@@ -3750,19 +3759,21 @@ function renderHomeDayTimeline(){
     if(activeLesson>=0) startIndex=activeLesson;
     else if(activeBreak>=0) startIndex=activeBreak+1;
     else {
-        const upcoming=entries.findIndex(x=>mins<x.r.end);
-        if(upcoming<0){box.innerHTML='<div class="home-ref-empty">Занятия на сегодня закончились.</div>';return;}
-        startIndex=upcoming;
+        const upcoming=findNextActiveHomeEntry(entries,entries.findIndex(x=>mins<x.r.end));
+        if(!upcoming){box.innerHTML='<div class="home-ref-empty">Занятия на сегодня закончились.</div>';return;}
+        startIndex=upcoming.index;
     }
 
     const selected=entries.slice(startIndex,startIndex+3);
     let html='';
     if(activeLesson>=0){
-        const nextEntry=entries[activeLesson+1]||null;
+        const nextActive=findNextActiveHomeEntry(entries,activeLesson+1);
+        const nextEntry=nextActive?.entry||null;
         const bi=nextEntry?homeBreakInfo(entries[activeLesson].it,nextEntry.it):null;
         html+=renderHomeDayStatus({mode:'lesson',entry:entries[activeLesson],nextEntry,breakInfo:bi,nowMinutes:mins});
     }else if(activeBreak>=0){
-        const nextEntry=entries[activeBreak+1]||null;
+        const nextActive=findNextActiveHomeEntry(entries,activeBreak+1);
+        const nextEntry=nextActive?.entry||null;
         const bi=nextEntry?homeBreakInfo(entries[activeBreak].it,nextEntry.it):null;
         html+=renderHomeDayStatus({mode:'break',nextEntry,breakInfo:bi,nowMinutes:mins});
     }else{
@@ -3777,21 +3788,26 @@ function renderHomeDayTimeline(){
     selected.forEach((entry,pos)=>{
         let lessonState='';
         if(activeLesson>=0&&entry.index===entries[activeLesson].index) lessonState='current';
-        else if(
-            (activeLesson>=0&&entries[activeLesson+1]&&entry.index===entries[activeLesson+1].index) ||
-            (activeBreak>=0&&entries[activeBreak+1]&&entry.index===entries[activeBreak+1].index) ||
-            (activeLesson<0&&activeBreak<0&&pos===0)
-        ) lessonState='next';
+        else {
+            const expectedNext = activeLesson>=0
+                ? findNextActiveHomeEntry(entries,activeLesson+1)?.entry
+                : activeBreak>=0
+                    ? findNextActiveHomeEntry(entries,activeBreak+1)?.entry
+                    : entries[startIndex];
+            if(expectedNext&&entry.index===expectedNext.index&&!isHomeEntryCancelled(entry)) lessonState='next';
+        }
 
         html+=renderHomeLessonCard(entry,mins,lessonState);
 
         if(pos<selected.length-1){
             const nextEntry=selected[pos+1];
             const bi=homeBreakInfo(entry.it,nextEntry.it);
+            const nextActiveAfterCurrent=activeLesson>=0?findNextActiveHomeEntry(entries,activeLesson+1)?.entry:null;
             const isNearestBreak=(
                 activeLesson>=0 &&
                 entry.index===entries[activeLesson].index &&
-                nextEntry.index===entries[activeLesson+1]?.index
+                nextActiveAfterCurrent &&
+                nextEntry.index===nextActiveAfterCurrent.index
             );
             if(bi)html+=renderHomeBreakCard(bi,isNearestBreak?'nearest':'normal',mins);
         }
