@@ -86,9 +86,49 @@ service cloud.firestore {
       allow update, delete: if isOwner() || admin1Has('notifications') || admin2Has('notifications');
     }
 
+    // Private, append-only client action history. Existing attendance/schedule access stays unchanged.
+    // This log is informational; older clients do not write audit entries.
+    match /toe_group/shared/audit_logs/{auditId} {
+      function historyReader() {
+        return hasPermission('journal') || hasPermission('schedule');
+      }
+      function validActor() {
+        return (isOwner() && request.resource.data.actorLogin == 'owner')
+          || (isAdmin1() && request.resource.data.actorLogin == 'admin1')
+          || (isAdmin2() && request.resource.data.actorLogin == 'admin2');
+      }
+      allow get: if historyReader();
+      allow list: if historyReader() && request.query.limit != null && request.query.limit <= 100;
+      allow create: if validActor()
+        && request.resource.data.keys().hasOnly(['actorUid','actorLogin','kind','target','operationId','createdAt','changes','receivedAt'])
+        && request.resource.data.keys().hasAll(['actorUid','actorLogin','kind','target','operationId','createdAt','changes','receivedAt'])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.receivedAt == request.time
+        && request.resource.data.createdAt is string
+        && request.resource.data.operationId is string
+        && request.resource.data.changes is list
+        && request.resource.data.changes.size() > 0
+        && request.resource.data.changes.size() <= 1000
+        && ((request.resource.data.kind == 'attendance'
+              && request.resource.data.target is string
+              && request.resource.data.target.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}{threadId} {
+      allow read, write: if isOwner() || admin1Has('support') || admin2Has('support') || (signedIn() && threadId == request.auth.uid);
+    }
+
+  }
+}
+)
+              && hasPermission('journal'))
+            || (request.resource.data.kind == 'schedule'
+              && request.resource.data.target == 'main'
+              && hasPermission('schedule')));
+      allow update, delete: if false;
+    }
+
     match /toe_group/shared/support/{threadId} {
       allow read, write: if isOwner() || admin1Has('support') || admin2Has('support') || (signedIn() && threadId == request.auth.uid);
     }
 
   }
 }
+

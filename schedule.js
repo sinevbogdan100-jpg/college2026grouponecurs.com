@@ -1,7 +1,8 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261005-mobile-bells-update-v1";
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261005-group-tools-v1";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261005-group-tools-v1";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
+import { scheduleShareSnapshot } from './group-tools-data.js?v=20261005-group-tools-v1';
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
@@ -15,7 +16,9 @@ let dependencies = {
     setRealtimeDiagnostic: () => {},
     setWriteDiagnostic: () => {},
     diagLog: () => {},
-    publishScheduleChange: async () => false
+    publishScheduleChange: async () => false,
+    recordActionHistory: () => {},
+    confirmActionHistory: () => {}
 };
 
 export function configureSchedule(nextDependencies = {}) {
@@ -154,6 +157,7 @@ let scheduleReconnectTimer = null;
 let scheduleReconnectAttempt = 0;
 let lastScheduleAppliedUpdatedAt = '';
 let lastScheduleLocalWriteAt = '';
+let scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
 
 window.__scheduleDebug = window.__scheduleDebug || { lastSnapshotAt:'', lastUpdatedAt:'', lastSource:'', lastSaveOk:false };
 window.__scheduleListenerActive = false;
@@ -399,6 +403,10 @@ export function getCurrentScheduleDay() {
 
 export function getCurrentScheduleWeekType() {
     return currentScheduleWeekType;
+}
+
+export function getScheduleShareData(mode = 'day') {
+    return scheduleShareSnapshot(getScheduleDataForWeek(currentScheduleWeekType), currentScheduleDay, currentScheduleWeekType, scheduleReferenceDate, mode);
 }
 
 export function getScheduleDataForWeek(type) {
@@ -1177,11 +1185,15 @@ function saveScheduleHistorySnapshot() {
 export async function saveScheduleData(changeEvent = null){
     saveScheduleHistorySnapshot();
     const updatedAt = new Date().toISOString();
+    let before = scheduleAuditBaseline;
+    const auditAfter = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
     const num = JSON.stringify(scheduleDataNumerator);
     const den = JSON.stringify(scheduleDataDenominator);
     await savePersistentValue('toe_schedule_num', num);
     await savePersistentValue('toe_schedule_den', den);
     await savePersistentValue('toe_schedule_last_saved', updatedAt);
+    dependencies.recordActionHistory?.({kind:'schedule',target:'main',before,after:auditAfter,operationId:updatedAt});
+    scheduleAuditBaseline = auditAfter;
     lastScheduleLocalWriteAt = updatedAt;
 
     const payload = {
@@ -1233,6 +1245,7 @@ export async function saveScheduleData(changeEvent = null){
         if (changeEvent?.id && !events.some(item => item?.id === changeEvent.id)) events.push(changeEvent);
         await publishPendingScheduleEvents(events);
         await clearPendingSchedule();
+        dependencies.confirmActionHistory?.(updatedAt);
     } catch (e) {
         await storePendingSchedule(payload, changeEvent);
         window.__scheduleLastSaveOk = false;
@@ -1277,6 +1290,7 @@ export async function syncPendingScheduleData(){
         await publishPendingScheduleEvents(Array.isArray(pending.events) ? pending.events : []);
         await clearPendingSchedule();
         window.__schedulePendingSync = false;
+        dependencies.confirmActionHistory?.(updatedAt);
         window.__scheduleLastSaveOk = true;
         dependencies.setWriteDiagnostic?.(true, `Офлайн-расписание синхронизировано: ${updatedAt}`);
         return true;
@@ -1321,6 +1335,7 @@ export async function loadScheduleData(){
     } catch(e) {
         reportError('schedule-local-load', e, { localSaved:false, fallback:'Не удалось загрузить сохранённое расписание' });
     }
+    scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
 }
 
 export function applyCloudScheduleData(data, source = 'cloud') {
@@ -1353,6 +1368,7 @@ export function applyCloudScheduleData(data, source = 'cloud') {
             window.__scheduleDebug.lastSnapshotAt = new Date().toISOString();
         }
     }
+    scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
     return changed;
 }
 
@@ -1433,4 +1449,3 @@ if (typeof window !== 'undefined') {
         if (view && !view.classList.contains('hidden')) renderSchedule(currentScheduleDay);
     }, 60000);
 }
-

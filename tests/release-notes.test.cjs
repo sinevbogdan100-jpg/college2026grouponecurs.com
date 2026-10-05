@@ -66,7 +66,7 @@ older.context.window.openReleaseHistory();
 assert.doesNotMatch(older.node('release-notes-content').innerHTML, /18\.46/, 'older clients do not describe features not installed');
 assert.match(older.node('release-notes-content').innerHTML, /Исправления/);
 
-const unknown = app({ build: 'step18.47-not-described-yet' }); unknown.timers.shift()();
+const unknown = app({ build: 'step18.999-not-described-yet' }); unknown.timers.shift()();
 assert.equal(unknown.node('release-notes-modal').classList.contains('hidden'), true, 'missing notes never reuse an old release');
 
 const blocked = app({ busy: true }); blocked.timers.shift()();

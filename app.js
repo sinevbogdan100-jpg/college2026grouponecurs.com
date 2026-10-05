@@ -18,7 +18,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261004-console-fixes-v1";
+} from "./firebase.js?v=20261005-group-tools-v1";
 
 import {
     getWeekTypeForDate,
@@ -43,8 +43,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-mobile-bells-update-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-mobile-bells-update-v1";
+} from "./schedule.js?v=20261005-group-tools-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-group-tools-v1";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v1';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v1';
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -469,6 +471,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     if (!canEditJournal()) { allOk = false; continue; }
                     try {
                         await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', date), payload, { merge:false });
+                        confirmActionHistory(payload.updatedAt);
                         attendanceArchive[date] = payload;
                         await clearOfflineChange('attendance', date);
                     } catch (e) {
@@ -633,6 +636,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         });
         let currentAccessRole = 'viewer';
         let currentAccountLogin = '';
+        let notificationsCache=[];
+        let notificationsUnsubscribe=null;
         let authStateUnsubscribe = null;
         try {
             const cachedAdminPermissions = JSON.parse(localStorage.getItem('toe_admin_permissions') || 'null');
@@ -726,8 +731,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         window.__firebaseUid = '';
         window.__realtimeDate = '';
 
+        const groupToolsState = () => ({db,uid:auth?.currentUser?.uid,login:currentAccountLogin,owner:isOwnerRole(),journal:canEditJournal(),schedule:canEditSchedule()});
+        configureGroupTools({state:groupToolsState,toast:message=>showToast(message),title:notificationTitleForLocale,text:notificationTextForLocale,renderNotifications:()=>renderNotifications(),groupName:()=>document.getElementById('group-name')?.textContent});
+        configureActionHistory({state:groupToolsState,toast:message=>showToast(message)});
         configureSchedule({
             getCloudState: () => ({ isCloudConnected, db, auth }),
+            recordActionHistory,
+            confirmActionHistory,
             showToast: (message) => showToast(message),
             reportError: (scope, error, options) => reportAppError(scope, error, options),
             createAutomaticBackup: () => createAutomaticBackup(),
@@ -2381,6 +2391,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             document.body.classList.toggle('journal-edit-mode', journalAllowed);
             document.body.classList.toggle('schedule-edit-mode', scheduleAllowed);
             document.getElementById('schedule-bell-btn')?.classList.toggle('hidden', !scheduleAllowed);
+            refreshActionHistoryAccess();
+            updateGroupAnnouncements(notificationsCache);
             if (!scheduleAllowed) window.closeScheduleBellEditor?.();
             document.body.classList.toggle('group-info-edit-mode', groupInfoAllowed);
             document.body.classList.toggle('students-edit-mode', studentsAllowed);
@@ -3376,6 +3388,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (!canEditJournal()) return false;
             setSaveStatus('Сохранение…', true);
             const dateVal = document.getElementById('date-picker').value || getCurrentDateStr();
+            let auditBefore = {};
+            try { auditBefore = JSON.parse(localStorage.getItem(`toe_att_${dateVal}`) || '{}'); } catch (_) {}
             const dataToSave = {
                 state: { ...attendanceState },
                 notes: { ...attendanceNotes },
@@ -3401,6 +3415,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 await savePersistentValue(backupKey, serialized);
                 await cleanupOldAttendanceBackups(30);
                 await queueOfflineChange('attendance', dataToSave, dateVal);
+                recordActionHistory({kind:'attendance',target:dateVal,before:auditBefore,after:dataToSave,operationId:dataToSave.updatedAt});
             } catch (e) {
                 window.__journalDirty = true;
                 setSaveStatus('Ошибка сохранения', false);
@@ -3416,6 +3431,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         subscribeToAttendance(dateVal);
                     }
                     cloudSaveOk = true;
+                    confirmActionHistory(dataToSave.updatedAt);
                     await clearOfflineChange('attendance', dateVal);
                     attendanceArchive[dateVal] = dataToSave;
                     scheduleRosterStatsRebuild(700);
@@ -3750,8 +3766,6 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 const UI_LANG_KEY='toe_ui_language';
 let activeJournalTab='editor';
 let editingAttendanceNoteStudent='';
-let notificationsCache=[];
-let notificationsUnsubscribe=null;
 let supportUnsubscribe=null;
 const visitorSupportId=(()=>{let id=localStorage.getItem('toe_support_id'); if(!id){id='v_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);localStorage.setItem('toe_support_id',id);}return id;})();
 
@@ -3770,6 +3784,8 @@ window.setInterfaceLanguage = function(lang) {
     window.refreshNotificationSettings?.();
     window.updateInstallButton?.();
     window.refreshReleaseNotes?.();
+    refreshGroupTools();
+    renderNotifications();
     applyKzTranslations();
 };
 function updateLanguageButtons() {
@@ -4415,6 +4431,7 @@ function renderHomeLatestNotification(){
     </button>`;
 }
 function renderNotifications(){
+    updateGroupAnnouncements(notificationsCache);
     renderHomeLatestNotification();
     const box=document.getElementById('notifications-list');
     if(!box)return;
@@ -4438,7 +4455,7 @@ function renderNotifications(){
                         <span class="notification-type-chip">${translateUI(meta.label)}</span>
                         <strong>${escapeNotificationText(notificationTitleForLocale(n))}</strong>
                     </div>
-                    <div class="notification-item-actions"><span>${notificationTimeLabel(n.createdAt)}</span>${deleteButton}</div>
+                    <div class="notification-item-actions"><span>${notificationTimeLabel(n.createdAt)}</span>${pinControl(n,isOwnerRole())}${deleteButton}</div>
                 </div>
                 <p>${escapeNotificationText(notificationTextForLocale(n))}</p>
                 ${n.author?`<small class="notification-author"><i class="fa-regular fa-user"></i>${escapeNotificationText(n.author)}</small>`:''}
@@ -4451,6 +4468,7 @@ function renderNotifications(){
         });
     }
     applyKzTranslations(box);
+    bindPinControls(box);
 }
 function markNotificationsRead(){const read=getReadNotificationIds();notificationsCache.forEach(n=>read.add(n.id));saveReadNotificationIds(read);updateNotificationBadge();renderNotifications();}
 const deletingNotifications=new Set();
@@ -4534,6 +4552,9 @@ window.publishNotification=async function(){
     const priorityField=document.getElementById('notification-priority');
     const priority=priorityField?.value==='important'?'important':'normal';
     const title=titleField?.value.trim()||'',text=textField?.value.trim()||'';
+    const titleKzField=document.getElementById('notification-title-kz'),textKzField=document.getElementById('notification-text-kz');
+    const titleKz=titleKzField?.value.trim()||'',textKz=textKzField?.value.trim()||'';
+    if((!title&&!text)||(!titleKz&&!textKz)){showToast(gt('bothLanguages'));return;}
     if(!title&&!text){showToast('Введите заголовок или текст');return;}
     const button=document.getElementById('notification-publish-button');publishingNotification=true;if(button)button.disabled=true;
     const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
@@ -4541,6 +4562,8 @@ window.publishNotification=async function(){
         await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{
             title:title||(priority==='important'?'Важное объявление':'Объявление'),
             text,
+            titleKz:titleKz||(priority==='important'?'Маңызды хабарландыру':'Хабарландыру'),
+            textKz,
             createdAt:new Date().toISOString(),
             author:currentAccountLogin||'Владелец',
             authorUid:auth.currentUser.uid,
@@ -4548,6 +4571,7 @@ window.publishNotification=async function(){
             priority
         });
         if(titleField?.value.trim()===title)titleField.value='';if(textField?.value.trim()===text)textField.value='';if(priorityField)priorityField.value='normal';
+        if(titleKzField?.value.trim()===titleKz)titleKzField.value='';if(textKzField?.value.trim()===textKz)textKzField.value='';
         showToast('Уведомление опубликовано');
     }catch(error){console.warn('publish notification',error);showToast(error.code==='permission-denied'?'Нет права публиковать уведомления':'Не удалось опубликовать уведомление');}
     finally{publishingNotification=false;if(button)button.disabled=false;}
@@ -4729,4 +4753,3 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();
-

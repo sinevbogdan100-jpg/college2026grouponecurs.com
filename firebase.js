@@ -8,7 +8,7 @@ import {
     setPersistence,
     browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, deleteField, writeBatch, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
 
 // Единая конфигурация Firebase проекта группы.
@@ -54,5 +54,10 @@ export {
     onSnapshot,
     updateDoc,
     deleteDoc,
-    deleteField
+    deleteField,
+    writeBatch,
+    serverTimestamp,
+    query,
+    orderBy,
+    limit
 };

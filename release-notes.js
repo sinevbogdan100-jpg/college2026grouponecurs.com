@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261005-release-history-v1';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261005-group-tools-v1';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);

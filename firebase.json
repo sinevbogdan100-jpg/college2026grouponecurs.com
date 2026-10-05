@@ -1,3 +1,19 @@
 {
-  "functions": [{ "source": "functions", "codebase": "sbp-group-push", "ignore": ["node_modules", "test", "*.local", ".env*", "generate-vapid.cjs", "deploy-push.cjs"] }]
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "sbp-group-push",
+      "ignore": [
+        "node_modules",
+        "test",
+        "*.local",
+        ".env*",
+        "generate-vapid.cjs",
+        "deploy-push.cjs"
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules"
+  }
 }

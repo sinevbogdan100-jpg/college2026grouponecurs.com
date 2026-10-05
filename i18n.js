@@ -4,6 +4,7 @@ export function currentLang() { return localStorage.getItem(UI_LANG_KEY) === 'kz
 export function interfaceLocale() { return currentLang() === 'kz' ? 'kk-KZ' : 'ru-RU'; }
 
 export const KZ_EXACT = Object.freeze({
+  'Отмена пары':'Сабақ тоқтатылды',
   'Загрузить актуальную версию':'Актуалды нұсқаны жүктеу',
   'Доступно обновление':'Жаңарту қолжетімді',
   'Обновить сейчас':'Қазір жаңарту',
@@ -160,8 +161,8 @@ export const KZ_EXACT = Object.freeze({
 });
 
 const MONTHS = {'января':'қаңтар','февраля':'ақпан','марта':'наурыз','апреля':'сәуір','мая':'мамыр','июня':'маусым','июля':'шілде','августа':'тамыз','сентября':'қыркүйек','октября':'қазан','ноября':'қараша','декабря':'желтоқсан'};
-const PATTERNS = [
-  [/^Ближайший урок: (.+)$/,(_,subject)=>`Ең жақын сабақ: ${translateUI(subject)}`],
+const translationPatterns = language => [
+  [/^Ближайший урок: (.+)$/,(_,subject)=>`Ең жақын сабақ: ${translateUI(subject, language)}`],
   [/^(\d+) из (\d+)$/,(_,a,b)=>`${a} / ${b}`],
   [/^(\d+) студентов$/,(_,n)=>`${n} студент`],
   [/^Посещаемость группы: (\d+)%$/,(_,n)=>`Топтың қатысуы: ${n}%`],
@@ -174,11 +175,11 @@ const PATTERNS = [
   [/^Всем установлен статус: (.+)$/,(_,status)=>`Барлығына қойылған белгі: ${translateUI(status)}`],
   [/^Перемена — (\d+) минут$/,(_,n)=>`Үзіліс — ${n} минут`],
   [/^П (\d+)$/,(_,n)=>`Қ ${n}`],[/^О (\d+)$/,(_,n)=>`К ${n}`],[/^Пропуски (\d+)$/,(_,n)=>`Қатыспаған ${n}`],
-  [/^Замена кабинета: (.+) — вместо (.+)$/,(_,subject,detail)=>`Кабинетті ауыстыру: ${translateUI(subject)} — ${detail}`],
-  [/^Замена преподавателя: (.+) — вместо (.+)$/,(_,subject,detail)=>`Оқытушыны ауыстыру: ${translateUI(subject)} — ${detail}`],
-  [/^Замена предмета: вместо (.+) — (.+)$/,(_,before,after)=>`Пәнді ауыстыру: ${translateUI(before)} орнына ${translateUI(after)}`],
-  [/^Перенос пары: (.+) — с (.+) на (.+)$/,(_,subject,before,after)=>`Сабақты ауыстыру: ${translateUI(subject)} — ${before} орнына ${after}`],
-  [/^(Замена кабинета|Замена преподавателя|Замена пары|Перенос пары|Пара отменена): (.+)$/,(_,label,detail)=>`${({'Замена кабинета':'Кабинетті ауыстыру','Замена преподавателя':'Оқытушыны ауыстыру','Замена пары':'Сабақты ауыстыру','Перенос пары':'Сабақты ауыстыру','Пара отменена':'Сабақ болмайды'})[label]}: ${translateUI(detail)}`],
+  [/^Замена кабинета: (.+) — вместо (.+)$/,(_,subject,detail)=>`Кабинетті ауыстыру: ${translateUI(subject, language)} — ${detail}`],
+  [/^Замена преподавателя: (.+) — вместо (.+)$/,(_,subject,detail)=>`Оқытушыны ауыстыру: ${translateUI(subject, language)} — ${detail}`],
+  [/^Замена предмета: вместо (.+) — (.+)$/,(_,before,after)=>`Пәнді ауыстыру: ${translateUI(before, language)} орнына ${translateUI(after, language)}`],
+  [/^Перенос пары: (.+) — с (.+) на (.+)$/,(_,subject,before,after)=>`Сабақты ауыстыру: ${translateUI(subject, language)} — ${before} орнына ${after}`],
+  [/^(Замена кабинета|Замена преподавателя|Замена пары|Перенос пары|Пара отменена): (.+)$/,(_,label,detail)=>`${({'Замена кабинета':'Кабинетті ауыстыру','Замена преподавателя':'Оқытушыны ауыстыру','Замена пары':'Сабақты ауыстыру','Перенос пары':'Сабақты ауыстыру','Пара отменена':'Сабақ болмайды'})[label]}: ${translateUI(detail, language)}`],
   [/^(\d+) мин$/,(_,n)=>`${n} минут`],
   [/^(Большая перемена|Перемена): (\d+) мин$/,(_,label,n)=>`${label==='Перемена'?'Үзіліс':'Үлкен үзіліс'}: ${n} минут`],
   [/^Опоздал на (\d+) минут$/,(_,n)=>`${n} минутқа кешікті`],
@@ -198,13 +199,13 @@ const PATTERNS = [
   [/^(.+) удалён только на этом устройстве$/,(_,name)=>`${name} тек осы құрылғыдан шығарылды`]
 ];
 
-export function translateUI(value) {
+export function translateUI(value, language = currentLang()) {
   const source = String(value ?? '');
-  if (currentLang() !== 'kz') return source;
+  if (language !== 'kz') return source;
   const text = source.trim();
   let result = KZ_EXACT[text];
   if (result === undefined) {
-    for (const [pattern, replace] of PATTERNS) {
+    for (const [pattern, replace] of translationPatterns(language)) {
       if (pattern.test(text)) { result = text.replace(pattern, replace); break; }
     }
   }
@@ -269,4 +270,3 @@ export function startInterfaceTranslations() {
   });
   applyKzTranslations();
 }
-
