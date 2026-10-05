@@ -33,6 +33,7 @@ async function main(){
   assert(old.closed);assert.equal(node('gt-history-list').innerHTML,'');assert(node('menu-action-history-button').classList.contains('hidden'));
   old.success({docs:[{id:'private',data:()=>({createdAt:'2026',changes:[]})}],metadata:{fromCache:false}});assert.equal(node('gt-history-list').innerHTML,'','late callbacks cannot leak previous account history');
   active={uid:'admin-uid',login:'admin1',owner:false,journal:true,schedule:false,db:{}};api.refreshActionHistoryAccess();api.confirmActionHistory('op2');assert.equal(saved(active.uid).length,0,'another account cannot submit owner queued records');
+  api.recordActionHistory({kind:'attendance',target:'2026-10-05',before:{},after:{state:{x:'late'}},operationId:'late-save',actorUid:'owner-uid'});assert.equal(saved(active.uid).length,0,'save finishing after account change is never attributed to another account');
   api.recordActionHistory({kind:'schedule',target:'main',before:{},after:{numerator:{mon:[{subject:'New'}]}},operationId:'denied'});assert.equal(saved(active.uid).length,0,'missing schedule permission cannot create an audit record');
   // Switching accounts while a duplicate check is pending must cancel that account's write.
   active={uid:'owner-uid',login:'owner',owner:true,journal:true,schedule:true,db:{}};api.refreshActionHistoryAccess();writeFailure=false;

@@ -1,7 +1,7 @@
-import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261005-group-tools-v1';
-import { currentLang, translateUI } from './i18n.js?v=20261005-group-tools-v1';
-import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261005-group-tools-v1';
-import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261005-group-tools-v1';
+import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261005-group-tools-v2';
+import { currentLang, translateUI } from './i18n.js?v=20261005-group-tools-v2';
+import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261005-group-tools-v2';
+import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261005-group-tools-v2';
 
 let bridge = {}, context = '', entries = [], remote = [], unsubscribe = null, cloudStatus = 'offline', flushing = false, flushAgain = false;
 const byId = id => document.getElementById(id);
@@ -53,9 +53,10 @@ export function refreshActionHistoryAccess() {
   }
   renderHistory();
 }
-export function recordActionHistory({kind,target,before,after,operationId}) {
+export function recordActionHistory({kind,target,before,after,operationId,actorUid}) {
   const s=state();
   if(!canRead(s)||!(kind==='attendance'?s.journal:s.schedule))return;
+  if(actorUid&&actorUid!==s.uid)return;
   const changes=kind==='attendance'?attendanceChanges(before,after):scheduleChanges(before,after);
   if(!changes.length)return;
   const event={id:`a_${Date.now()}_${crypto.randomUUID().replaceAll('-','')}`,actorUid:s.uid,actorLogin:s.login,kind,target:String(target||''),operationId,createdAt:new Date().toISOString(),changes,status:'local-data'};

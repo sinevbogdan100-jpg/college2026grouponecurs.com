@@ -18,7 +18,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261005-group-tools-v1";
+} from "./firebase.js?v=20261005-group-tools-v2";
 
 import {
     getWeekTypeForDate,
@@ -43,10 +43,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-group-tools-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-group-tools-v1";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v1';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v1';
+} from "./schedule.js?v=20261005-group-tools-v2";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-group-tools-v2";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v2';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -3389,6 +3389,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             setSaveStatus('Сохранение…', true);
             const dateVal = document.getElementById('date-picker').value || getCurrentDateStr();
             let auditBefore = {};
+            const auditActorUid = auth?.currentUser?.uid;
             try { auditBefore = JSON.parse(localStorage.getItem(`toe_att_${dateVal}`) || '{}'); } catch (_) {}
             const dataToSave = {
                 state: { ...attendanceState },
@@ -3415,7 +3416,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 await savePersistentValue(backupKey, serialized);
                 await cleanupOldAttendanceBackups(30);
                 await queueOfflineChange('attendance', dataToSave, dateVal);
-                recordActionHistory({kind:'attendance',target:dateVal,before:auditBefore,after:dataToSave,operationId:dataToSave.updatedAt});
+                recordActionHistory({kind:'attendance',target:dateVal,before:auditBefore,after:dataToSave,operationId:dataToSave.updatedAt,actorUid:auditActorUid});
             } catch (e) {
                 window.__journalDirty = true;
                 setSaveStatus('Ошибка сохранения', false);
