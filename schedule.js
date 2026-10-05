@@ -30,6 +30,13 @@ function showToast(message) {
     dependencies.showToast?.(message);
 }
 
+function animateScheduleRefresh() {
+    const container = document.getElementById('schedule-container');
+    const heading = document.getElementById('schedule-day-heading');
+    window.animateUiRefresh?.(container, 'ui-refreshing', 220);
+    window.animateUiRefresh?.(heading, 'ui-refreshing-soft', 180);
+}
+
 function reportError(scope, error, options = {}) {
     const reported = dependencies.reportError?.(scope, error, options);
     if (!reported && options.fallback) showToast(options.fallback);
@@ -422,6 +429,7 @@ window.setScheduleWeekType = function(type) {
     try { localStorage.setItem('toe_schedule_week_type', type); } catch(e) {}
     updateScheduleReferenceControls();
     renderSchedule(currentScheduleDay);
+    animateScheduleRefresh();
 };
 
 window.setScheduleDay = function(day) {
@@ -431,6 +439,7 @@ window.setScheduleDay = function(day) {
     try { localStorage.setItem('toe_current_schedule_day', day); } catch(e) {}
     updateScheduleReferenceControls();
     renderSchedule(day);
+    animateScheduleRefresh();
 };
 
 window.shiftScheduleReferenceDate = function(delta) {
@@ -452,6 +461,7 @@ window.shiftScheduleReferenceDate = function(delta) {
     try { localStorage.setItem('toe_current_schedule_day', currentScheduleDay); } catch(e) {}
     updateScheduleReferenceControls();
     renderSchedule(currentScheduleDay);
+    animateScheduleRefresh();
 };
 
 function collectScheduleItems() {
