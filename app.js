@@ -2559,6 +2559,26 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         const mainNavButtons = [...document.querySelectorAll('#bottom-nav button[data-nav]')];
         const bottomNavElement = document.getElementById('bottom-nav');
         let currentVisibleView = '';
+
+        window.handleBottomNav = function(viewName) {
+            const settingsModal = document.getElementById('admin-settings-modal');
+            const settingsOpen = !!settingsModal && !settingsModal.classList.contains('hidden');
+            const savedView = localStorage.getItem('toe_current_view') || 'home';
+            const activeView = currentVisibleView || savedView;
+
+            // Re-tapping the already open main section performs a real page reload.
+            // toe_current_view is saved before reload, so the same section is restored
+            // immediately by the early bootstrap in index.html.
+            if (!settingsOpen && activeView === viewName) {
+                saveCurrentScrollPosition();
+                try { localStorage.setItem('toe_current_view', viewName); } catch (_) {}
+                window.location.reload();
+                return;
+            }
+
+            window.switchView(viewName);
+        };
+
         window.switchView = function(viewName, fromReload = false) {
             const settingsModal = document.getElementById('admin-settings-modal');
             const settingsOpen = !!settingsModal && !settingsModal.classList.contains('hidden');
@@ -3113,7 +3133,11 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (!dayKey) return [];
             const weekType = getWeekTypeForDate(date);
             const source = getScheduleDataForWeek(weekType);
-            return (source[dayKey] || []).filter(item => !item.isClassHour);
+            return (source[dayKey] || []).filter(item =>
+                !item.isClassHour &&
+                !item.cancelled &&
+                item.changeType !== 'cancel'
+            );
         }
 
         function getFloorFromRoom(roomText) {
@@ -3960,11 +3984,31 @@ function renderHomeReferenceDate(displayDate=new Date(),isNearestStudyDay=false)
 }
 
 function getHomeStudyDate(now=new Date()){
-    const target=new Date(now);
-    target.setHours(0,0,0,0);
-    if(target.getDay()===6) target.setDate(target.getDate()+2);
-    else if(target.getDay()===0) target.setDate(target.getDate()+1);
-    return target;
+    const today=new Date(now);
+    today.setHours(0,0,0,0);
+    const nowMinutes=now.getHours()*60+now.getMinutes();
+
+    // Stay on today only while there is a real, non-cancelled lesson
+    // that is still running or starts later. After the final lesson ends,
+    // the whole Home schedule advances to the next study day.
+    if(getScheduleDayKey(today)){
+        const hasRemainingLesson=getLessonsForScheduleDate(today).some(item=>{
+            const range=parseScheduleTimeRange(item.time);
+            return !!range && range.end>nowMinutes;
+        });
+        if(hasRemainingLesson) return today;
+    }
+
+    const candidate=new Date(today);
+    for(let i=0;i<14;i++){
+        candidate.setDate(candidate.getDate()+1);
+        candidate.setHours(0,0,0,0);
+        if(!getScheduleDayKey(candidate)) continue;
+        const hasLessons=getLessonsForScheduleDate(candidate).some(item=>!!parseScheduleTimeRange(item.time));
+        if(hasLessons) return new Date(candidate);
+    }
+
+    return today;
 }
 function homeBreakInfo(current,next){
     const a=parseMinutes(current?.time),b=parseMinutes(next?.time);
@@ -4119,8 +4163,13 @@ function renderHomeDayTimeline(){
     if(!entries.length){box.innerHTML='<div class="home-ref-empty">Расписание ещё не заполнено.</div>';return;}
 
     if(isNearestStudyDay){
-        let html=renderHomeDayStatus({mode:'nearest',nextEntry:entries[0],nowMinutes:0});
-        const selected=entries.slice(0,3);
+        const nearestActive=findNextActiveHomeEntry(entries,0);
+        if(!nearestActive){
+            box.innerHTML='<div class="home-ref-empty">На ближайший учебный день действующих занятий нет.</div>';
+            return;
+        }
+        let html=renderHomeDayStatus({mode:'nearest',nextEntry:nearestActive.entry,nowMinutes:0});
+        const selected=entries.slice(nearestActive.index,nearestActive.index+3);
         selected.forEach((entry,pos)=>{
             html+=renderHomeLessonCard(entry,-1,pos===0?'next':'');
             if(pos<selected.length-1){
