@@ -1820,6 +1820,21 @@
   color:#6e50d3!important;
 }
 
+/* Important announcement */
+.notification-item.notification-kind-important{
+  border-left-color:#d94f61!important;
+  background:linear-gradient(105deg,#ffffff 0%,#fff7f8 100%)!important;
+}
+.notification-kind-important .notification-item-icon,
+#view-home .notification-kind-important .home-ref-notification-icon{
+  background:#ffe6ea!important;
+  color:#c63e53!important;
+}
+.notification-kind-important .notification-type-chip{
+  background:#ffe6ea;
+  color:#bd354a!important;
+}
+
 /* Personal / support */
 .notification-item.notification-kind-personal{
   border-left-color:#2f9f78!important;
@@ -1857,6 +1872,7 @@
 }
 #view-home .home-ref-notification-card.notification-kind-schedule{border-left-color:#5576df!important}
 #view-home .home-ref-notification-card.notification-kind-announcement{border-left-color:#7b61d9!important}
+#view-home .home-ref-notification-card.notification-kind-important{border-left-color:#d94f61!important}
 #view-home .home-ref-notification-card.notification-kind-personal{border-left-color:#2f9f78!important}
 #view-home .home-ref-notification-card.notification-kind-system{border-left-color:#d08b2a!important}
 #view-home .home-ref-notification-icon{
@@ -1876,10 +1892,29 @@
 }
 #view-home .notification-kind-schedule .home-ref-notification-kind{background:#e8eeff;color:#4667ce}
 #view-home .notification-kind-announcement .home-ref-notification-kind{background:#efeaff;color:#6e50d3}
+#view-home .notification-kind-important .home-ref-notification-kind{background:#ffe6ea;color:#bd354a}
 #view-home .notification-kind-personal .home-ref-notification-kind{background:#e1f6ee;color:#278663}
 #view-home .notification-kind-system .home-ref-notification-kind{background:#fff0d7;color:#a76512}
 #view-home .home-ref-notification-card.unread{
   box-shadow:0 7px 20px rgba(35,50,80,.055)!important;
+}
+
+.notification-composer select{
+  width:100%;
+  min-height:40px;
+  padding:9px 34px 9px 11px;
+  border:1px solid #e1e3ec;
+  border-radius:11px;
+  background:#fff;
+  color:#38445d;
+  font-size:11px;
+  font-weight:700;
+  outline:none;
+  cursor:pointer;
+}
+.notification-composer select:focus{
+  border-color:#b9b2ef;
+  box-shadow:0 0 0 3px rgba(105,89,211,.08);
 }
 
 /* Unread feels clear without being loud. */
