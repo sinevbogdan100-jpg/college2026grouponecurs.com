@@ -1920,9 +1920,25 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const record = studentRecords[index];
             if (!record) return;
             if (!confirm(translateUI(`Убрать ${record.name} из группы? Старые записи посещаемости останутся в архиве.`))) return;
+
+            const originalIndex = index;
+            const removedRecord = { ...record };
             const next = studentRecords.filter((_, i) => i !== index);
             const cloudOk = await persistStudentsToCloud(next);
-            showToast(cloudOk ? `${record.name} удалён из состава группы` : `${record.name} удалён только на этом устройстве`);
+
+            window.showUndoAction?.(
+                cloudOk
+                    ? `${removedRecord.name} удалён из состава группы`
+                    : `${removedRecord.name} удалён на этом устройстве`,
+                async () => {
+                    if (!canManageStudents()) throw new Error('Нет права на изменение состава группы');
+                    if (studentRecords.some(item => item.name === removedRecord.name)) return;
+                    const restored = [...studentRecords];
+                    restored.splice(Math.min(originalIndex, restored.length), 0, removedRecord);
+                    await persistStudentsToCloud(restored);
+                },
+                6500
+            );
         };
 
         window.saveGroupInfo = async function() {
@@ -4311,7 +4327,20 @@ async function deleteNotification(notificationId,button){
         saveReadNotificationIds(read);
         renderNotifications();
         updateNotificationBadge();
-        showToast('Уведомление удалено');
+        if(item){
+            const restorePayload={...item};
+            delete restorePayload.id;
+            window.showUndoAction?.('Уведомление удалено',async()=>{
+                if(!canPublishNotifications())throw new Error('Нет права восстанавливать уведомления');
+                if(!db||!auth?.currentUser)throw new Error('Нет подключения к облаку');
+                await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),restorePayload,{merge:false});
+                const readNow=getReadNotificationIds();
+                readNow.delete(id);
+                saveReadNotificationIds(readNow);
+            },6500);
+        }else{
+            showToast('Уведомление удалено');
+        }
     }catch(error){
         console.warn('delete notification',error);
         showToast(error.code==='permission-denied'?'Нет права удалять уведомления':'Не удалось удалить уведомление');
