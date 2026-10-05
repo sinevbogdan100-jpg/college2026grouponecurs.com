@@ -2455,14 +2455,21 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         };
 
         const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+        const uiAnimationTimers = new WeakMap();
 
         function replayUiAnimation(element, className = 'ui-refreshing', duration = 240) {
             if (!element || reducedMotionQuery?.matches) return;
-            element.classList.remove(className);
+            const previousTimer = uiAnimationTimers.get(element);
+            if (previousTimer) clearTimeout(previousTimer);
+            element.classList.remove('ui-refreshing','ui-refreshing-soft','is-view-entering');
             // Force a single style flush so the same element can be animated again.
             void element.offsetWidth;
             element.classList.add(className);
-            window.setTimeout(() => element.classList.remove(className), duration);
+            const timer = window.setTimeout(() => {
+                element.classList.remove(className);
+                uiAnimationTimers.delete(element);
+            }, duration);
+            uiAnimationTimers.set(element, timer);
         }
         window.animateUiRefresh = replayUiAnimation;
 
