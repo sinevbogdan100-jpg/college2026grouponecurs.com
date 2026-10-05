@@ -2454,6 +2454,18 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             schedule: document.getElementById('view-schedule')
         };
 
+        const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+
+        function replayUiAnimation(element, className = 'ui-refreshing', duration = 240) {
+            if (!element || reducedMotionQuery?.matches) return;
+            element.classList.remove(className);
+            // Force a single style flush so the same element can be animated again.
+            void element.offsetWidth;
+            element.classList.add(className);
+            window.setTimeout(() => element.classList.remove(className), duration);
+        }
+        window.animateUiRefresh = replayUiAnimation;
+
         const sectionLoadingTimers = new Map();
 
         function showSectionLoading(viewName, delay = 0) {
@@ -2517,7 +2529,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 renderSchedule(getCurrentScheduleDay());
             }
 
+            Object.values(mainViews).forEach(view => view?.classList.remove('is-view-entering'));
             targetView.classList.remove('hidden');
+            if (!fromReload) replayUiAnimation(targetView, 'is-view-entering', 240);
             currentVisibleView = viewName;
             restoreScrollPosition(viewName);
         };
@@ -3339,6 +3353,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(val);
             } finally {
                 hideSectionLoading('tracker');
+                replayUiAnimation(document.getElementById('journal-editor-main'), 'ui-refreshing', 220);
             }
         };
 
@@ -3405,6 +3420,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(value);
             } finally {
                 hideSectionLoading('tracker');
+                replayUiAnimation(document.getElementById('journal-editor-main'), 'ui-refreshing', 220);
             }
         };
 
@@ -3422,6 +3438,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 await loadAttendanceForDate(value);
             } finally {
                 hideSectionLoading('tracker');
+                replayUiAnimation(document.getElementById('journal-editor-main'), 'ui-refreshing', 220);
             }
         };
 
@@ -3748,11 +3765,16 @@ window.showJournalTab=function(tab){
     activeJournalTab=tab==='stats'?'stats':'editor';
     document.getElementById('journal-tab-editor')?.classList.toggle('active',activeJournalTab==='editor');
     document.getElementById('journal-tab-stats')?.classList.toggle('active',activeJournalTab==='stats');
-    document.getElementById('journal-editor-main')?.classList.toggle('hidden',activeJournalTab==='stats');
-    document.getElementById('attendance-analytics')?.classList.toggle('hidden',activeJournalTab!=='stats');
+    const editorView=document.getElementById('journal-editor-main');
+    const analyticsView=document.getElementById('attendance-analytics');
+    editorView?.classList.toggle('hidden',activeJournalTab==='stats');
+    analyticsView?.classList.toggle('hidden',activeJournalTab!=='stats');
     if(activeJournalTab==='stats'){
         closeAttendanceStudentDetail();
         renderAttendanceAssessmentList();
+        replayUiAnimation(analyticsView,'ui-refreshing',220);
+    }else{
+        replayUiAnimation(editorView,'ui-refreshing',220);
     }
 };
 
