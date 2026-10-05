@@ -2760,3 +2760,65 @@ body:has(.undo-action-bar:not(.hidden)) .app-update-bar:not(.hidden){
 :where(button,a,[role="button"],summary,input,select,textarea):focus:not(:focus-visible){
   outline:none!important;
 }
+
+
+/* Bell schedule editor — SBP Information */
+#schedule-bell-modal{padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
+#schedule-bell-modal>div{
+  border:1px solid rgba(129,140,248,.18)!important;
+  border-radius:24px!important;
+  box-shadow:0 24px 70px rgba(51,65,85,.18)!important;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(196,181,253,.22),transparent 34%),
+    radial-gradient(circle at 0% 100%,rgba(186,230,253,.18),transparent 34%),
+    #fff!important;
+}
+#schedule-bell-modal h2{font-size:18px;letter-spacing:-.025em}
+#schedule-bell-modal input{
+  min-height:44px;
+  border-radius:13px!important;
+  border-color:rgba(148,163,184,.28)!important;
+  background:rgba(248,250,252,.88)!important;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+#schedule-bell-modal input:focus{
+  outline:none;
+  border-color:rgba(129,140,248,.7)!important;
+  box-shadow:0 0 0 3px rgba(129,140,248,.12);
+  background:#fff!important;
+}
+#schedule-bell-breaks{gap:10px}
+#schedule-bell-breaks label{
+  padding:10px;
+  border:1px solid rgba(129,140,248,.12);
+  border-radius:16px;
+  background:rgba(248,250,252,.72);
+}
+#schedule-bell-preview{
+  border-radius:17px!important;
+  border-color:rgba(129,140,248,.14)!important;
+  background:rgba(248,250,252,.72)!important;
+  padding:6px!important;
+}
+#schedule-bell-preview>div{
+  align-items:center;
+  padding:9px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,.88);
+}
+#schedule-bell-preview>div+div{margin-top:4px}
+#schedule-bell-preview span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#schedule-bell-preview b{flex:none;color:#4f46e5;font-variant-numeric:tabular-nums}
+#schedule-bell-modal button[onclick="saveScheduleBellEditor()"]{
+  background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;
+  box-shadow:0 8px 20px rgba(99,102,241,.22);
+}
+@media(max-width:480px){
+  #schedule-bell-modal{align-items:flex-end!important;padding:10px 8px max(8px,env(safe-area-inset-bottom))}
+  #schedule-bell-modal>div{max-height:92dvh!important;border-radius:24px 24px 18px 18px!important;padding:16px!important}
+  #schedule-bell-breaks{grid-template-columns:1fr 1fr}
+  #schedule-bell-preview>div{font-size:10px}
+}
+@media(max-width:350px){
+  #schedule-bell-breaks{grid-template-columns:1fr}
+}
