@@ -1144,7 +1144,7 @@ export async function loadScheduleData(){
         if (parsedNum) Object.keys(scheduleDataNumerator).forEach(k => { if (Array.isArray(parsedNum[k])) scheduleDataNumerator[k] = parsedNum[k]; });
         if (parsedDen) Object.keys(scheduleDataDenominator).forEach(k => { if (Array.isArray(parsedDen[k])) scheduleDataDenominator[k] = parsedDen[k]; });
         const { isCloudConnected, db, auth } = getCloudState();
-        if (isCloudConnected && db && auth?.currentUser) {
+        if (!readPendingSchedule() && navigator.onLine && isCloudConnected && db && auth?.currentUser) {
             try {
                 const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'schedule', 'main'));
                 if (snap.exists()) {
@@ -1171,6 +1171,7 @@ export async function loadScheduleData(){
 
 export function applyCloudScheduleData(data, source = 'cloud') {
     if (!data) return false;
+    if (readPendingSchedule()) return false;
     const remoteUpdatedAt = String(data.updatedAt || '');
     if (remoteUpdatedAt && lastScheduleLocalWriteAt && remoteUpdatedAt < lastScheduleLocalWriteAt) return false;
     if (remoteUpdatedAt && lastScheduleAppliedUpdatedAt && remoteUpdatedAt < lastScheduleAppliedUpdatedAt) return false;
