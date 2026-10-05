@@ -1151,3 +1151,145 @@
     animation:none!important;
   }
 }
+
+
+/* ===== ERROR + CONNECTIVITY SYSTEM — step18.34 ===== */
+.system-status-banner{
+  position:fixed;
+  left:50%;
+  bottom:calc(78px + env(safe-area-inset-bottom));
+  z-index:49;
+  width:min(560px,calc(100vw - 20px));
+  transform:translate(-50%,0);
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 32px;
+  align-items:center;
+  gap:10px;
+  padding:10px 10px 10px 11px;
+  border:1px solid #dce4f0;
+  border-radius:15px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 12px 34px rgba(26,39,68,.16);
+  color:#17223f;
+  backdrop-filter:saturate(130%) blur(10px);
+  -webkit-backdrop-filter:saturate(130%) blur(10px);
+  transition:opacity .2s ease,transform .2s ease;
+}
+.system-status-banner.hidden{display:none!important}
+.system-status-icon{
+  width:36px;
+  height:36px;
+  border-radius:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eef4ff;
+  color:#3266d5;
+  font-size:15px;
+}
+.system-status-copy{min-width:0}
+.system-status-copy strong{
+  display:block;
+  margin:0;
+  color:#111a33;
+  font-size:11.5px;
+  line-height:1.2;
+  font-weight:850;
+}
+.system-status-copy span{
+  display:block;
+  margin-top:3px;
+  color:#66748f;
+  font-size:9.5px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.system-status-close{
+  width:30px;
+  height:30px;
+  padding:0;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#7a879d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+}
+.system-status-close:hover{background:#f1f4f8;color:#283650}
+
+.system-status-banner[data-kind="offline"]{
+  border-color:#f0d7aa;
+  background:rgba(255,250,239,.98);
+}
+.system-status-banner[data-kind="offline"] .system-status-icon{
+  background:#fff0cd;
+  color:#cf7900;
+}
+.system-status-banner[data-kind="warning"]{
+  border-color:#ead8af;
+  background:rgba(255,251,241,.98);
+}
+.system-status-banner[data-kind="warning"] .system-status-icon{
+  background:#fff1cf;
+  color:#c87400;
+}
+.system-status-banner[data-kind="error"]{
+  border-color:#efcbd1;
+  background:rgba(255,247,248,.98);
+}
+.system-status-banner[data-kind="error"] .system-status-icon{
+  background:#ffe7eb;
+  color:#c63c53;
+}
+.system-status-banner[data-kind="success"]{
+  border-color:#c9e9d5;
+  background:rgba(246,255,249,.98);
+}
+.system-status-banner[data-kind="success"] .system-status-icon{
+  background:#dff7e8;
+  color:#19874a;
+}
+
+#toast[data-type="success"] > div{background:#123a28!important;border-color:#1d5b3e!important}
+#toast[data-type="warning"] > div{background:#4a3511!important;border-color:#6b4d18!important}
+#toast[data-type="error"] > div{background:#4a1f28!important;border-color:#6d2d39!important}
+#toast[data-type="info"] > div{background:#182338!important;border-color:#26344f!important}
+#toast[data-type="success"] #toast-icon{color:#6ee7a5!important}
+#toast[data-type="warning"] #toast-icon{color:#ffd17a!important}
+#toast[data-type="error"] #toast-icon{color:#ff9aa9!important}
+#toast[data-type="info"] #toast-icon{color:#9fc0ff!important}
+
+@media(max-width:420px){
+  .system-status-banner{
+    bottom:calc(74px + env(safe-area-inset-bottom));
+    width:calc(100vw - 16px);
+    grid-template-columns:34px minmax(0,1fr) 28px;
+    gap:8px;
+    padding:9px;
+    border-radius:14px;
+  }
+  .system-status-icon{width:32px;height:32px;border-radius:10px}
+  .system-status-copy strong{font-size:11px}
+  .system-status-copy span{font-size:9px}
+  .system-status-close{width:28px;height:28px}
+}
+
+@media(min-width:768px){
+  body:not(.layout-phone) .system-status-banner{
+    bottom:88px;
+    width:min(640px,calc(100vw - 36px));
+    grid-template-columns:44px minmax(0,1fr) 36px;
+    gap:12px;
+    padding:12px 13px;
+    border-radius:17px;
+  }
+  body:not(.layout-phone) .system-status-icon{width:42px;height:42px;font-size:17px}
+  body:not(.layout-phone) .system-status-copy strong{font-size:14px}
+  body:not(.layout-phone) .system-status-copy span{font-size:12px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .system-status-banner{transition:none!important}
+}
