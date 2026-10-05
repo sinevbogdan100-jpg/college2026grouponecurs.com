@@ -1,14 +1,14 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-live-progress-v2';
+const CACHE_NAME = 'sbp-shell-20261005-loading-states-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261005-live-progress-v2',
+  './app.js?v=20261005-loading-states-v1',
   './style.css?v=20261005-live-progress-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261004-speed-v1',
+  './responsive-fit.css?v=20261005-loading-states-v1',
   './firebase.js?v=20261004-console-fixes-v1',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
