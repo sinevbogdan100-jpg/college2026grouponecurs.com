@@ -2741,8 +2741,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             });
             rosterStatsByStudent = next;
             rosterStatsReady = rows.length > 0;
-            renderRosterList();
-            if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
+            if (activeJournalTab === 'stats' && !document.getElementById('view-tracker')?.classList.contains('hidden')) {
+                renderAttendanceAssessmentList();
+            }
         }
 
         async function rebuildRosterStatsFromCloud() {
@@ -2801,7 +2802,6 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 }, err => {
                     rosterStatsReady = false;
                     console.warn('Realtime roster stats error', err);
-                    renderRosterList();
                 });
                 return true;
             } catch (e) {
@@ -2820,26 +2820,39 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const ref = collection(db, ...CLOUD_ROOT, 'attendance_records');
             try {
                 attendanceArchiveUnsubscribe = onSnapshot(ref, snapshot => {
-                    const nextArchive = {};
-                    snapshot.forEach(snap => {
-                        const dateKey = snap.id;
+                    let attendanceChanged = false;
+                    snapshot.docChanges().forEach(change => {
+                        const dateKey = change.doc.id;
                         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
-                        const data = snap.data() || {};
+
+                        if (change.type === 'removed') {
+                            if (attendanceArchive[dateKey]) {
+                                delete attendanceArchive[dateKey];
+                                attendanceChanged = true;
+                            }
+                            try { localStorage.removeItem(`toe_att_${dateKey}`); } catch (_) {}
+                            return;
+                        }
+
+                        const data = change.doc.data() || {};
                         if (!data.state || typeof data.state !== 'object') return;
-                        nextArchive[dateKey] = data;
+                        attendanceArchive[dateKey] = data;
+                        attendanceChanged = true;
                         try { localStorage.setItem(`toe_att_${dateKey}`, JSON.stringify(data)); } catch (_) {}
                     });
-                    attendanceArchive = nextArchive;
+
                     attendanceArchiveReady = true;
-                    renderRosterList();
-                    renderApp();
-                    renderMiniCalendar();
-                    if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
-                    if (!rosterStatsReady) scheduleRosterStatsRebuild(250);
+                    if (!attendanceChanged) return;
+
+                    const trackerVisible = !document.getElementById('view-tracker')?.classList.contains('hidden');
+                    if (trackerVisible) {
+                        renderMiniCalendar();
+                        if (activeJournalTab === 'stats') renderAttendanceAssessmentList();
+                    }
+                    if (!rosterStatsReady) scheduleRosterStatsRebuild(500);
                 }, err => {
                     attendanceArchiveReady = false;
                     console.warn('Realtime attendance archive error', err);
-                    renderRosterList();
                 });
                 return true;
             } catch (e) {
