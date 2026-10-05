@@ -4142,6 +4142,43 @@ function notificationTitleForLocale(item){
 function notificationTextForLocale(item){
     return currentLang()==='kz' && item?.textKz ? item.textKz : (item?.text || '');
 }
+function notificationVisualMeta(item={}){
+    const rawType=String(item.type||item.kind||'').trim().toLowerCase();
+    const haystack=`${notificationTitleForLocale(item)} ${notificationTextForLocale(item)}`.toLowerCase();
+
+    if(
+        rawType==='schedule_change' ||
+        rawType==='schedule' ||
+        haystack.includes('распис') ||
+        haystack.includes('кесте')
+    ){
+        return {key:'schedule',label:'Расписание',icon:'fa-calendar-days'};
+    }
+
+    if(
+        rawType==='support' ||
+        rawType==='direct' ||
+        rawType==='message' ||
+        rawType==='personal' ||
+        haystack.includes('поддерж') ||
+        haystack.includes('обращен') ||
+        haystack.includes('сообщен')
+    ){
+        return {key:'personal',label:'Личное',icon:'fa-comments'};
+    }
+
+    if(
+        rawType==='system' ||
+        rawType==='status' ||
+        rawType==='update' ||
+        haystack.includes('систем') ||
+        haystack.includes('обновлен')
+    ){
+        return {key:'system',label:'Система',icon:'fa-circle-info'};
+    }
+
+    return {key:'announcement',label:'Объявление',icon:'fa-bullhorn'};
+}
 function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
 function renderHomeLatestNotification(){
     const box=document.getElementById('home-latest-notification');
@@ -4150,16 +4187,16 @@ function renderHomeLatestNotification(){
     if(!n){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
     const title=escapeNotificationText(notificationTitleForLocale(n));
     const body=escapeNotificationText(notificationTextForLocale(n));
-    const lower=(title+' '+body).toLowerCase();
-    const icon=lower.includes('распис')?'fa-calendar-days':lower.includes('поддерж')?'fa-comments':'fa-bullhorn';
+    const meta=notificationVisualMeta(n);
+    const unread=!getReadNotificationIds().has(n.id);
     let time='';
     if(n.createdAt){
         const d=new Date(n.createdAt);
         if(!Number.isNaN(d.getTime()))time=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
     }
-    box.innerHTML=`<button class="home-ref-notification-card" onclick="openNotifications()">
-        <span class="home-ref-notification-icon"><i class="fa-solid ${icon}"></i></span>
-        <span class="home-ref-notification-copy"><strong>${title}</strong><span>${body||'Открыть уведомление'}</span></span>
+    box.innerHTML=`<button class="home-ref-notification-card notification-kind-${meta.key} ${unread?'unread':''}" onclick="openNotifications()">
+        <span class="home-ref-notification-icon"><i class="fa-solid ${meta.icon}"></i>${unread?'<b class="notification-unread-dot" aria-hidden="true"></b>':''}</span>
+        <span class="home-ref-notification-copy"><em class="home-ref-notification-kind">${translateUI(meta.label)}</em><strong>${title}</strong><span>${body||'Открыть уведомление'}</span></span>
         <span class="home-ref-notification-time">${time}</span>
     </button>`;
 }
@@ -4175,18 +4212,22 @@ function renderNotifications(){
     const canDelete=canPublishNotifications();
     box.innerHTML=notificationsCache.map(n=>{
         const unread=!read.has(n.id);
+        const meta=notificationVisualMeta(n);
         const deleteButton=canDelete
             ? `<button class="notification-delete-button" type="button" data-notification-id="${encodeURIComponent(n.id)}" title="Удалить уведомление" aria-label="Удалить уведомление"><i class="fa-regular fa-trash-can"></i></button>`
             : '';
-        return `<article class="notification-item ${unread?'unread':''}">
-            <div class="notification-item-icon"><i class="fa-regular fa-bell"></i></div>
+        return `<article class="notification-item notification-kind-${meta.key} ${unread?'unread':''}">
+            <div class="notification-item-icon"><i class="fa-solid ${meta.icon}"></i>${unread?'<b class="notification-unread-dot" aria-hidden="true"></b>':''}</div>
             <div class="notification-item-body">
                 <div class="notification-item-head">
-                    <strong>${escapeNotificationText(notificationTitleForLocale(n))}</strong>
+                    <div class="notification-title-stack">
+                        <span class="notification-type-chip">${translateUI(meta.label)}</span>
+                        <strong>${escapeNotificationText(notificationTitleForLocale(n))}</strong>
+                    </div>
                     <div class="notification-item-actions"><span>${notificationTimeLabel(n.createdAt)}</span>${deleteButton}</div>
                 </div>
                 <p>${escapeNotificationText(notificationTextForLocale(n))}</p>
-                ${n.author?`<small>${escapeNotificationText(n.author)}</small>`:''}
+                ${n.author?`<small class="notification-author"><i class="fa-regular fa-user"></i>${escapeNotificationText(n.author)}</small>`:''}
             </div>
         </article>`;
     }).join('');
@@ -4235,7 +4276,16 @@ function subscribeNotifications(){
         notificationsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
         if(!snap.metadata?.fromCache){
             const arrivals=eventArrivals.update(notificationsCache.map(item=>({id:item.id,count:1,item})));
-            arrivals.forEach(({item})=>{if(item.authorUid!==auth?.currentUser?.uid && (!item.author || item.author!==currentAccountLogin)){const scheduleChange=item.type==='schedule_change';notificationCenter.incoming({key:`event:${item.id}`,title:scheduleChange?notificationTitleForLocale(item):translateUI('Новое объявление'),body:scheduleChange?notificationTextForLocale(item):notificationTitleForLocale(item),kind:'events'});}});
+            arrivals.forEach(({item})=>{
+                if(item.authorUid===auth?.currentUser?.uid || (item.author&&item.author===currentAccountLogin))return;
+                const meta=notificationVisualMeta(item);
+                notificationCenter.incoming({
+                    key:`event:${item.id}`,
+                    title:meta.key==='announcement'?translateUI('Новое объявление'):notificationTitleForLocale(item),
+                    body:meta.key==='announcement'?notificationTitleForLocale(item):notificationTextForLocale(item),
+                    kind:'events'
+                });
+            });
         }
         renderNotifications();renderHomeLatestNotification();updateNotificationBadge();
     },e=>{console.warn('notifications realtime',e);notificationsUnsubscribe=null;});
