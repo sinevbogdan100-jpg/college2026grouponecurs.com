@@ -1003,14 +1003,31 @@ window.deleteScheduleLesson = async function() {
     const list=getCurrentScheduleList();
     if(editingScheduleIndex<0 || !list)return;
     if(!confirm(translateUI('Удалить эту пару из расписания?')))return;
-    const removed=list.splice(editingScheduleIndex,1)[0];
+
+    const removedIndex=editingScheduleIndex;
+    const removed=list.splice(removedIndex,1)[0];
+    const targetList=list;
+
     try {
         const cloudSaved = await saveScheduleData();
         window.closeScheduleEditor();
         renderSchedule(currentScheduleDay);
-        showToast(cloudSaved ? 'Пара удалена и сохранена в облако' : 'Пара удалена и сохранена на устройстве');
+
+        window.showUndoAction?.(
+            cloudSaved ? 'Пара удалена из расписания' : 'Пара удалена и сохранена на устройстве',
+            async () => {
+                if (sessionStorage.getItem('toe_can_schedule') !== '1') throw new Error('Нет права изменять расписание');
+                if (!removed) return;
+                targetList.splice(Math.min(removedIndex,targetList.length),0,removed);
+                lastScheduleRenderKey='';
+                renderSchedule(currentScheduleDay);
+                await saveScheduleData();
+            },
+            6500
+        );
     } catch (e) {
-        list.splice(editingScheduleIndex,0,removed);
+        targetList.splice(Math.min(removedIndex,targetList.length),0,removed);
+        lastScheduleRenderKey='';
         renderSchedule(currentScheduleDay);
         console.error('Schedule delete failed:', e);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = false;
