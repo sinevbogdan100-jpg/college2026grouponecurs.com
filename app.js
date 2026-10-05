@@ -823,7 +823,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const savedDay = localStorage.getItem('toe_current_schedule_day');
             const savedWeek = localStorage.getItem('toe_schedule_week_type');
             const savedView = localStorage.getItem('toe_current_view');
+            const initialView = savedView && ['home','tracker','roster','schedule'].includes(savedView) ? savedView : 'home';
             restoreScheduleSelection(savedDay, savedWeek);
+
+            // Show the last-used screen immediately. Its skeleton masks the short
+            // local/IndexedDB restore instead of leaving a blank or half-built page.
+            showSectionLoading(initialView);
+            switchView(initialView, true);
 
             await Promise.allSettled([
                 loadAttendanceForDate(effectiveTodayStr),
@@ -846,6 +852,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 ensureMainViewVisible();
             }
 
+            hideSectionLoading(initialView);
             ensureMainViewVisible();
             updateHomeWeekBanner();
             updateHomeTodayCard();
@@ -1972,6 +1979,39 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             roster: document.getElementById('view-roster'),
             schedule: document.getElementById('view-schedule')
         };
+
+        const sectionLoadingTimers = new Map();
+
+        function showSectionLoading(viewName, delay = 0) {
+            const view = mainViews[viewName];
+            if (!view) return;
+            const previous = sectionLoadingTimers.get(viewName);
+            if (previous) clearTimeout(previous);
+            sectionLoadingTimers.delete(viewName);
+
+            if (delay > 0) {
+                const timer = setTimeout(() => {
+                    sectionLoadingTimers.delete(viewName);
+                    view.classList.add('is-section-loading');
+                    view.setAttribute('aria-busy', 'true');
+                }, delay);
+                sectionLoadingTimers.set(viewName, timer);
+                return;
+            }
+
+            view.classList.add('is-section-loading');
+            view.setAttribute('aria-busy', 'true');
+        }
+
+        function hideSectionLoading(viewName) {
+            const view = mainViews[viewName];
+            const timer = sectionLoadingTimers.get(viewName);
+            if (timer) clearTimeout(timer);
+            sectionLoadingTimers.delete(viewName);
+            if (!view) return;
+            view.classList.remove('is-section-loading');
+            view.removeAttribute('aria-busy');
+        }
         const mainNavButtons = [...document.querySelectorAll('#bottom-nav button[data-nav]')];
         const bottomNavElement = document.getElementById('bottom-nav');
         let currentVisibleView = '';
@@ -2804,9 +2844,14 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (label) label.textContent = formatCalendarLabel(new Date(val + 'T00:00:00'));
             updateSelectedDateUI(val);
             renderMiniCalendar();
-            await loadAttendanceForDate(val);
-            // Переподключаем realtime listener именно к выбранной дате.
-            if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(val);
+            showSectionLoading('tracker', 140);
+            try {
+                await loadAttendanceForDate(val);
+                // Переподключаем realtime listener именно к выбранной дате.
+                if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(val);
+            } finally {
+                hideSectionLoading('tracker');
+            }
         };
 
 
@@ -2864,8 +2909,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const label = document.getElementById('calendar-trigger-text');
             if (label) label.textContent = formatCalendarLabel(base);
             updateSelectedDateUI(value);
-            await loadAttendanceForDate(value);
-            if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(value);
+            showSectionLoading('tracker', 140);
+            try {
+                await loadAttendanceForDate(value);
+                if (isCloudConnected && db && auth?.currentUser) subscribeToAttendance(value);
+            } finally {
+                hideSectionLoading('tracker');
+            }
         };
 
         window.goToToday = async function() {
@@ -2877,7 +2927,12 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const label = document.getElementById('calendar-trigger-text');
             if (label) label.textContent = formatCalendarLabel(date);
             updateSelectedDateUI(value);
-            await loadAttendanceForDate(value);
+            showSectionLoading('tracker', 140);
+            try {
+                await loadAttendanceForDate(value);
+            } finally {
+                hideSectionLoading('tracker');
+            }
         };
 
         window.closeHistoryModal = function() {
