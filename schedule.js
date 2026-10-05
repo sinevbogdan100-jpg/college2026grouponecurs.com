@@ -8,6 +8,7 @@ const CLOUD_ROOT = ['toe_group', 'shared'];
 let dependencies = {
     getCloudState: () => ({ isCloudConnected: false, db: null, auth: null }),
     showToast: () => {},
+    reportError: () => null,
     createAutomaticBackup: async () => {},
     updateBackupStatus: () => {},
     setRealtimeDiagnostic: () => {},
@@ -26,6 +27,12 @@ function getCloudState() {
 
 function showToast(message) {
     dependencies.showToast?.(message);
+}
+
+function reportError(scope, error, options = {}) {
+    const reported = dependencies.reportError?.(scope, error, options);
+    if (!reported && options.fallback) showToast(options.fallback);
+    return reported;
 }
 
 // Schedule Data with specified teachers & room rules
@@ -919,7 +926,7 @@ window.saveScheduleLesson = async function() {
         renderSchedule(currentScheduleDay);
         console.error('Schedule save failed:', e);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = false;
-        showToast('Ошибка сохранения расписания');
+        // Причина уже показана единой системой ошибок.
     }
 };
 
@@ -938,7 +945,7 @@ window.moveScheduleLesson = async function(index, delta) {
         [list[index], list[target]] = [list[target], list[index]];
         renderSchedule(currentScheduleDay);
         console.error('Schedule reorder failed:', e);
-        showToast('Не удалось сохранить порядок пар');
+        // Причина уже показана единой системой ошибок.
     }
 };
 
@@ -958,7 +965,7 @@ window.deleteScheduleLesson = async function() {
         renderSchedule(currentScheduleDay);
         console.error('Schedule delete failed:', e);
         if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = false;
-        showToast('Ошибка сохранения расписания');
+        // Причина уже показана единой системой ошибок.
     }
 };
 
@@ -983,8 +990,10 @@ export async function saveScheduleData(changeEvent = null){
     await savePersistentValue('toe_schedule_last_saved', new Date().toISOString());
 
     const { isCloudConnected, db, auth } = getCloudState();
-    if (!isCloudConnected || !db || !auth?.currentUser) {
-        throw new Error('Firebase не подключён или пользователь не авторизован');
+    if (!isCloudConnected || !db || !auth?.currentUser || !navigator.onLine) {
+        const error = new Error(navigator.onLine ? 'Firebase не подключён или пользователь не авторизован' : 'offline');
+        reportError('schedule-save', error, { localSaved:false, fallback:'Не удалось сохранить расписание в облако' });
+        throw error;
     }
 
     const updatedAt = new Date().toISOString();
@@ -1023,6 +1032,7 @@ export async function saveScheduleData(changeEvent = null){
         dependencies.setWriteDiagnostic?.(false, detail);
         dependencies.diagLog?.('Firestore SCHEDULE WRITE ERROR', detail);
         console.error('Cloud schedule save failed:', e);
+        reportError('schedule-save', e, { localSaved:false, fallback:'Не удалось сохранить расписание в облако' });
         throw e;
     }
     try { await dependencies.createAutomaticBackup?.(); } catch (e) { console.warn('Автоматическая резервная копия расписания не создана', e); }
@@ -1057,9 +1067,13 @@ export async function loadScheduleData(){
                     localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
                     localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
                 }
-            } catch (e) { console.warn('Не удалось загрузить облачное расписание', e); }
+            } catch (e) {
+                reportError('schedule-load', e, { localSaved:true, fallback:'Не удалось обновить расписание из облака' });
+            }
         }
-    } catch(e) { console.warn('Не удалось загрузить изменённое расписание', e); }
+    } catch(e) {
+        reportError('schedule-local-load', e, { localSaved:false, fallback:'Не удалось загрузить сохранённое расписание' });
+    }
 }
 
 export function applyCloudScheduleData(data, source = 'cloud') {
@@ -1119,6 +1133,7 @@ export function subscribeToSchedule() {
         }, err => {
             window.__scheduleListenerActive = false;
             console.warn('Realtime schedule error', err);
+            reportError('schedule-realtime', err, { localSaved:true, fallback:'Синхронизация расписания временно недоступна' });
             scheduleReconnectAttempt = Math.min(scheduleReconnectAttempt + 1, 8);
             const delay = Math.min(1000 * Math.pow(2, scheduleReconnectAttempt - 1), 15000);
             if (scheduleReconnectTimer) clearTimeout(scheduleReconnectTimer);
@@ -1130,6 +1145,7 @@ export function subscribeToSchedule() {
     } catch (e) {
         window.__scheduleListenerActive = false;
         console.warn('Schedule listener registration error', e);
+        reportError('schedule-realtime', e, { localSaved:true, fallback:'Синхронизация расписания временно недоступна' });
         scheduleReconnectAttempt = Math.min(scheduleReconnectAttempt + 1, 8);
         const delay = Math.min(1000 * Math.pow(2, scheduleReconnectAttempt - 1), 15000);
         scheduleReconnectTimer = setTimeout(() => subscribeToSchedule(), delay);
@@ -1148,6 +1164,7 @@ export function startSchedulePolling() {
             applyCloudScheduleData(snap.data() || {}, 'polling');
         } catch (e) {
             console.warn('Schedule fallback sync error', e);
+            reportError('schedule-sync', e, { localSaved:true, fallback:'Не удалось обновить расписание из облака' });
         }
     };
     // Realtime listener is the primary path. A lightweight server read remains only as a safety net.
