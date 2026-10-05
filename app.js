@@ -42,7 +42,7 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     restoreScheduleSelection
-} from "./schedule.js?v=20261004-schedule-change-v1";
+} from "./schedule.js?v=20261005-error-system-v1";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-live-progress-v2";
 
         
