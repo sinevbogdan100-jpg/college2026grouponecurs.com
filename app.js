@@ -752,7 +752,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         localStorage.setItem(`toe_att_${dateStr}`, backup);
                     }
                 } catch (e) {
-                    console.warn('Не удалось прочитать резервную копию журнала', e);
+                    reportAppError('journal-local-load', e, { localSaved:false });
                 }
             }
 
@@ -788,7 +788,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         renderApp();
                     }
                 } catch (e) {
-                    console.warn('Не удалось загрузить облачную посещаемость', e);
+                    reportAppError('journal-load', e, { localSaved:!!saved });
                 }
             }
         }
@@ -839,6 +839,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         window.__rtd.log('POLL ERROR: ' + (e?.code || '') + ' ' + (e?.message || e));
                         window.__rtd.render();
                     }
+                    reportAppError('journal-sync', e, { localSaved:true });
                 }
             };
             poll();
@@ -862,6 +863,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     window.__attendanceListenerActive = true;
                     attendanceReconnectAttempt = 0;
                     window.__realtimeLastSnapshotAt = new Date().toISOString();
+                    if (navigator.onLine && cloudProblemSeen) syncSystemStatus({ recovered:true });
                     if (!snap.exists()) {
                         if (window.__rtd) {
                             window.__rtd.state.listener = true;
@@ -901,6 +903,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     firebaseDiag.realtime = {ok:false, detail:err?.code ? `${err.code}: ${err.message}` : String(err)};
                     diagLog('Realtime attendance ERROR', firebaseDiag.realtime.detail);
                     renderFirebaseDiagnostic();
+                    reportAppError('journal-realtime', err, { localSaved:true });
                     // Автоматически восстанавливаем listener. Даже если он временно падает,
                     // резервная проверка продолжает синхронизацию каждые 2.5 секунды.
                     attendanceReconnectAttempt = Math.min(attendanceReconnectAttempt + 1, 8);
@@ -920,6 +923,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 if (window.__rtd) { window.__rtd.state.listener = false; window.__rtd.log('REALTIME REGISTER ERROR: ' + (e?.code || '') + ' ' + (e?.message || e)); window.__rtd.render(); }
                 firebaseDiag.realtime = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
                 diagLog('Realtime attendance REGISTER ERROR', firebaseDiag.realtime.detail);
+                reportAppError('journal-realtime', e, { localSaved:true });
                 const delay = Math.min(1000 * Math.pow(2, Math.min(attendanceReconnectAttempt++, 7)), 15000);
                 attendanceReconnectTimer = setTimeout(() => subscribeToAttendance(dateStr), delay);
             }
@@ -1001,6 +1005,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     console.error('Firebase auth error:', e);
                     isCloudConnected = false;
                     updateCloudBadge(false);
+                    reportAppError('cloud-auth', e, { localSaved:true });
                 }
             } catch (e) {
                 firebaseDiag.init = false;
@@ -1009,6 +1014,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 console.error('Firebase init error:', e);
                 isCloudConnected = false;
                 updateCloudBadge(false);
+                reportAppError('cloud-init', e, { localSaved:true });
             }
 
             const datePicker = document.getElementById('date-picker');
@@ -1031,6 +1037,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     firebaseDiag.error = e?.code ? `${e.code}: ${e.message}` : String(e);
                     diagLog('CLOUD OPERATION ERROR', firebaseDiag.error);
                     renderFirebaseDiagnostic();
+                    reportAppError('cloud-sync', e, { localSaved:true });
                 }
             } else {
                 await loadAttendanceForDate(today);
@@ -1040,6 +1047,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (!navigator.onLine) syncSystemStatus();
             const todayStr = getCurrentDateStr();
             const effectiveTodayStr = isWeekendDate(todayStr) ? getLastWorkingDate(todayStr) : todayStr;
             const datePicker = document.getElementById('date-picker');
@@ -1101,7 +1109,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     renderApp(true);
                     renderSchedule(getCurrentScheduleDay());
                 } catch (e) {
-                    console.warn('Firebase init skipped', e);
+                    reportAppError('cloud-init', e, { localSaved:true });
                 }
             });
         });
