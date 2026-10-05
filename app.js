@@ -2756,16 +2756,25 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             rosterStatsRebuildInFlight = true;
             rosterStatsRebuildPending = false;
             try {
-                const snapshot = await getDocs(collection(db, ...CLOUD_ROOT, 'attendance_records'));
-                const cloudArchive = {};
-                snapshot.forEach(snap => {
-                    if (!/^\d{4}-\d{2}-\d{2}$/.test(snap.id)) return;
-                    const data = snap.data() || {};
-                    if (data.state && typeof data.state === 'object') cloudArchive[snap.id] = data;
-                });
-                attendanceArchive = cloudArchive;
-                attendanceArchiveReady = true;
-                const byStudent = computeRosterStatsFromArchive(cloudArchive);
+                let sourceArchive = attendanceArchive;
+
+                // Once the realtime archive has completed its first snapshot we already
+                // have every dated journal document locally. Reuse it instead of reading
+                // the whole Firestore collection after every attendance edit.
+                if (!attendanceArchiveReady) {
+                    const snapshot = await getDocs(collection(db, ...CLOUD_ROOT, 'attendance_records'));
+                    const cloudArchive = {};
+                    snapshot.forEach(snap => {
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(snap.id)) return;
+                        const data = snap.data() || {};
+                        if (data.state && typeof data.state === 'object') cloudArchive[snap.id] = data;
+                    });
+                    attendanceArchive = cloudArchive;
+                    attendanceArchiveReady = true;
+                    sourceArchive = cloudArchive;
+                }
+
+                const byStudent = computeRosterStatsFromArchive(sourceArchive);
                 const payload = makeRosterStatsPayload(byStudent);
                 await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', ROSTER_STATS_DOC_ID), payload, { merge: false });
                 applyRosterStatsPayload(payload);
@@ -2777,7 +2786,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 rosterStatsRebuildInFlight = false;
                 if (rosterStatsRebuildPending) {
                     rosterStatsRebuildPending = false;
-                    scheduleRosterStatsRebuild(200);
+                    scheduleRosterStatsRebuild(400);
                 }
             }
         }
@@ -3382,8 +3391,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     cloudSaveOk = true;
                     await clearOfflineChange('attendance', dateVal);
                     attendanceArchive[dateVal] = dataToSave;
-                    renderRosterList();
-                    scheduleRosterStatsRebuild(500);
+                    scheduleRosterStatsRebuild(700);
                     if (window.__rtd) { window.__rtd.state.lastSource='этот браузер → Firestore'; window.__rtd.state.lastUpdatedAt=dataToSave.updatedAt; window.__rtd.log('WRITE OK: '+dateVal+' updatedAt='+dataToSave.updatedAt); window.__rtd.render(); }
                     firebaseDiag.write = {ok:true, detail:`Запись посещаемости прошла: toe_group/shared/attendance_records/${dateVal}`};
                     diagLog('Firestore WRITE OK', firebaseDiag.write.detail);
