@@ -573,6 +573,12 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             refreshSettingsSystem?.();
             void reconnectAndFlushOfflineQueue();
         });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && navigator.onLine && offlinePendingCount() > 0) {
+                void reconnectAndFlushOfflineQueue();
+            }
+        });
         let attendanceUnsubscribe = null;
         let attendanceArchiveUnsubscribe = null;
         let attendanceArchiveReady = false;
@@ -960,8 +966,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             renderApp();
             renderRosterList();
 
-            // Если облако подключено, общая запись имеет приоритет над локальной.
-            if (isCloudConnected && db && auth?.currentUser) {
+            // Если дата изменена офлайн, локальная версия имеет приоритет до синхронизации.
+            const pendingAttendance = readOfflineQueue().attendance?.[dateStr];
+            if (!pendingAttendance && isCloudConnected && db && auth?.currentUser && navigator.onLine) {
                 try {
                     const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', dateStr));
                     if (snap.exists()) {
@@ -992,6 +999,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             stopAttendancePolling();
             if (!isCloudConnected || !db || !auth?.currentUser) return;
             const poll = async () => {
+                if (readOfflineQueue().attendance?.[dateStr]) return;
                 try {
                     const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', dateStr), { source: 'server' });
                     if (!snap.exists()) return;
@@ -1049,6 +1057,14 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     window.__attendanceListenerActive = true;
                     attendanceReconnectAttempt = 0;
                     window.__realtimeLastSnapshotAt = new Date().toISOString();
+                    if (readOfflineQueue().attendance?.[dateStr]) {
+                        if (window.__rtd) {
+                            window.__rtd.state.lastSource = 'локальная офлайн-версия';
+                            window.__rtd.log('REALTIME SKIP: локальная версия ожидает синхронизации');
+                            window.__rtd.render();
+                        }
+                        return;
+                    }
                     if (navigator.onLine && cloudProblemSeen) syncSystemStatus({ recovered:true });
                     if (!snap.exists()) {
                         if (window.__rtd) {
@@ -1641,6 +1657,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         };
 
         function applyCloudGroupInfo(data = {}) {
+            if (readOfflineQueue().groupInfo) return;
             const updatedAt = String(data.updatedAt || '');
             if (updatedAt && updatedAt === lastGroupInfoUpdatedAt) return;
             if (updatedAt) lastGroupInfoUpdatedAt = updatedAt;
@@ -1758,6 +1775,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         }
 
         function applyStudentsPayload(data = {}) {
+            if (Array.isArray(readOfflineQueue().students)) return;
             const updatedAt = String(data.updatedAt || '');
             if (updatedAt && updatedAt === lastStudentsUpdatedAt) return;
             if (!Array.isArray(data.students)) return;
@@ -2135,6 +2153,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 document.getElementById('admin-login-box')?.classList.add('hidden');
                 document.getElementById('admin-panel')?.classList.remove('hidden');
                 showToast(isOwnerRole() ? 'Вход выполнен: Владелец' : `${account.label}: вход выполнен`);
+                void flushOfflineQueue();
             } catch (e) {
                 console.warn('Editor login failed', e);
                 const code = String(e?.code || '');
