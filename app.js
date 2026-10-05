@@ -901,15 +901,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         }
 
         function storeStudentRecordsLocally(records, options = {}) {
-            const nextRecords = normalizeStudentRecords(records);
-            const previousSignature = JSON.stringify(studentRecords);
-            const nextSignature = JSON.stringify(nextRecords);
-            studentRecords = nextRecords;
+            studentRecords = normalizeStudentRecords(records);
             students = studentRecords.map(item => item.name);
-            if (previousSignature !== nextSignature) {
-                studentRosterRenderVersion++;
-                lastRosterRenderKey = '';
-            }
+            studentRosterRenderVersion++;
+            lastRosterRenderKey = '';
             const confirmedEmpty = options.confirmedEmpty === true && studentRecords.length === 0;
             studentRosterFallbackActive = false;
             localStorage.setItem('toe_students_roster', JSON.stringify(studentRecords));
