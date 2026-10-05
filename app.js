@@ -3206,6 +3206,25 @@ window.saveAttendanceNote=async function(){if(!editingAttendanceNoteStudent)retu
 
 function parseMinutes(text){const m=String(text||'').match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/);return m?{start:+m[1]*60+(+m[2]),end:+m[3]*60+(+m[4])}:null;}
 function homeMinutesLabel(total){const value=Math.max(0,Math.ceil(total));return value===1?'1 мин':`${value} мин`;}
+function homeDurationLabel(seconds){
+    const safe=Math.max(0,Math.floor(Number(seconds)||0));
+    const mins=Math.floor(safe/60);
+    const secs=safe%60;
+    return `${mins} мин ${String(secs).padStart(2,'0')} сек`;
+}
+function homeLiveMetrics(timeText, now=new Date()){
+    const range=parseMinutes(timeText);
+    if(!range || range.end<=range.start) return null;
+    const startSec=range.start*60;
+    const endSec=range.end*60;
+    const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+    const durationSec=endSec-startSec;
+    const elapsedSec=Math.max(0,Math.min(durationSec,nowSec-startSec));
+    const remainingSec=Math.max(0,endSec-nowSec);
+    const current=nowSec>=startSec&&nowSec<endSec;
+    const progress=current?Math.max(.1,Math.min(100,(elapsedSec/durationSec)*100)):0;
+    return {startSec,endSec,nowSec,durationSec,elapsedSec,remainingSec,current,progress};
+}
 function renderHomeReferenceDate(displayDate=new Date(),isNearestStudyDay=false){
     const dateEl=document.getElementById('home-reference-date');
     const weekdayEl=document.getElementById('home-reference-weekday');
@@ -3234,9 +3253,8 @@ function renderHomeLessonCard(entry,nowMinutes){
     const {it,index,r}=entry;
     const floor=getFloorFromRoom(it.room);
     const cancelled=!!it.cancelled||it.changeType==='cancel';
-    const current=!cancelled&&!!r&&nowMinutes>=r.start&&nowMinutes<r.end;
-    const remaining=current?r.end-nowMinutes:0;
-    const progress=current?Math.max(1,Math.min(100,((nowMinutes-r.start)/(r.end-r.start))*100)):0;
+    const live=nowMinutes>=0&&!cancelled?homeLiveMetrics(it.time):null;
+    const current=!!live?.current;
     const originalSubject=String(it.originalSubject||it.subject||'Занятие');
     const replacement=!cancelled&&['subject','replace'].includes(it.changeType)&&originalSubject!==it.subject;
     const changeMain=cancelled
@@ -3250,17 +3268,27 @@ function renderHomeLessonCard(entry,nowMinutes){
             <div><span>${translateUI(replacement?'Новый кабинет':'Кабинет')}</span><strong>${it.room||'—'}</strong></div>
             <div><span>${translateUI(replacement?'Новый этаж':'Этаж')}</span><strong>${floor||'—'}</strong></div>
         </div>`;
-    return `<article class="home-ref-lesson-card ${current?'current':''} ${cancelled?'cancelled':''} ${replacement?'replacement':''}">
+    const progressHtml=current&&live?`<div class="home-ref-progress-row" data-start-sec="${live.startSec}" data-end-sec="${live.endSec}">
+            <div class="home-ref-progress-top">
+                <span class="home-ref-progress-time"><i class="fa-regular fa-clock"></i>${it.time||''}</span>
+                <span class="home-ref-live-badge"><i></i>${translateUI('Идёт сейчас')}</span>
+                <strong class="home-ref-progress-remaining">${translateUI('Осталось')} <b data-live-remaining>${homeDurationLabel(live.remainingSec)}</b></strong>
+            </div>
+            <div class="home-ref-progress-line">
+                <div class="home-ref-progress"><i data-live-progress style="width:${live.progress}%"></i></div>
+                <strong class="home-ref-progress-percent" data-live-percent>${Math.round(live.progress)}%</strong>
+            </div>
+            <div class="home-ref-progress-bottom">
+                <span><span>${translateUI('Прошло')}:</span> <b data-live-elapsed>${homeDurationLabel(live.elapsedSec)}</b> ${translateUI('из')} <b data-live-total>${homeDurationLabel(live.durationSec)}</b></span>
+            </div>
+        </div>`:''; 
+    return `<article class="home-ref-lesson-card ${current?'current':''} ${cancelled?'cancelled':''} ${replacement?'replacement':''}" ${current&&live?`data-live-lesson="1" data-start-sec="${live.startSec}" data-end-sec="${live.endSec}"`:''}>
         <div class="home-ref-lesson-row">
             <div class="home-ref-lesson-number">${index+1}</div>
             <div class="home-ref-lesson-main">${changeMain}</div>
             ${meta}
         </div>
-        ${current?`<div class="home-ref-progress-row">
-            <div class="home-ref-progress-labels"><strong>Идёт урок</strong><span>Осталось ${homeMinutesLabel(remaining)}</span></div>
-            <div class="home-ref-progress"><i style="width:${progress}%"></i></div>
-            <div class="home-ref-progress-percent">${Math.round(progress)}%</div>
-        </div>`:''}
+        ${progressHtml}
     </article>`;
 }
 function renderHomeBreakCard(info,active=false,nowMinutes=0){
@@ -3344,12 +3372,44 @@ function renderHomeDayTimeline(){
     box.innerHTML=html;
     applyKzTranslations(box);
 }
-const homeTimelineTimer = setInterval(() => {
+function updateHomeLiveProgress(){
+    if(document.visibilityState!=='visible') return;
+    const homeView=document.getElementById('view-home');
+    if(!homeView||homeView.classList.contains('hidden')) return;
+    const card=homeView.querySelector('[data-live-lesson="1"]');
+    if(!card) return;
+    const startSec=Number(card.dataset.startSec);
+    const endSec=Number(card.dataset.endSec);
+    if(!Number.isFinite(startSec)||!Number.isFinite(endSec)||endSec<=startSec) return;
+    const now=new Date();
+    const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+    if(nowSec<startSec||nowSec>=endSec){
+        renderHomeDayTimeline();
+        return;
+    }
+    const durationSec=endSec-startSec;
+    const elapsedSec=Math.max(0,Math.min(durationSec,nowSec-startSec));
+    const remainingSec=Math.max(0,endSec-nowSec);
+    const progress=Math.max(.1,Math.min(100,(elapsedSec/durationSec)*100));
+    const bar=card.querySelector('[data-live-progress]');
+    const percent=card.querySelector('[data-live-percent]');
+    const remaining=card.querySelector('[data-live-remaining]');
+    const elapsed=card.querySelector('[data-live-elapsed]');
+    const total=card.querySelector('[data-live-total]');
+    if(bar) bar.style.width=`${progress}%`;
+    if(percent) percent.textContent=`${Math.round(progress)}%`;
+    if(remaining) remaining.textContent=homeDurationLabel(remainingSec);
+    if(elapsed) elapsed.textContent=homeDurationLabel(elapsedSec);
+    if(total) total.textContent=homeDurationLabel(durationSec);
+}
+const homeLiveProgressTimer=setInterval(updateHomeLiveProgress,1000);
+const homeTimelineTimer=setInterval(() => {
     if (document.visibilityState !== 'visible') return;
     const homeView = document.getElementById('view-home');
     if (homeView && !homeView.classList.contains('hidden')) renderHomeDayTimeline();
-},30000);
-setTimeout(renderHomeDayTimeline,80);
+},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){updateHomeLiveProgress();}});
+setTimeout(()=>{renderHomeDayTimeline();updateHomeLiveProgress();},80);
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
 function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}

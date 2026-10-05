@@ -4500,3 +4500,139 @@ button[onclick="openAppMenu()"]{position:relative}
 #menu-install-button:not(.is-installed){
   cursor:pointer;
 }
+
+
+/* ===== LIVE LESSON PROGRESS — step18.31 ===== */
+#view-home .home-ref-lesson-card.current{
+  border-color:rgba(99,72,226,.14)!important;
+  box-shadow:0 8px 28px rgba(73,66,145,.07)!important;
+}
+#view-home .home-ref-progress-row{
+  display:block!important;
+  padding:5px 14px 13px!important;
+  border-top:0!important;
+}
+#view-home .home-ref-progress-top{
+  display:grid;
+  grid-template-columns:auto auto minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+#view-home .home-ref-progress-time{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#61708e;
+  font-size:10.5px;
+  font-weight:650;
+  white-space:nowrap;
+}
+#view-home .home-ref-progress-time i{
+  color:#6175a5;
+  font-size:11px;
+}
+#view-home .home-ref-live-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  width:max-content;
+  min-height:24px;
+  padding:0 9px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#d9f8df,#ccf2d6);
+  color:#16903a;
+  font-size:9.5px;
+  font-weight:850;
+  white-space:nowrap;
+  box-shadow:inset 0 0 0 1px rgba(35,169,71,.05);
+}
+#view-home .home-ref-live-badge>i{
+  width:7px;
+  height:7px;
+  flex:0 0 7px;
+  border-radius:50%;
+  background:#20c552;
+  box-shadow:0 0 0 4px rgba(32,197,82,.09);
+}
+#view-home .home-ref-progress-remaining{
+  justify-self:end;
+  color:#1d2742;
+  font-size:10px;
+  font-weight:650;
+  white-space:nowrap;
+}
+#view-home .home-ref-progress-remaining b{
+  font-weight:850;
+}
+#view-home .home-ref-progress-line{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 46px;
+  align-items:center;
+  gap:10px;
+}
+#view-home .home-ref-progress{
+  position:relative;
+  width:100%;
+  height:8px!important;
+  overflow:hidden;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,#e7e9f4,#edf0f7)!important;
+  box-shadow:inset 0 1px 2px rgba(50,59,100,.06);
+}
+#view-home .home-ref-progress>i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#7655ef 0%,#5b45f1 58%,#523ef0 100%)!important;
+  box-shadow:0 0 9px rgba(93,67,239,.23);
+  transition:width .9s linear;
+  will-change:width;
+}
+#view-home .home-ref-progress-percent{
+  justify-self:end;
+  min-width:42px;
+  color:#5a3df0!important;
+  font-size:11px!important;
+  font-weight:850;
+  text-align:right;
+}
+#view-home .home-ref-progress-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:7px;
+  color:#7a879f;
+  font-size:9.5px;
+  line-height:1.25;
+}
+#view-home .home-ref-progress-bottom b{
+  color:#65728c;
+  font-weight:700;
+}
+@media(max-width:520px){
+  #view-home .home-ref-progress-row{
+    padding:4px 10px 12px!important;
+  }
+  #view-home .home-ref-progress-top{
+    grid-template-columns:auto auto;
+    gap:7px;
+  }
+  #view-home .home-ref-progress-remaining{
+    grid-column:1/-1;
+    justify-self:end;
+    margin-top:-1px;
+  }
+  #view-home .home-ref-progress-line{
+    grid-template-columns:minmax(0,1fr) 40px;
+    gap:7px;
+  }
+  #view-home .home-ref-progress-bottom{
+    font-size:8.5px;
+  }
+}
+@media(max-width:350px){
+  #view-home .home-ref-progress-time{font-size:9px}
+  #view-home .home-ref-live-badge{font-size:8.5px;padding:0 7px}
+  #view-home .home-ref-progress-remaining{font-size:9px}
+}
