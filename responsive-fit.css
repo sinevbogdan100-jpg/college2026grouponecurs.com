@@ -2937,3 +2937,87 @@ body.group-tools-open { overflow: hidden; }
   .gt-history-values { grid-template-columns: 1fr; }
   .gt-selects { flex-wrap: wrap; }
 }
+
+
+/* ===== HARD MOBILE PERFORMANCE — step18.50 =====
+   Same interface, less GPU/paint work on phones and installed PWA. */
+@media (max-width:767px), (hover:none) and (pointer:coarse){
+  html{scroll-behavior:auto!important}
+  body{overscroll-behavior-x:none}
+
+  button,[role="button"],a,input,select,textarea,label{
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  :is(
+    .app-overlay,
+    .bell-editor-overlay,
+    #admin-settings-modal,
+    #schedule-editor-modal,
+    #report-preview-modal,
+    .system-status-banner,
+    .app-update-bar,
+    .undo-action-bar,
+    .bottom-nav
+  ){
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+
+  :is(
+    .sheet-panel,
+    .app-drawer,
+    .bell-editor-sheet,
+    .schedule-editor-sheet,
+    .report-preview-sheet,
+    .system-status-banner,
+    .app-update-bar,
+    .undo-action-bar
+  ){
+    box-shadow:0 4px 14px rgba(26,39,68,.10)!important;
+  }
+
+  .section-skeleton,
+  .section-skeleton *,
+  .skeleton-shape{
+    animation:none!important;
+  }
+  .skeleton-shape{background:#edf1f7!important}
+
+  :is(
+    #view-home .home-ref-lesson-card,
+    #view-home .home-ref-break-card,
+    #view-home .home-day-status,
+    #view-tracker .journal-ref-row,
+    #view-roster .roster-person-card,
+    #view-schedule .schedule-ref-row,
+    #view-schedule .schedule-ref-break,
+    .notification-item,
+    .support-message
+  ){
+    contain:layout paint style;
+  }
+
+  :is(
+    #bottom-nav button,
+    .home-ref-topbtn,
+    .journal-ref-topbtn,
+    .schedule-ref-topbtn,
+    .roster-ref-topbtn,
+    .schedule-ref-date-arrow,
+    .schedule-ref-days button
+  ){
+    transition-duration:.08s!important;
+  }
+
+  .ui-refreshing,
+  .ui-refreshing-soft,
+  .is-view-entering{
+    animation:none!important;
+  }
+
+  :is(#view-home,#view-tracker,#view-roster,#view-schedule,.app-drawer,.sheet-panel){
+    will-change:auto!important;
+  }
+}
