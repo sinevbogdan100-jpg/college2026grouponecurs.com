@@ -2189,6 +2189,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             updateAdminUI();
             renderApp();
             renderSchedule(getCurrentScheduleDay());
+            if (navigator.onLine && offlinePendingCount() > 0) void flushOfflineQueue({ silent:true });
         }
 
         async function persistAdminPermissionsToCloud(nextPermissions) {
