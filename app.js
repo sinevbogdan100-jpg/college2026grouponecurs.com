@@ -3628,8 +3628,9 @@ function renderHomeDayStatus({mode,entry,nextEntry,breakInfo,nowMinutes}){
     }
 
     const remain=targetSec>0?Math.max(0,targetSec-nowSec):0;
+    const timerLabel=mode==='lesson'?'До конца':mode==='break'?'До пары':'До начала';
     const countdown=targetSec>0
-        ? `<strong class="home-day-status-countdown" data-home-status-countdown data-target-sec="${targetSec}">${homeDurationLabel(remain)}</strong>`
+        ? `<div class="home-day-status-timer"><span>${translateUI(timerLabel)}</span><strong class="home-day-status-countdown" data-home-status-countdown data-target-sec="${targetSec}">${homeDurationLabel(remain)}</strong></div>`
         : '';
 
     return `<div class="home-day-status ${mode||''}" data-home-day-status>
