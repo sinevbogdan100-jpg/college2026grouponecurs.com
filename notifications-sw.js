@@ -43,8 +43,13 @@ self.addEventListener('install', event => {
         if (response.ok || response.type === 'opaque') await cache.put(url, response);
       } catch (_) {}
     }));
-    await self.skipWaiting();
   })());
+});
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', event => {
