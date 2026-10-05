@@ -41,7 +41,8 @@ import {
     renderSchedule,
     getCurrentScheduleDay,
     getScheduleDataForWeek,
-    restoreScheduleSelection
+    restoreScheduleSelection,
+    syncPendingScheduleData
 } from "./schedule.js?v=20261005-error-system-v1";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-live-progress-v2";
 
@@ -341,10 +342,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         function syncSystemStatus(options = {}) {
             if (!navigator.onLine) {
+                const pending = typeof offlinePendingCount === 'function' ? offlinePendingCount() : 0;
                 setSystemStatus(
                     'offline',
                     'Нет интернета',
-                    'Показываем сохранённые данные. Облачные обновления временно недоступны.',
+                    pending
+                        ? `Работаем с данными на устройстве. Ожидают синхронизации: ${pending}.`
+                        : 'Показываем сохранённые данные. Облачные обновления временно недоступны.',
                     { key:'offline', dismissible:false }
                 );
                 return;
@@ -374,6 +378,187 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             }
         }
 
+        const OFFLINE_QUEUE_KEY = 'toe_offline_queue_v1';
+        let offlineFlushInFlight = false;
+        let onlineReconnectInFlight = false;
+
+        function emptyOfflineQueue() {
+            return { attendance:{}, groupInfo:null, students:null, updatedAt:'' };
+        }
+
+        function readOfflineQueue() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || 'null');
+                if (!parsed || typeof parsed !== 'object') return emptyOfflineQueue();
+                return {
+                    attendance: parsed.attendance && typeof parsed.attendance === 'object' ? parsed.attendance : {},
+                    groupInfo: parsed.groupInfo || null,
+                    students: Array.isArray(parsed.students) ? parsed.students : null,
+                    updatedAt: String(parsed.updatedAt || '')
+                };
+            } catch (_) {
+                return emptyOfflineQueue();
+            }
+        }
+
+        function offlinePendingCount() {
+            const queue = readOfflineQueue();
+            let count = Object.keys(queue.attendance || {}).length;
+            if (queue.groupInfo) count++;
+            if (Array.isArray(queue.students)) count++;
+            try { if (localStorage.getItem('toe_pending_schedule_v1')) count++; } catch (_) {}
+            return count;
+        }
+
+        function hasOfflineQueueData(queue = readOfflineQueue()) {
+            return Object.keys(queue.attendance || {}).length > 0 ||
+                !!queue.groupInfo ||
+                Array.isArray(queue.students);
+        }
+
+        async function writeOfflineQueue(queue) {
+            const normalized = {
+                attendance: queue?.attendance && typeof queue.attendance === 'object' ? queue.attendance : {},
+                groupInfo: queue?.groupInfo || null,
+                students: Array.isArray(queue?.students) ? queue.students : null,
+                updatedAt: new Date().toISOString()
+            };
+            if (!hasOfflineQueueData(normalized)) {
+                localStorage.removeItem(OFFLINE_QUEUE_KEY);
+                try { await dbDelete(OFFLINE_QUEUE_KEY); } catch (_) {}
+                return normalized;
+            }
+            await savePersistentValue(OFFLINE_QUEUE_KEY, JSON.stringify(normalized));
+            return normalized;
+        }
+
+        async function queueOfflineChange(kind, payload, key = '') {
+            const queue = readOfflineQueue();
+            if (kind === 'attendance' && key) queue.attendance[key] = payload;
+            else if (kind === 'groupInfo') queue.groupInfo = payload;
+            else if (kind === 'students') queue.students = payload;
+            await writeOfflineQueue(queue);
+            refreshSettingsSystem?.();
+            if (!navigator.onLine) syncSystemStatus();
+        }
+
+        async function clearOfflineChange(kind, key = '') {
+            const queue = readOfflineQueue();
+            if (kind === 'attendance' && key) delete queue.attendance[key];
+            else if (kind === 'groupInfo') queue.groupInfo = null;
+            else if (kind === 'students') queue.students = null;
+            await writeOfflineQueue(queue);
+            refreshSettingsSystem?.();
+        }
+
+        async function flushOfflineQueue(options = {}) {
+            if (offlineFlushInFlight || !navigator.onLine || !isCloudConnected || !db || !auth?.currentUser) return false;
+            const queue = readOfflineQueue();
+            const hadAppQueue = hasOfflineQueueData(queue);
+            const hadScheduleQueue = !!localStorage.getItem('toe_pending_schedule_v1');
+            if (!hadAppQueue && !hadScheduleQueue) return true;
+
+            offlineFlushInFlight = true;
+            let allOk = true;
+            try {
+                for (const [date, payload] of Object.entries(queue.attendance || {})) {
+                    if (!payload || typeof payload !== 'object') {
+                        await clearOfflineChange('attendance', date);
+                        continue;
+                    }
+                    if (!canEditJournal()) { allOk = false; continue; }
+                    try {
+                        await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', date), payload, { merge:false });
+                        attendanceArchive[date] = payload;
+                        await clearOfflineChange('attendance', date);
+                    } catch (e) {
+                        allOk = false;
+                        reportAppError('journal-offline-sync', e, { localSaved:true });
+                    }
+                }
+
+                const latestQueue = readOfflineQueue();
+                if (latestQueue.groupInfo) {
+                    if (!canEditGroupInfo()) {
+                        allOk = false;
+                    } else {
+                        const info = normalizeGroupInfoCloudData(latestQueue.groupInfo);
+                        const payload = {
+                            ...DEFAULT_GROUP_INFO,
+                            ...info,
+                            updatedAt: new Date().toISOString(),
+                            build: window.__SITE_BUILD__
+                        };
+                        try {
+                            await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', GROUP_INFO_DOC_ID), payload, { merge:false });
+                            lastGroupInfoUpdatedAt = payload.updatedAt;
+                            saveGroupInfoLocally(info);
+                            await clearOfflineChange('groupInfo');
+                        } catch (e) {
+                            allOk = false;
+                            reportAppError('group-offline-sync', e, { localSaved:true });
+                        }
+                    }
+                }
+
+                const afterGroupQueue = readOfflineQueue();
+                if (Array.isArray(afterGroupQueue.students)) {
+                    if (!canManageStudents()) {
+                        allOk = false;
+                    } else {
+                        const normalized = normalizeStudentRecords(afterGroupQueue.students);
+                        const payload = {
+                            students: normalized,
+                            emptyRosterConfirmed: normalized.length === 0,
+                            updatedAt: new Date().toISOString(),
+                            build: window.__SITE_BUILD__
+                        };
+                        try {
+                            await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID), payload, { merge:false });
+                            lastStudentsUpdatedAt = payload.updatedAt;
+                            storeStudentRecordsLocally(normalized, { confirmedEmpty:normalized.length === 0 });
+                            syncStudentCountLocally();
+                            renderStudentDependentViews();
+                            await clearOfflineChange('students');
+                        } catch (e) {
+                            allOk = false;
+                            reportAppError('roster-offline-sync', e, { localSaved:true });
+                        }
+                    }
+                }
+
+                const scheduleOk = await syncPendingScheduleData();
+                if (!scheduleOk) allOk = false;
+
+                const left = offlinePendingCount();
+                if (allOk && left === 0 && !options.silent) {
+                    setSystemStatus(
+                        'success',
+                        'Офлайн-изменения синхронизированы',
+                        'Все сохранённые на устройстве изменения отправлены в облако.',
+                        { key:'offline-synced', autoHide:3000, dismissible:false }
+                    );
+                }
+                refreshSettingsSystem?.();
+                return allOk && left === 0;
+            } finally {
+                offlineFlushInFlight = false;
+            }
+        }
+
+        async function reconnectAndFlushOfflineQueue() {
+            if (onlineReconnectInFlight || !navigator.onLine) return;
+            onlineReconnectInFlight = true;
+            try {
+                if (!isCloudConnected || !db || !auth?.currentUser) await initFirebase();
+                if (isCloudConnected && db && auth?.currentUser) await flushOfflineQueue();
+            } catch (e) {
+                reportAppError('offline-reconnect', e, { localSaved:true });
+            } finally {
+                onlineReconnectInFlight = false;
+            }
+        }
+
         window.addEventListener('offline', () => {
             lastKnownOnlineState = false;
             syncSystemStatus();
@@ -386,6 +571,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (wasOffline && isCloudConnected) syncSystemStatus({ recovered:true });
             else syncSystemStatus();
             refreshSettingsSystem?.();
+            void reconnectAndFlushOfflineQueue();
         });
         let attendanceUnsubscribe = null;
         let attendanceArchiveUnsubscribe = null;
@@ -1870,9 +2056,16 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (version) version.textContent = getSiteVersion(document.querySelector('meta[name="app-build"]')?.content);
             const sync = document.getElementById('settings-sync-status');
             if (!sync) return;
-            if (!navigator.onLine) sync.textContent = translateUI('Офлайн — используются сохранённые данные');
-            else if (isCloudConnected) sync.textContent = translateUI('Подключено к облаку');
-            else sync.textContent = translateUI('Облако временно недоступно');
+            const pending = offlinePendingCount();
+            if (!navigator.onLine) {
+                sync.textContent = translateUI(pending ? `Офлайн — ожидают синхронизации: ${pending}` : 'Офлайн — используются сохранённые данные');
+            } else if (pending > 0) {
+                sync.textContent = translateUI(`Подключено — синхронизация изменений: ${pending}`);
+            } else if (isCloudConnected) {
+                sync.textContent = translateUI('Подключено к облаку');
+            } else {
+                sync.textContent = translateUI('Облако временно недоступно');
+            }
         }
 
         // Настройки доступа: владелец + два администратора. Обычные посетители работают без входа.
