@@ -4061,7 +4061,7 @@ function renderHomeDayStatus({mode,entry,nextEntry,breakInfo,nowMinutes}){
         targetSec=nextEntry.r.start*60;
         detail=`Начало в ${homeTimeLabel(nextEntry.r.start)}`;
     }else if(mode==='nearest'&&nextEntry){
-        title=`Ближайшая: ${nextEntry.it?.subject||'Занятие'}`;
+        title=`Ближайший урок: ${nextEntry.it?.subject||'Занятие'}`;
         eyebrow='Следующий учебный день';
         icon='fa-calendar-day';
         detail=`Начало в ${homeTimeLabel(nextEntry.r.start)}`;
