@@ -111,12 +111,17 @@ service cloud.firestore {
         && request.resource.data.changes.size() <= 1000
         && ((request.resource.data.kind == 'attendance'
               && request.resource.data.target is string
-              && request.resource.data.target.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}{threadId} {
+              && request.resource.data.target.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+      allow update, delete: if false;
+    }
+
+    match /toe_group/shared/support/{threadId} {
       allow read, write: if isOwner() || admin1Has('support') || admin2Has('support') || (signedIn() && threadId == request.auth.uid);
     }
 
   }
 }
+
 )
               && hasPermission('journal'))
             || (request.resource.data.kind == 'schedule'
