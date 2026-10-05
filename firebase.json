@@ -15,11 +15,5 @@
   ],
   "firestore": {
     "rules": "firestore.rules"
-  },
-  "auth": {
-    "providers": {
-      "anonymous": true,
-      "emailPassword": true
-    }
   }
 }
