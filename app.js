@@ -823,7 +823,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const record = typeof recordOrName === 'string' ? getStudentRecordByName(recordOrName) : (recordOrName || {});
             const cls = ['student-profile-avatar', record.gender || 'neutral', className].filter(Boolean).join(' ');
             if (record.avatar && /^data:image\//i.test(record.avatar)) {
-                return `<span class="${cls} has-photo"><img src="${record.avatar}" alt=""></span>`;
+                return `<span class="${cls} has-photo"><img src="${record.avatar}" alt="" loading="lazy" decoding="async"></span>`;
             }
             return `<span class="${cls}"><i class="fa-solid fa-user"></i></span>`;
         }
@@ -851,6 +851,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         let studentRecords = readLocalStudentRecords();
         let students = studentRecords.map(item => item.name);
+        let studentRosterRenderVersion = 1;
+        let lastRosterRenderKey = '';
 
         function recoverJournalStudentNames(dateStr) {
             const names = new Set();
@@ -899,8 +901,15 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         }
 
         function storeStudentRecordsLocally(records, options = {}) {
-            studentRecords = normalizeStudentRecords(records);
+            const nextRecords = normalizeStudentRecords(records);
+            const previousSignature = JSON.stringify(studentRecords);
+            const nextSignature = JSON.stringify(nextRecords);
+            studentRecords = nextRecords;
             students = studentRecords.map(item => item.name);
+            if (previousSignature !== nextSignature) {
+                studentRosterRenderVersion++;
+                lastRosterRenderKey = '';
+            }
             const confirmedEmpty = options.confirmedEmpty === true && studentRecords.length === 0;
             studentRosterFallbackActive = false;
             localStorage.setItem('toe_students_roster', JSON.stringify(studentRecords));
@@ -2857,14 +2866,16 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         function renderRosterList() {
             const container = document.getElementById('roster-container');
             if (!container) return;
-            const fragment = document.createDocumentFragment();
             const info = getGroupInfo();
             const rc=document.getElementById('roster-curator'), rh=document.getElementById('roster-headman'), rd=document.getElementById('roster-deputy');
             if(rc) rc.textContent=info.curator||'—';
             if(rh) rh.textContent=info.headman||'—';
             if(rd) rd.textContent=info.deputy||'—';
             const editable = canManageStudents();
+            const renderKey = `${studentRosterRenderVersion}|${editable?'edit':'view'}`;
+            if (renderKey === lastRosterRenderKey && container.childElementCount === studentRecords.length) return;
 
+            const fragment = document.createDocumentFragment();
             studentRecords.forEach((record, index) => {
                 const item = document.createElement('div');
                 item.className = 'roster-person-card';
@@ -2880,6 +2891,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 fragment.appendChild(item);
             });
             container.replaceChildren(fragment);
+            lastRosterRenderKey = renderKey;
         }
 
         let studentProfileEditIndex = -1;
