@@ -44,7 +44,7 @@ import {
     restoreScheduleSelection,
     syncPendingScheduleData
 } from "./schedule.js?v=20261005-performance-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-live-progress-v2";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-home-language-branding-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -4061,7 +4061,7 @@ function renderHomeDayStatus({mode,entry,nextEntry,breakInfo,nowMinutes}){
         targetSec=nextEntry.r.start*60;
         detail=`Начало в ${homeTimeLabel(nextEntry.r.start)}`;
     }else if(mode==='nearest'&&nextEntry){
-        title=`Ближайшая: ${nextEntry.it?.subject||'Занятие'}`;
+        title=`Ближайший урок: ${nextEntry.it?.subject||'Занятие'}`;
         eyebrow='Следующий учебный день';
         icon='fa-calendar-day';
         detail=`Начало в ${homeTimeLabel(nextEntry.r.start)}`;
