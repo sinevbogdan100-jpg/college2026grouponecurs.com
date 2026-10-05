@@ -4177,6 +4177,10 @@ function notificationVisualMeta(item={}){
         return {key:'system',label:'Система',icon:'fa-circle-info'};
     }
 
+    if(rawType==='important_announcement' || item.priority==='important'){
+        return {key:'important',label:'Важно',icon:'fa-triangle-exclamation'};
+    }
+
     return {key:'announcement',label:'Объявление',icon:'fa-bullhorn'};
 }
 function updateNotificationBadge(){const badge=document.getElementById('notification-badge');if(!badge)return;const read=getReadNotificationIds();const unread=notificationsCache.filter(n=>!read.has(n.id)).length;badge.textContent=String(unread);badge.classList.toggle('hidden',unread===0);}
@@ -4281,8 +4285,14 @@ function subscribeNotifications(){
                 const meta=notificationVisualMeta(item);
                 notificationCenter.incoming({
                     key:`event:${item.id}`,
-                    title:meta.key==='announcement'?translateUI('Новое объявление'):notificationTitleForLocale(item),
-                    body:meta.key==='announcement'?notificationTitleForLocale(item):notificationTextForLocale(item),
+                    title:meta.key==='announcement'
+                        ? translateUI('Новое объявление')
+                        : meta.key==='important'
+                            ? translateUI('Важное объявление')
+                            : notificationTitleForLocale(item),
+                    body:(meta.key==='announcement'||meta.key==='important')
+                        ? notificationTitleForLocale(item)
+                        : notificationTextForLocale(item),
                     kind:'events'
                 });
             });
@@ -4298,13 +4308,23 @@ window.publishNotification=async function(){
     if(!canPublishNotifications()){showToast('Нет права публиковать уведомления');return;}
     if(!db||!auth?.currentUser){showToast('Нет подключения к облаку');return;}
     const titleField=document.getElementById('notification-title'),textField=document.getElementById('notification-text');
+    const priorityField=document.getElementById('notification-priority');
+    const priority=priorityField?.value==='important'?'important':'normal';
     const title=titleField?.value.trim()||'',text=textField?.value.trim()||'';
     if(!title&&!text){showToast('Введите заголовок или текст');return;}
     const button=document.getElementById('notification-publish-button');publishingNotification=true;if(button)button.disabled=true;
     const id=`n_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
     try{
-        await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{title:title||'Объявление',text,createdAt:new Date().toISOString(),author:currentAccountLogin||'Владелец',authorUid:auth.currentUser.uid,type:'announcement'});
-        if(titleField?.value.trim()===title)titleField.value='';if(textField?.value.trim()===text)textField.value='';
+        await setDoc(doc(db,...CLOUD_ROOT,'notifications',id),{
+            title:title||(priority==='important'?'Важное объявление':'Объявление'),
+            text,
+            createdAt:new Date().toISOString(),
+            author:currentAccountLogin||'Владелец',
+            authorUid:auth.currentUser.uid,
+            type:priority==='important'?'important_announcement':'announcement',
+            priority
+        });
+        if(titleField?.value.trim()===title)titleField.value='';if(textField?.value.trim()===text)textField.value='';if(priorityField)priorityField.value='normal';
         showToast('Уведомление опубликовано');
     }catch(error){console.warn('publish notification',error);showToast(error.code==='permission-denied'?'Нет права публиковать уведомления':'Не удалось опубликовать уведомление');}
     finally{publishingNotification=false;if(button)button.disabled=false;}
