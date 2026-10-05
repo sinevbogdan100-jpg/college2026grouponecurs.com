@@ -585,6 +585,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let attendanceArchive = {};
         let groupInfoUnsubscribe = null;
         let groupInfoPollTimer = null;
+        let groupInfoRealtimeHealthy = false;
         let lastGroupInfoUpdatedAt = '';
         let rosterStatsUnsubscribe = null;
         let rosterStatsReady = false;
@@ -594,6 +595,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let rosterStatsRebuildPending = false;
         let studentsUnsubscribe = null;
         let studentsPollTimer = null;
+        let studentsRealtimeHealthy = false;
         let lastStudentsUpdatedAt = '';
         const GROUP_INFO_DOC_ID = 'group_info_shared';
         const ROSTER_STATS_DOC_ID = 'roster_stats_shared';
@@ -619,6 +621,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         };
         let adminPermissionsUnsubscribe = null;
         let adminPermissionsPollTimer = null;
+        let adminPermissionsRealtimeHealthy = false;
         let lastAdminPermissionsUpdatedAt = '';
 
         // Три фиксированные учётные записи редакторов. Пароли никогда не хранятся в коде.
@@ -964,7 +967,6 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
             updateWeekTypeButtons(currentWeekType);
             renderApp();
-            renderRosterList();
 
             // Если дата изменена офлайн, локальная версия имеет приоритет до синхронизации.
             const pendingAttendance = readOfflineQueue().attendance?.[dateStr];
@@ -1037,7 +1039,11 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 }
             };
             poll();
-            attendancePollTimer = setInterval(() => { if (document.visibilityState === 'visible') void poll(); }, 30000);
+            attendancePollTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible') return;
+                if (window.__attendanceListenerActive) return;
+                void poll();
+            }, 120000);
             window.__attendanceFallbackActive = true;
         }
 
@@ -1707,7 +1713,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         function startGroupInfoPolling() {
             if (groupInfoPollTimer) clearInterval(groupInfoPollTimer);
-            groupInfoPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollGroupInfoOnce(); }, 30000);
+            groupInfoPollTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible' || groupInfoRealtimeHealthy) return;
+                void pollGroupInfoOnce();
+            }, 120000);
         }
 
         function subscribeToGroupInfo() {
@@ -1719,6 +1728,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const ref = doc(db, ...CLOUD_ROOT, 'attendance_records', GROUP_INFO_DOC_ID);
             try {
                 groupInfoUnsubscribe = onSnapshot(ref, async snap => {
+                    groupInfoRealtimeHealthy = true;
                     if (snap.exists()) {
                         applyCloudGroupInfo(snap.data() || {});
                         return;
@@ -1738,11 +1748,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     // Первый облачный документ может создать только владелец.
                     if (canEditGroupInfo()) await persistGroupInfoToCloud(getGroupInfo());
                 }, err => {
+                    groupInfoRealtimeHealthy = false;
                     reportAppError('group-realtime', err, { localSaved:true });
                 });
                 startGroupInfoPolling();
                 return true;
             } catch (e) {
+                groupInfoRealtimeHealthy = false;
                 reportAppError('group-realtime', e, { localSaved:true });
                 startGroupInfoPolling();
                 return false;
@@ -1751,11 +1763,15 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         function renderStudentDependentViews() {
             renderGroupInfo();
-            const roster = document.getElementById('roster-container');
-            if (roster) renderRosterList();
-            const journal = document.getElementById('students-container');
-            if (journal) renderApp();
-            renderMiniCalendar();
+
+            const rosterView = document.getElementById('view-roster');
+            if (rosterView && !rosterView.classList.contains('hidden')) renderRosterList();
+
+            const trackerView = document.getElementById('view-tracker');
+            if (trackerView && !trackerView.classList.contains('hidden')) {
+                renderApp();
+                renderMiniCalendar();
+            }
         }
 
         function syncStudentCountLocally() {
@@ -1855,7 +1871,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         function startStudentsPolling() {
             if (studentsPollTimer) clearInterval(studentsPollTimer);
-            studentsPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollStudentsOnce(); }, 30000);
+            studentsPollTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible' || studentsRealtimeHealthy) return;
+                void pollStudentsOnce();
+            }, 120000);
         }
 
         function subscribeToStudents() {
@@ -1867,17 +1886,20 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const ref = doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID);
             try {
                 studentsUnsubscribe = onSnapshot(ref, async snap => {
+                    studentsRealtimeHealthy = true;
                     if (snap.exists()) {
                         applyStudentsPayload(snap.data() || {});
                     } else if (canManageStudents()) {
                         await persistStudentsToCloud(studentRecords);
                     }
                 }, err => {
+                    studentsRealtimeHealthy = false;
                     reportAppError('roster-realtime', err, { localSaved:true });
                 });
                 startStudentsPolling();
                 return true;
             } catch (e) {
+                studentsRealtimeHealthy = false;
                 reportAppError('roster-realtime', e, { localSaved:true });
                 startStudentsPolling();
                 return false;
@@ -2254,7 +2276,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         function startAdminPermissionsPolling() {
             if (adminPermissionsPollTimer) clearInterval(adminPermissionsPollTimer);
-            adminPermissionsPollTimer = setInterval(() => { if (document.visibilityState === 'visible') void pollAdminPermissionsOnce(); }, 30000);
+            adminPermissionsPollTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible' || adminPermissionsRealtimeHealthy) return;
+                void pollAdminPermissionsOnce();
+            }, 180000);
         }
 
         function subscribeToAdminPermissions() {
@@ -2266,13 +2291,16 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const ref = doc(db, ...CLOUD_ROOT, 'access', ADMIN_PERMISSIONS_DOC_ID);
             try {
                 adminPermissionsUnsubscribe = onSnapshot(ref, snap => {
+                    adminPermissionsRealtimeHealthy = true;
                     if (snap.exists()) applyAdminPermissionsPayload(snap.data() || {});
                 }, err => {
+                    adminPermissionsRealtimeHealthy = false;
                     console.warn('Realtime admin permissions error', err);
                 });
                 startAdminPermissionsPolling();
                 return true;
             } catch (e) {
+                adminPermissionsRealtimeHealthy = false;
                 console.warn('Admin permissions listener registration error', e);
                 startAdminPermissionsPolling();
                 return false;
