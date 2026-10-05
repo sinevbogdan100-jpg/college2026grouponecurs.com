@@ -3568,6 +3568,55 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 toast.classList.add('-translate-y-20', 'opacity-0');
             }, Math.max(1600, Number(duration) || 2600));
         }
+
+        let undoActionTimer = null;
+        let undoActionHandler = null;
+        let undoActionBusy = false;
+
+        function hideUndoAction() {
+            const bar = document.getElementById('undo-action-bar');
+            clearTimeout(undoActionTimer);
+            undoActionTimer = null;
+            undoActionHandler = null;
+            undoActionBusy = false;
+            if (bar) bar.classList.add('hidden');
+        }
+
+        window.showUndoAction = function(message, undoHandler, duration = 6000) {
+            const bar = document.getElementById('undo-action-bar');
+            const messageEl = document.getElementById('undo-action-message');
+            const button = document.getElementById('undo-action-button');
+            const close = document.getElementById('undo-action-close');
+            if (!bar || !messageEl || !button || typeof undoHandler !== 'function') return;
+
+            clearTimeout(undoActionTimer);
+            undoActionHandler = undoHandler;
+            undoActionBusy = false;
+            messageEl.textContent = translateUI(message);
+            button.disabled = false;
+            button.textContent = translateUI('Отменить');
+            bar.classList.remove('hidden');
+
+            button.onclick = async () => {
+                if (undoActionBusy || typeof undoActionHandler !== 'function') return;
+                undoActionBusy = true;
+                button.disabled = true;
+                button.textContent = translateUI('Восстановление…');
+                const handler = undoActionHandler;
+                try {
+                    await handler();
+                    hideUndoAction();
+                    showToast('Действие отменено', 'success');
+                } catch (error) {
+                    undoActionBusy = false;
+                    button.disabled = false;
+                    button.textContent = translateUI('Отменить');
+                    reportAppError('undo-action', error, { localSaved:true });
+                }
+            };
+            close.onclick = hideUndoAction;
+            undoActionTimer = setTimeout(hideUndoAction, Math.max(3500, Number(duration) || 6000));
+        };
     
         // Режим отображения: телефон / ПК
         window.setDeviceMode = function(mode) {
