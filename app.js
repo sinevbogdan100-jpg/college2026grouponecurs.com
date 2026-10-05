@@ -2587,6 +2587,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             if (!fromReload) replayUiAnimation(targetView, 'is-view-entering', 240);
             currentVisibleView = viewName;
             restoreScrollPosition(viewName);
+            window.refreshHomeTimers?.();
         };
 
 
@@ -4217,14 +4218,47 @@ function updateHomeLiveProgress(){
     if(elapsed) elapsed.textContent=homeDurationLabel(elapsedSec);
     if(total) total.textContent=homeDurationLabel(durationSec);
 }
-const homeLiveProgressTimer=setInterval(updateHomeLiveProgress,1000);
-const homeTimelineTimer=setInterval(() => {
-    if (document.visibilityState !== 'visible') return;
-    const homeView = document.getElementById('view-home');
-    if (homeView && !homeView.classList.contains('hidden')) renderHomeDayTimeline();
-},60000);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){updateHomeLiveProgress();}});
-setTimeout(()=>{renderHomeDayTimeline();updateHomeLiveProgress();},80);
+let homeLiveProgressTimer=null;
+let homeTimelineTimer=null;
+
+function homeViewIsActive(){
+    const homeView=document.getElementById('view-home');
+    return document.visibilityState==='visible' && !!homeView && !homeView.classList.contains('hidden');
+}
+function scheduleHomeLiveProgress(delay=1000){
+    clearTimeout(homeLiveProgressTimer);
+    homeLiveProgressTimer=null;
+    if(!homeViewIsActive())return;
+    homeLiveProgressTimer=setTimeout(()=>{
+        updateHomeLiveProgress();
+        scheduleHomeLiveProgress(1000);
+    },Math.max(0,delay));
+}
+function scheduleHomeTimelineRefresh(delay=300000){
+    clearTimeout(homeTimelineTimer);
+    homeTimelineTimer=null;
+    if(!homeViewIsActive())return;
+    homeTimelineTimer=setTimeout(()=>{
+        renderHomeDayTimeline();
+        updateHomeLiveProgress();
+        scheduleHomeTimelineRefresh(300000);
+    },Math.max(1000,delay));
+}
+function refreshHomeTimers(){
+    if(!homeViewIsActive()){
+        clearTimeout(homeLiveProgressTimer);
+        clearTimeout(homeTimelineTimer);
+        homeLiveProgressTimer=null;
+        homeTimelineTimer=null;
+        return;
+    }
+    updateHomeLiveProgress();
+    scheduleHomeLiveProgress(1000);
+    scheduleHomeTimelineRefresh(300000);
+}
+window.refreshHomeTimers=refreshHomeTimers;
+document.addEventListener('visibilitychange',refreshHomeTimers);
+setTimeout(()=>{renderHomeDayTimeline();refreshHomeTimers();},80);
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';
 function getReadNotificationIds(){try{return new Set(JSON.parse(localStorage.getItem(NOTIFICATIONS_READ_KEY)||'[]'));}catch(e){return new Set();}}
