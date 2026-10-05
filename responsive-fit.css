@@ -2751,3 +2751,12 @@ body:has(.undo-action-bar:not(.hidden)) .app-update-bar:not(.hidden){
 @media(prefers-reduced-motion:reduce){
   .app-update-bar{animation:none!important}
 }
+
+
+/* Prevent the browser's blue tap/click halo without removing keyboard focus. */
+:where(button,a,[role="button"],summary,label[for],input,select,textarea){
+  -webkit-tap-highlight-color:transparent;
+}
+:where(button,a,[role="button"],summary,input,select,textarea):focus:not(:focus-visible){
+  outline:none!important;
+}
