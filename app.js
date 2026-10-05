@@ -4206,7 +4206,7 @@ function renderNotifications(){
     if(!box)return;
     const read=getReadNotificationIds();
     if(!notificationsCache.length){
-        box.innerHTML='<div class="empty-state">Новых объявлений пока нет.</div>';
+        box.innerHTML='<div class="empty-state">Новых уведомлений пока нет.</div>';
         return;
     }
     const canDelete=canPublishNotifications();
