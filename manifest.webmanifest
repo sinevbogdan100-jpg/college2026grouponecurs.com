@@ -10,7 +10,7 @@
   "icons": [
     {
       "src": "sbp-information-icon-20261004-v4.png",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"
     }
