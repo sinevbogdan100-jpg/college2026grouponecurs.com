@@ -1477,7 +1477,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 lastGroupInfoUpdatedAt = payload.updatedAt;
                 return true;
             } catch (e) {
-                console.warn('Не удалось сохранить данные группы в облако', e);
+                reportAppError('group-save', e, { localSaved:true });
                 return false;
             }
         }
@@ -1616,7 +1616,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 await syncStudentCountToCloud();
                 return true;
             } catch (e) {
-                console.warn('Не удалось сохранить состав группы в облако', e);
+                reportAppError('roster-save', e, { localSaved:true });
                 return false;
             }
         }
@@ -3031,23 +3031,29 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             window.__lastLocalAttendanceUpdatedAt = dataToSave.updatedAt;
             lastAppliedCloudUpdatedAt = dataToSave.updatedAt;
 
-            // Основное сохранение + независимая резервная копия.
-            await savePersistentValue(`toe_att_${dateVal}`, serialized);
-            const dates = JSON.parse(localStorage.getItem('toe_att_dates') || '[]');
-            if (!dates.includes(dateVal)) {
-                dates.push(dateVal);
-                dates.sort();
-                await savePersistentValue('toe_att_dates', JSON.stringify(dates));
+            try {
+                // Сначала сохраняем безопасную локальную копию. Если облако упадёт,
+                // пользователь всё равно не потеряет сделанные отметки.
+                await savePersistentValue(`toe_att_${dateVal}`, serialized);
+                const dates = JSON.parse(localStorage.getItem('toe_att_dates') || '[]');
+                if (!dates.includes(dateVal)) {
+                    dates.push(dateVal);
+                    dates.sort();
+                    await savePersistentValue('toe_att_dates', JSON.stringify(dates));
+                }
+
+                const backupKey = `toe_att_backup_${dateVal}`;
+                await savePersistentValue(backupKey, serialized);
+                await cleanupOldAttendanceBackups(30);
+            } catch (e) {
+                window.__journalDirty = true;
+                setSaveStatus('Ошибка сохранения', false);
+                reportAppError('journal-local-save', e, { localSaved:false });
+                throw e;
             }
 
-            // Отдельный журнал последних сохранений позволяет восстановить данные,
-            // даже если одна запись localStorage будет повреждена.
-            const backupKey = `toe_att_backup_${dateVal}`;
-            await savePersistentValue(backupKey, serialized);
-            await cleanupOldAttendanceBackups(30);
-
             let cloudSaveOk = false;
-            if (isCloudConnected && db && auth?.currentUser) {
+            if (isCloudConnected && db && auth?.currentUser && navigator.onLine) {
                 try {
                     await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', dateVal), dataToSave, { merge: false });
                     if (window.__realtimeDate !== dateVal || !attendanceUnsubscribe) {
@@ -3060,18 +3066,24 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     if (window.__rtd) { window.__rtd.state.lastSource='этот браузер → Firestore'; window.__rtd.state.lastUpdatedAt=dataToSave.updatedAt; window.__rtd.log('WRITE OK: '+dateVal+' updatedAt='+dataToSave.updatedAt); window.__rtd.render(); }
                     firebaseDiag.write = {ok:true, detail:`Запись посещаемости прошла: toe_group/shared/attendance_records/${dateVal}`};
                     diagLog('Firestore WRITE OK', firebaseDiag.write.detail);
+                    if (cloudProblemSeen) syncSystemStatus({ recovered:true });
                 } catch(e) {
                     firebaseDiag.write = {ok:false, detail:e?.code ? `${e.code}: ${e.message}` : String(e)};
                     diagLog('Firestore WRITE ERROR', firebaseDiag.write.detail);
-                    console.warn("Cloud save failed; local backup is safe", e);
+                    reportAppError('journal-save', e, { localSaved:true });
                 }
+            } else if (!navigator.onLine) {
+                syncSystemStatus();
+            } else if (!isCloudConnected) {
+                syncSystemStatus();
             }
-            try { await createAutomaticBackup(); } catch (e) { console.warn('Автоматическая резервная копия не создана', e); }
+
+            try { await createAutomaticBackup(); } catch (e) { console.warn('Автоматическая резервная копия журнала не создана', e); }
             window.__journalDirty = false;
-            setSaveStatus(cloudSaveOk || !isCloudConnected ? 'Сохранено' : 'Только локально', false);
-            if (isCloudConnected && !cloudSaveOk) showToast('Не удалось сохранить в облако');
-            if (!isCloudConnected) renderRosterList();
+            setSaveStatus(cloudSaveOk ? 'Сохранено в облаке' : 'Сохранено локально', false);
+            if (!isCloudConnected || !navigator.onLine) renderRosterList();
             updateBackupStatus();
+            return cloudSaveOk;
         }
 
         window.onDateChanged = async function() {
@@ -3129,11 +3141,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Сохранение…</span>';
             }
             try {
-                await saveCurrentDateState();
-                showToast(isCloudConnected ? 'Журнал сохранён в облако' : 'Журнал сохранён локально');
+                const cloudSaved = await saveCurrentDateState();
+                showToast(
+                    cloudSaved ? 'Журнал сохранён в облако' : 'Журнал сохранён на этом устройстве',
+                    cloudSaved ? 'success' : 'warning'
+                );
             } catch (e) {
-                console.error('Manual journal save error:', e);
-                showToast('Не удалось сохранить журнал');
+                reportAppError('journal-local-save', e, { localSaved:false });
             } finally {
                 if (btn) {
                     btn.disabled = false;
