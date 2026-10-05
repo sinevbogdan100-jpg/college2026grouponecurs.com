@@ -18,7 +18,8 @@ let dependencies = {
     diagLog: () => {},
     publishScheduleChange: async () => false,
     recordActionHistory: () => {},
-    confirmActionHistory: () => {}
+    confirmActionHistory: () => {},
+    refreshHomeSchedule: () => {}
 };
 
 export function configureSchedule(nextDependencies = {}) {
@@ -31,6 +32,11 @@ function getCloudState() {
 
 function showToast(message) {
     dependencies.showToast?.(message);
+}
+
+function refreshHomeSchedule() {
+    try { dependencies.refreshHomeSchedule?.(); }
+    catch (e) { console.warn('Home schedule refresh failed', e); }
 }
 
 function animateScheduleRefresh() {
@@ -1193,6 +1199,9 @@ export async function saveScheduleData(changeEvent = null){
     await savePersistentValue('toe_schedule_num', num);
     await savePersistentValue('toe_schedule_den', den);
     await savePersistentValue('toe_schedule_last_saved', updatedAt);
+    // Keep every consumer of the schedule in sync immediately. This is intentionally
+    // independent of subject/room/change type so a room edit can never hide a lesson on Home.
+    refreshHomeSchedule();
     dependencies.recordActionHistory?.({kind:'schedule',target:'main',before,after:auditAfter,operationId:updatedAt,actorUid:auditActorUid});
     scheduleAuditBaseline = auditAfter;
     lastScheduleLocalWriteAt = updatedAt;
@@ -1337,6 +1346,7 @@ export async function loadScheduleData(){
         reportError('schedule-local-load', e, { localSaved:false, fallback:'Не удалось загрузить сохранённое расписание' });
     }
     scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+    refreshHomeSchedule();
 }
 
 export function applyCloudScheduleData(data, source = 'cloud') {
@@ -1363,6 +1373,7 @@ export function applyCloudScheduleData(data, source = 'cloud') {
         localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
         localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
         renderSchedule(currentScheduleDay);
+        refreshHomeSchedule();
         if (window.__scheduleDebug) {
             window.__scheduleDebug.lastSource = source;
             window.__scheduleDebug.lastUpdatedAt = remoteUpdatedAt;
