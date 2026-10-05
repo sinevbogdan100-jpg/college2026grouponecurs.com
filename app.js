@@ -1488,7 +1488,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', GROUP_INFO_DOC_ID));
                 if (snap.exists()) applyCloudGroupInfo(snap.data() || {});
             } catch (e) {
-                console.warn('Group info polling error', e);
+                reportAppError('group-sync', e, { localSaved:true });
             }
         }
 
@@ -1525,12 +1525,12 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     // Первый облачный документ может создать только владелец.
                     if (canEditGroupInfo()) await persistGroupInfoToCloud(getGroupInfo());
                 }, err => {
-                    console.warn('Realtime group info error', err);
+                    reportAppError('group-realtime', err, { localSaved:true });
                 });
                 startGroupInfoPolling();
                 return true;
             } catch (e) {
-                console.warn('Group info listener registration error', e);
+                reportAppError('group-realtime', e, { localSaved:true });
                 startGroupInfoPolling();
                 return false;
             }
@@ -1627,7 +1627,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID));
                 if (snap.exists()) applyStudentsPayload(snap.data() || {});
             } catch (e) {
-                console.warn('Students polling error', e);
+                reportAppError('roster-sync', e, { localSaved:true });
             }
         }
 
@@ -1651,12 +1651,12 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         await persistStudentsToCloud(studentRecords);
                     }
                 }, err => {
-                    console.warn('Realtime students error', err);
+                    reportAppError('roster-realtime', err, { localSaved:true });
                 });
                 startStudentsPolling();
                 return true;
             } catch (e) {
-                console.warn('Students listener registration error', e);
+                reportAppError('roster-realtime', e, { localSaved:true });
                 startStudentsPolling();
                 return false;
             }
