@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.32-unified-sections-2026-10-05">
+    <meta name="app-build" content="step18.33-loading-states-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-console-fixes-v1">
@@ -375,6 +375,23 @@
             </button>
         </div>
 
+        <div class="section-skeleton section-skeleton-home" aria-hidden="true">
+            <div class="skeleton-card skeleton-hero">
+                <span class="skeleton-shape skeleton-avatar skeleton-avatar-lg"></span>
+                <div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-52"></span><span class="skeleton-shape skeleton-line w-30"></span></div>
+            </div>
+            <div class="skeleton-grid skeleton-grid-3">
+                <div class="skeleton-card skeleton-mini"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-40"></span><span class="skeleton-shape skeleton-line w-72"></span></div></div>
+                <div class="skeleton-card skeleton-mini"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-36"></span><span class="skeleton-shape skeleton-line w-68"></span></div></div>
+                <div class="skeleton-card skeleton-mini"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-46"></span><span class="skeleton-shape skeleton-line w-58"></span></div></div>
+            </div>
+            <div class="skeleton-card skeleton-stack">
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-square"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-56"></span><span class="skeleton-shape skeleton-line w-36"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-square"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-64"></span><span class="skeleton-shape skeleton-line w-44"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-square"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-48"></span><span class="skeleton-shape skeleton-line w-32"></span></div></div>
+            </div>
+        </div>
+
         <main class="home-ref-shell">
             <section class="home-ref-group-card">
                 <button type="button" id="group-icon-home" class="home-ref-group-icon" onclick="openGroupSettings()" disabled aria-disabled="true" aria-label="Изменить иконку группы"><i class="fa-solid fa-user-group"></i></button>
@@ -430,6 +447,18 @@
                 <span>Посещаемость студентов</span>
             </div>
             <button class="journal-ref-topbtn journal-ref-bell" onclick="openNotifications()" aria-label="Уведомления"><i class="fa-regular fa-bell"></i></button>
+        </div>
+
+        <div class="section-skeleton section-skeleton-tracker" aria-hidden="true">
+            <div class="skeleton-tabs"><span class="skeleton-shape"></span><span class="skeleton-shape"></span></div>
+            <div class="skeleton-datebar"><span class="skeleton-shape skeleton-button"></span><span class="skeleton-shape skeleton-line w-46"></span><span class="skeleton-shape skeleton-button"></span></div>
+            <div class="skeleton-card skeleton-table">
+                <div class="skeleton-table-head"><span class="skeleton-shape skeleton-line w-32"></span><span class="skeleton-shape skeleton-line w-24"></span><span class="skeleton-shape skeleton-line w-28"></span></div>
+                <div class="skeleton-table-row"><span class="skeleton-shape skeleton-avatar"></span><span class="skeleton-shape skeleton-line w-48"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span></div>
+                <div class="skeleton-table-row"><span class="skeleton-shape skeleton-avatar"></span><span class="skeleton-shape skeleton-line w-58"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span></div>
+                <div class="skeleton-table-row"><span class="skeleton-shape skeleton-avatar"></span><span class="skeleton-shape skeleton-line w-42"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span></div>
+                <div class="skeleton-table-row"><span class="skeleton-shape skeleton-avatar"></span><span class="skeleton-shape skeleton-line w-54"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span><span class="skeleton-shape skeleton-pill"></span></div>
+            </div>
         </div>
         <span id="tracker-group-name" class="hidden">ТОЭ-26-9-1</span>
         <span id="tracker-curator" class="hidden">Негманова Г.Б.</span>
@@ -553,6 +582,17 @@
             </button>
         </div>
 
+        <div class="section-skeleton section-skeleton-schedule" aria-hidden="true">
+            <div class="skeleton-tabs"><span class="skeleton-shape"></span><span class="skeleton-shape"></span></div>
+            <div class="skeleton-datebar"><span class="skeleton-shape skeleton-button"></span><span class="skeleton-shape skeleton-line w-52"></span><span class="skeleton-shape skeleton-button"></span></div>
+            <div class="skeleton-days"><span class="skeleton-shape"></span><span class="skeleton-shape"></span><span class="skeleton-shape"></span><span class="skeleton-shape"></span><span class="skeleton-shape"></span></div>
+            <div class="skeleton-card skeleton-stack">
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-circle-sm"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-30"></span><span class="skeleton-shape skeleton-line w-64"></span><span class="skeleton-shape skeleton-line w-52"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-circle-sm"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-36"></span><span class="skeleton-shape skeleton-line w-58"></span><span class="skeleton-shape skeleton-line w-46"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-circle-sm"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-28"></span><span class="skeleton-shape skeleton-line w-68"></span><span class="skeleton-shape skeleton-line w-50"></span></div></div>
+            </div>
+        </div>
+
         <div class="schedule-ref-week-switch" role="tablist" aria-label="Тип недели">
             <button type="button" onclick="setScheduleWeekType('numerator')" id="sched-btn-num">Числитель</button>
             <button type="button" onclick="setScheduleWeekType('denominator')" id="sched-btn-den">Знаменатель</button>
@@ -603,6 +643,21 @@
             <button class="roster-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
                 <i class="fa-regular fa-bell"></i>
             </button>
+        </div>
+
+        <div class="section-skeleton section-skeleton-roster" aria-hidden="true">
+            <div class="skeleton-grid skeleton-grid-3">
+                <div class="skeleton-card skeleton-profile"><span class="skeleton-shape skeleton-avatar skeleton-avatar-lg"></span><span class="skeleton-shape skeleton-line w-38"></span><span class="skeleton-shape skeleton-line w-58"></span></div>
+                <div class="skeleton-card skeleton-profile"><span class="skeleton-shape skeleton-avatar skeleton-avatar-lg"></span><span class="skeleton-shape skeleton-line w-34"></span><span class="skeleton-shape skeleton-line w-52"></span></div>
+                <div class="skeleton-card skeleton-profile"><span class="skeleton-shape skeleton-avatar skeleton-avatar-lg"></span><span class="skeleton-shape skeleton-line w-42"></span><span class="skeleton-shape skeleton-line w-48"></span></div>
+            </div>
+            <div class="skeleton-section-label"><span class="skeleton-shape skeleton-line w-36"></span></div>
+            <div class="skeleton-card skeleton-stack">
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-56"></span><span class="skeleton-shape skeleton-line w-30"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-62"></span><span class="skeleton-shape skeleton-line w-26"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-48"></span><span class="skeleton-shape skeleton-line w-34"></span></div></div>
+                <div class="skeleton-row"><span class="skeleton-shape skeleton-avatar"></span><div class="skeleton-copy"><span class="skeleton-shape skeleton-line w-54"></span><span class="skeleton-shape skeleton-line w-28"></span></div></div>
+            </div>
         </div>
 
         <div class="group-leadership-grid">
