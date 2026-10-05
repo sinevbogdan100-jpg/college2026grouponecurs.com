@@ -1293,3 +1293,250 @@
 @media(prefers-reduced-motion:reduce){
   .system-status-banner{transition:none!important}
 }
+
+
+/* ===== SMART TODAY STATUS — step18.35 ===== */
+#view-home .home-day-status{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  margin:0 2px 8px;
+  padding:11px 12px;
+  border:1px solid #dfe7f4;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f8fbff 0%,#f3f7ff 100%);
+  box-shadow:0 8px 24px rgba(32,52,91,.045);
+}
+#view-home .home-day-status-icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#e9f0ff;
+  color:#3f63c8;
+  font-size:16px;
+}
+#view-home .home-day-status-copy{
+  min-width:0;
+}
+#view-home .home-day-status-copy>span{
+  display:block;
+  margin-bottom:2px;
+  color:#6d7b98;
+  font-size:8.5px;
+  font-weight:800;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+#view-home .home-day-status-copy>strong{
+  display:block;
+  color:#14203e;
+  font-size:13px;
+  line-height:1.25;
+  font-weight:850;
+  overflow-wrap:anywhere;
+}
+#view-home .home-day-status-copy>small{
+  display:block;
+  margin-top:4px;
+  color:#66748e;
+  font-size:9.5px;
+  line-height:1.35;
+  font-weight:600;
+  overflow-wrap:anywhere;
+}
+#view-home .home-day-status-timer{
+  min-width:92px;
+  text-align:right;
+  padding-left:8px;
+}
+#view-home .home-day-status-timer>span{
+  display:block;
+  color:#7a879d;
+  font-size:8px;
+  font-weight:750;
+}
+#view-home .home-day-status-timer>strong{
+  display:block;
+  margin-top:3px;
+  color:#273757;
+  font-size:11px;
+  line-height:1.15;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+#view-home .home-day-status.lesson{
+  border-color:#d9cef9;
+  background:linear-gradient(135deg,#f8f5ff 0%,#f3efff 100%);
+}
+#view-home .home-day-status.lesson .home-day-status-icon{
+  background:#e8e0ff;
+  color:#6548dc;
+}
+#view-home .home-day-status.lesson .home-day-status-timer>strong{
+  color:#5b40da;
+}
+#view-home .home-day-status.break{
+  border-color:#efddb5;
+  background:linear-gradient(135deg,#fffaf1 0%,#fff5e4 100%);
+}
+#view-home .home-day-status.break .home-day-status-icon{
+  background:#ffedc9;
+  color:#bb7415;
+}
+#view-home .home-day-status.break .home-day-status-timer>strong{
+  color:#a6640b;
+}
+#view-home .home-day-status.before{
+  border-color:#d8e4f6;
+  background:linear-gradient(135deg,#f7fbff 0%,#f0f6ff 100%);
+}
+#view-home .home-day-status.nearest{
+  border-color:#d9e6f1;
+  background:linear-gradient(135deg,#fbfdff 0%,#f5f9fd 100%);
+}
+
+#view-home .home-ref-lesson-card.next{
+  position:relative;
+  margin:2px;
+  border:1px solid #cfe0f8!important;
+  border-radius:13px;
+  background:linear-gradient(108deg,#fbfdff 0%,#f4f8ff 100%)!important;
+  box-shadow:0 6px 18px rgba(49,80,129,.04);
+  overflow:hidden;
+}
+#view-home .home-ref-lesson-card.next .home-ref-lesson-number{
+  background:linear-gradient(135deg,#e1edff,#d4e5ff)!important;
+  color:#3561b8!important;
+}
+#view-home .home-lesson-state-badge{
+  width:max-content;
+  max-width:100%;
+  min-height:20px;
+  margin-bottom:5px;
+  padding:0 7px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:8px;
+  line-height:1;
+  font-weight:850;
+  white-space:nowrap;
+}
+#view-home .home-lesson-state-badge.next{
+  background:#e5efff;
+  color:#3968bc;
+}
+#view-home .home-lesson-state-badge i{
+  font-size:7px;
+}
+
+#view-home .home-ref-break-card.nearest{
+  margin:0 2px;
+  border:1px solid #f1ddb0!important;
+  border-radius:12px;
+  background:linear-gradient(105deg,#fffdf8,#fff8e9)!important;
+}
+#view-home .home-ref-break-card.nearest .home-ref-break-icon{
+  background:#ffedc6!important;
+  color:#b66f12!important;
+}
+#view-home .home-ref-break-card.nearest .home-ref-break-main strong{
+  color:#925b14!important;
+}
+#view-home .home-ref-break-card.current{
+  margin:0 2px;
+  border:1px solid #efd7a2!important;
+  border-radius:12px;
+  background:linear-gradient(105deg,#fffaf1,#fff4df)!important;
+}
+#view-home .home-ref-break-card.current .home-ref-break-icon{
+  background:#ffe8b9!important;
+  color:#a9660e!important;
+}
+
+@media(max-width:520px){
+  #view-home .home-day-status{
+    grid-template-columns:36px minmax(0,1fr);
+    gap:8px;
+    margin:0 0 7px;
+    padding:10px;
+  }
+  #view-home .home-day-status-icon{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    font-size:14px;
+  }
+  #view-home .home-day-status-copy>strong{
+    font-size:11.5px;
+  }
+  #view-home .home-day-status-copy>small{
+    font-size:8.5px;
+  }
+  #view-home .home-day-status-timer{
+    grid-column:2;
+    min-width:0;
+    padding-left:0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    text-align:left;
+  }
+  #view-home .home-day-status-timer>span{
+    font-size:8px;
+  }
+  #view-home .home-day-status-timer>strong{
+    margin-top:0;
+    font-size:10px;
+  }
+  #view-home .home-lesson-state-badge{
+    font-size:7.5px;
+    min-height:19px;
+  }
+}
+
+@media(min-width:768px){
+  body:not(.layout-phone) #view-home .home-day-status{
+    grid-template-columns:52px minmax(0,1fr) auto;
+    gap:14px;
+    padding:15px 16px;
+    margin-bottom:12px;
+    border-radius:17px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-icon{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    font-size:19px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-copy>span{
+    font-size:11px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-copy>strong{
+    font-size:17px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-copy>small{
+    font-size:12.5px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-timer{
+    min-width:128px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-timer>span{
+    font-size:10px;
+  }
+  body:not(.layout-phone) #view-home .home-day-status-timer>strong{
+    font-size:14px;
+  }
+  body:not(.layout-phone) #view-home .home-lesson-state-badge{
+    min-height:24px;
+    padding:0 9px;
+    font-size:10px;
+  }
+}
