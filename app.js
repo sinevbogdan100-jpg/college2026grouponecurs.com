@@ -1861,7 +1861,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const version = document.getElementById('settings-build-version');
             if (version) version.textContent = getSiteVersion(document.querySelector('meta[name="app-build"]')?.content);
             const sync = document.getElementById('settings-sync-status');
-            if (sync) sync.textContent = translateUI(isCloudConnected ? 'Подключено к облаку' : 'Нет подключения к облаку');
+            if (!sync) return;
+            if (!navigator.onLine) sync.textContent = translateUI('Офлайн — используются сохранённые данные');
+            else if (isCloudConnected) sync.textContent = translateUI('Подключено к облаку');
+            else sync.textContent = translateUI('Облако временно недоступно');
         }
 
         // Настройки доступа: владелец + два администратора. Обычные посетители работают без входа.
@@ -3252,16 +3255,39 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             document.body.removeChild(textarea);
         }
 
-        function showToast(msg) {
+        function inferToastType(message) {
+            const value = String(message || '').toLowerCase();
+            if (/ошиб|не удалось|неверн|нет права|недоступно|отказ/.test(value)) return 'error';
+            if (/только на этом устройстве|локальн|нет интернет|офлайн|временно/.test(value)) return 'warning';
+            if (/сохран|готов|успеш|выполнен|добавлен|удалён|удален|скачан|скопирован|восстанов/.test(value)) return 'success';
+            return 'info';
+        }
+
+        function showToast(msg, type = '', duration = 2600) {
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+            if (!toast || !msgEl || !icon) return;
+
+            const resolvedType = type || inferToastType(msg);
+            const iconName = ({
+                success:'fa-circle-check',
+                warning:'fa-triangle-exclamation',
+                error:'fa-circle-exclamation',
+                info:'fa-circle-info'
+            })[resolvedType] || 'fa-circle-info';
+
             msgEl.innerText = translateUI(msg);
+            icon.className = `fa-solid ${iconName} text-sm`;
+            toast.dataset.type = resolvedType;
             toast.classList.remove('-translate-y-20', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
-            setTimeout(() => {
+
+            clearTimeout(window.__toeToastTimer);
+            window.__toeToastTimer = setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('-translate-y-20', 'opacity-0');
-            }, 2500);
+            }, Math.max(1600, Number(duration) || 2600));
         }
     
         // Режим отображения: телефон / ПК
