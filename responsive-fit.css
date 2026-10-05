@@ -787,6 +787,7 @@
 }
 #view-roster .roster-ref-title{
   grid-column:2!important;
+  display:block!important;
 }
 #view-roster .roster-ref-title > span{
   white-space:nowrap!important;
