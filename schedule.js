@@ -1,9 +1,10 @@
 import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-schedule-change-v1";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
-import { dbGet, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
+import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
+const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
 
 let dependencies = {
     getCloudState: () => ({ isCloudConnected: false, db: null, auth: null }),
@@ -33,6 +34,40 @@ function reportError(scope, error, options = {}) {
     const reported = dependencies.reportError?.(scope, error, options);
     if (!reported && options.fallback) showToast(options.fallback);
     return reported;
+}
+
+function readPendingSchedule() {
+    try {
+        const raw = localStorage.getItem(PENDING_SCHEDULE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+async function storePendingSchedule(payload, changeEvent = null) {
+    const previous = readPendingSchedule();
+    const events = Array.isArray(previous?.events) ? [...previous.events] : [];
+    if (changeEvent?.id && !events.some(item => item?.id === changeEvent.id)) events.push(changeEvent);
+    const pending = {
+        ...payload,
+        events: events.slice(-20),
+        queuedAt: new Date().toISOString()
+    };
+    await savePersistentValue(PENDING_SCHEDULE_KEY, JSON.stringify(pending));
+    return pending;
+}
+
+async function clearPendingSchedule() {
+    localStorage.removeItem(PENDING_SCHEDULE_KEY);
+    try { await dbDelete(PENDING_SCHEDULE_KEY); } catch (_) {}
+}
+
+async function publishPendingScheduleEvents(events = []) {
+    for (const event of events) {
+        try { await dependencies.publishScheduleChange?.(event); }
+        catch (e) { console.warn('Pending schedule notification publish failed', e); }
+    }
 }
 
 // Schedule Data with specified teachers & room rules
@@ -914,12 +949,16 @@ window.saveScheduleLesson = async function() {
     const savedIndex = editingScheduleIndex >= 0 ? editingScheduleIndex : list.length - 1;
     const changeEvent = scheduleChangeEvent(oldItem, item, savedIndex);
     try {
-        await saveScheduleData(changeEvent);
+        const cloudSaved = await saveScheduleData(changeEvent);
         window.closeScheduleEditor();
         lastScheduleRenderKey = '';
         renderSchedule(currentScheduleDay);
-        if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = true;
-        showToast(changeType === 'cancel' ? 'Отмена пары сохранена в облако' : 'Расписание сохранено в облако');
+        if (window.__scheduleDebug) window.__scheduleDebug.lastSaveOk = cloudSaved;
+        showToast(
+            cloudSaved
+                ? (changeType === 'cancel' ? 'Отмена пары сохранена в облако' : 'Расписание сохранено в облако')
+                : (changeType === 'cancel' ? 'Отмена пары сохранена на устройстве' : 'Расписание сохранено на устройстве')
+        );
     } catch (e) {
         if (editingScheduleIndex >= 0) list[editingScheduleIndex] = oldItem; else list.pop();
         lastScheduleRenderKey = '';
@@ -939,8 +978,8 @@ window.moveScheduleLesson = async function(index, delta) {
     [list[index], list[target]] = [list[target], list[index]];
     renderSchedule(currentScheduleDay);
     try {
-        await saveScheduleData();
-        showToast('Порядок пар сохранён в облако');
+        const cloudSaved = await saveScheduleData();
+        showToast(cloudSaved ? 'Порядок пар сохранён в облако' : 'Порядок пар сохранён на устройстве');
     } catch (e) {
         [list[index], list[target]] = [list[target], list[index]];
         renderSchedule(currentScheduleDay);
@@ -956,10 +995,10 @@ window.deleteScheduleLesson = async function() {
     if(!confirm(translateUI('Удалить эту пару из расписания?')))return;
     const removed=list.splice(editingScheduleIndex,1)[0];
     try {
-        await saveScheduleData();
+        const cloudSaved = await saveScheduleData();
         window.closeScheduleEditor();
         renderSchedule(currentScheduleDay);
-        showToast('Пара удалена из расписания');
+        showToast(cloudSaved ? 'Пара удалена и сохранена в облако' : 'Пара удалена и сохранена на устройстве');
     } catch (e) {
         list.splice(editingScheduleIndex,0,removed);
         renderSchedule(currentScheduleDay);
@@ -983,29 +1022,40 @@ function saveScheduleHistorySnapshot() {
 
 export async function saveScheduleData(changeEvent = null){
     saveScheduleHistorySnapshot();
+    const updatedAt = new Date().toISOString();
     const num = JSON.stringify(scheduleDataNumerator);
     const den = JSON.stringify(scheduleDataDenominator);
     await savePersistentValue('toe_schedule_num', num);
     await savePersistentValue('toe_schedule_den', den);
-    await savePersistentValue('toe_schedule_last_saved', new Date().toISOString());
+    await savePersistentValue('toe_schedule_last_saved', updatedAt);
+    lastScheduleLocalWriteAt = updatedAt;
+
+    const payload = {
+        numerator: scheduleDataNumerator,
+        denominator: scheduleDataDenominator,
+        lastChange: changeEvent || null,
+        updatedAt
+    };
+    const existingPending = readPendingSchedule();
+    const pendingEvents = Array.isArray(existingPending?.events) ? existingPending.events : [];
 
     const { isCloudConnected, db, auth } = getCloudState();
     if (!isCloudConnected || !db || !auth?.currentUser || !navigator.onLine) {
-        const error = new Error(navigator.onLine ? 'Firebase не подключён или пользователь не авторизован' : 'offline');
-        reportError('schedule-save', error, { localSaved:false, fallback:'Не удалось сохранить расписание в облако' });
-        throw error;
+        await storePendingSchedule(payload, changeEvent);
+        window.__scheduleLastSaveOk = false;
+        window.__schedulePendingSync = true;
+        reportError('schedule-save', new Error(navigator.onLine ? 'Firebase не подключён или пользователь не авторизован' : 'offline'), {
+            localSaved:true,
+            fallback:'Расписание сохранено на устройстве'
+        });
+        try { await dependencies.createAutomaticBackup?.(); } catch (e) { console.warn('Автоматическая резервная копия расписания не создана', e); }
+        dependencies.updateBackupStatus?.();
+        return false;
     }
 
-    const updatedAt = new Date().toISOString();
-    lastScheduleLocalWriteAt = updatedAt;
     try {
         const ref = doc(db, ...CLOUD_ROOT, 'schedule', 'main');
-        await setDoc(ref, {
-            numerator: scheduleDataNumerator,
-            denominator: scheduleDataDenominator,
-            lastChange: changeEvent || null,
-            updatedAt
-        }, { merge: false });
+        await setDoc(ref, payload, { merge: false });
 
         const verify = await getDoc(ref, { source: 'server' });
         if (!verify.exists()) throw new Error('Firebase не подтвердил сохранение расписания');
@@ -1013,31 +1063,74 @@ export async function saveScheduleData(changeEvent = null){
         if (String(verified.updatedAt || '') !== updatedAt) {
             throw new Error('Firebase вернул другую версию расписания');
         }
+
         lastScheduleAppliedUpdatedAt = updatedAt;
         dependencies.setWriteDiagnostic?.(true, `Расписание сохранено и подтверждено сервером: ${updatedAt}`);
         dependencies.diagLog?.('Firestore SCHEDULE WRITE VERIFIED', {updatedAt});
         window.__scheduleLastSaveOk = true;
         window.__scheduleLastSaveAt = updatedAt;
+        window.__schedulePendingSync = false;
         if (window.__scheduleDebug) {
             window.__scheduleDebug.lastUpdatedAt = updatedAt;
             window.__scheduleDebug.lastSource = 'Firestore (подтверждено сервером)';
         }
-        if (changeEvent) {
-            try { await dependencies.publishScheduleChange?.(changeEvent); }
-            catch (notifyError) { console.warn('Schedule notification publish failed', notifyError); }
-        }
+
+        const events = [...pendingEvents];
+        if (changeEvent?.id && !events.some(item => item?.id === changeEvent.id)) events.push(changeEvent);
+        await publishPendingScheduleEvents(events);
+        await clearPendingSchedule();
     } catch (e) {
+        await storePendingSchedule(payload, changeEvent);
         window.__scheduleLastSaveOk = false;
+        window.__schedulePendingSync = true;
         const detail = e?.code ? `${e.code}: ${e.message}` : String(e);
         dependencies.setWriteDiagnostic?.(false, detail);
         dependencies.diagLog?.('Firestore SCHEDULE WRITE ERROR', detail);
         console.error('Cloud schedule save failed:', e);
-        reportError('schedule-save', e, { localSaved:false, fallback:'Не удалось сохранить расписание в облако' });
-        throw e;
+        reportError('schedule-save', e, { localSaved:true, fallback:'Расписание сохранено на устройстве' });
+        try { await dependencies.createAutomaticBackup?.(); } catch (backupError) { console.warn('Автоматическая резервная копия расписания не создана', backupError); }
+        dependencies.updateBackupStatus?.();
+        return false;
     }
+
     try { await dependencies.createAutomaticBackup?.(); } catch (e) { console.warn('Автоматическая резервная копия расписания не создана', e); }
     dependencies.updateBackupStatus?.();
     return true;
+}
+
+export async function syncPendingScheduleData(){
+    const pending = readPendingSchedule();
+    if (!pending) {
+        window.__schedulePendingSync = false;
+        return true;
+    }
+
+    const { isCloudConnected, db, auth } = getCloudState();
+    if (!navigator.onLine || !isCloudConnected || !db || !auth?.currentUser) return false;
+
+    try {
+        const updatedAt = String(pending.updatedAt || new Date().toISOString());
+        const ref = doc(db, ...CLOUD_ROOT, 'schedule', 'main');
+        await setDoc(ref, {
+            numerator: pending.numerator || scheduleDataNumerator,
+            denominator: pending.denominator || scheduleDataDenominator,
+            lastChange: pending.lastChange || null,
+            updatedAt
+        }, { merge:false });
+
+        lastScheduleAppliedUpdatedAt = updatedAt;
+        lastScheduleLocalWriteAt = updatedAt;
+        await publishPendingScheduleEvents(Array.isArray(pending.events) ? pending.events : []);
+        await clearPendingSchedule();
+        window.__schedulePendingSync = false;
+        window.__scheduleLastSaveOk = true;
+        dependencies.setWriteDiagnostic?.(true, `Офлайн-расписание синхронизировано: ${updatedAt}`);
+        return true;
+    } catch (e) {
+        window.__schedulePendingSync = true;
+        reportError('schedule-offline-sync', e, { localSaved:true, fallback:'Расписание пока остаётся на устройстве' });
+        return false;
+    }
 }
 
 export async function loadScheduleData(){
