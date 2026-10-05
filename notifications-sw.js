@@ -1,10 +1,10 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-navigation-focus-v1';
+const CACHE_NAME = 'sbp-shell-20261005-home-nextday-navreload-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261005-navigation-focus-v1',
+  './app.js?v=20261005-home-nextday-navreload-v1',
   './style.css?v=20261005-live-progress-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
