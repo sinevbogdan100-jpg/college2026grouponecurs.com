@@ -3189,3 +3189,19 @@ body.group-tools-open { overflow: hidden; }
     font-size:21px!important;
   }
 }
+
+
+/* ===== SCHEDULE TITLE SIZE — step18.53 ===== */
+@media(max-width:767px){
+  #view-schedule .schedule-ref-title h1{
+    font-size:28px!important;
+    line-height:1.02!important;
+    font-weight:850!important;
+    letter-spacing:-.025em!important;
+  }
+}
+@media(max-width:360px){
+  #view-schedule .schedule-ref-title h1{
+    font-size:26px!important;
+  }
+}
