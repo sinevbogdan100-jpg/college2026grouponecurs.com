@@ -65,7 +65,12 @@ export function createNotificationCenter({ getCloud, translate, toast, open }) {
   }
 
   async function worker() {
-    registration ||= navigator.serviceWorker.register('./notifications-sw.js', { scope: './' }).then(async () => navigator.serviceWorker.ready);
+    if (registration) return registration;
+    registration = await navigator.serviceWorker.getRegistration('./');
+    if (!registration) {
+      registration = await navigator.serviceWorker.register('./notifications-sw.js', { scope: './', updateViaCache: 'none' });
+    }
+    await navigator.serviceWorker.ready;
     return registration;
   }
 
