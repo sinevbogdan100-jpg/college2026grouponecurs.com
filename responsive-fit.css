@@ -3205,3 +3205,108 @@ body.group-tools-open { overflow: hidden; }
     font-size:26px!important;
   }
 }
+
+
+/* ===== MOBILE SCHEDULE TYPOGRAPHY — step18.54 ===== */
+@media(max-width:767px){
+  /* Make the actual schedule content readable on phones. */
+  #view-schedule .schedule-ref-date-copy strong{
+    font-size:14px!important;
+    line-height:1.25!important;
+  }
+  #view-schedule .schedule-ref-date-copy>span{
+    font-size:11.5px!important;
+    line-height:1.25!important;
+  }
+
+  #view-schedule .schedule-ref-days button strong{
+    font-size:13px!important;
+    line-height:1.15!important;
+  }
+  #view-schedule .schedule-ref-days button span{
+    font-size:10.5px!important;
+    line-height:1.15!important;
+  }
+
+  #view-schedule .schedule-live-today strong{
+    font-size:16px!important;
+    line-height:1.2!important;
+  }
+  #view-schedule .schedule-live-today span:not(.schedule-live-icon){
+    font-size:12px!important;
+    line-height:1.3!important;
+  }
+  #view-schedule .schedule-live-state strong{
+    font-size:14px!important;
+    line-height:1.2!important;
+  }
+  #view-schedule .schedule-live-state span,
+  #view-schedule .schedule-live-card p{
+    font-size:12px!important;
+    line-height:1.35!important;
+  }
+
+  #view-schedule .schedule-ref-day-heading{
+    font-size:17px!important;
+    line-height:1.25!important;
+  }
+  #view-schedule .schedule-ref-number{
+    font-size:12px!important;
+  }
+  #view-schedule .schedule-ref-card-head time{
+    font-size:13.5px!important;
+    line-height:1.25!important;
+  }
+  #view-schedule .schedule-ref-state{
+    font-size:11px!important;
+    line-height:1.15!important;
+  }
+  #view-schedule .schedule-ref-subject{
+    font-size:16.5px!important;
+    line-height:1.32!important;
+  }
+
+  #view-schedule .schedule-ref-meta>span small{
+    font-size:11.5px!important;
+    line-height:1.25!important;
+  }
+  #view-schedule .schedule-ref-meta>span b,
+  #view-schedule .schedule-ref-meta span{
+    font-size:13px!important;
+    line-height:1.38!important;
+  }
+  #view-schedule .schedule-ref-change,
+  #view-schedule .schedule-cancel-meta{
+    font-size:11.5px!important;
+    line-height:1.4!important;
+  }
+
+  #view-schedule .schedule-ref-break-card strong{
+    font-size:12.5px!important;
+    line-height:1.3!important;
+  }
+  #view-schedule .schedule-ref-break-card time{
+    font-size:11.5px!important;
+    line-height:1.3!important;
+  }
+  #view-schedule .schedule-ref-break-card>b{
+    font-size:11px!important;
+    line-height:1.2!important;
+  }
+
+  #view-schedule .schedule-ref-admin-hint,
+  #view-schedule .schedule-admin-actions button{
+    font-size:11.5px!important;
+    line-height:1.3!important;
+  }
+}
+
+/* Also enforce the same typography when Phone mode is selected manually. */
+body.layout-phone #view-schedule .schedule-ref-card-head time{font-size:13.5px!important}
+body.layout-phone #view-schedule .schedule-ref-state{font-size:11px!important}
+body.layout-phone #view-schedule .schedule-ref-subject{font-size:16.5px!important;line-height:1.32!important}
+body.layout-phone #view-schedule .schedule-ref-meta>span small{font-size:11.5px!important}
+body.layout-phone #view-schedule .schedule-ref-meta>span b,
+body.layout-phone #view-schedule .schedule-ref-meta span{font-size:13px!important;line-height:1.38!important}
+body.layout-phone #view-schedule .schedule-ref-break-card strong{font-size:12.5px!important}
+body.layout-phone #view-schedule .schedule-ref-break-card time{font-size:11.5px!important}
