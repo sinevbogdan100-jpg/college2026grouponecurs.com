@@ -49,7 +49,9 @@ import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinContr
 import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
 
         
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.49-home-full-schedule-2026-10-05';
+const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
+window.__MOBILE_FAST_MODE__ = MOBILE_FAST_MODE;
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.50-mobile-hard-opt-2026-10-05';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
@@ -1057,7 +1059,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 if (document.visibilityState !== 'visible') return;
                 if (window.__attendanceListenerActive) return;
                 void poll();
-            }, 120000);
+            }, MOBILE_FAST_MODE ? 240000 : 120000);
             window.__attendanceFallbackActive = true;
         }
 
@@ -1321,8 +1323,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             updateHomeWeekBanner();
             updateHomeTodayCard();
             setInterval(() => {
-                if (document.visibilityState === 'visible') updateHomeTodayCard();
-            }, 30000);
+                const homeView = document.getElementById('view-home');
+                if (document.visibilityState === 'visible' && homeView && !homeView.classList.contains('hidden')) updateHomeTodayCard();
+            }, MOBILE_FAST_MODE ? 90000 : 30000);
 
             // CLOUD BOOT: Firebase and realtime listeners connect in parallel without blocking the UI.
             queueMicrotask(async () => {
@@ -1731,7 +1734,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             groupInfoPollTimer = setInterval(() => {
                 if (document.visibilityState !== 'visible' || groupInfoRealtimeHealthy) return;
                 void pollGroupInfoOnce();
-            }, 120000);
+            }, MOBILE_FAST_MODE ? 240000 : 120000);
         }
 
         function subscribeToGroupInfo() {
@@ -1889,7 +1892,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             studentsPollTimer = setInterval(() => {
                 if (document.visibilityState !== 'visible' || studentsRealtimeHealthy) return;
                 void pollStudentsOnce();
-            }, 120000);
+            }, MOBILE_FAST_MODE ? 240000 : 120000);
         }
 
         function subscribeToStudents() {
@@ -2296,7 +2299,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             adminPermissionsPollTimer = setInterval(() => {
                 if (document.visibilityState !== 'visible' || adminPermissionsRealtimeHealthy) return;
                 void pollAdminPermissionsOnce();
-            }, 180000);
+            }, MOBILE_FAST_MODE ? 360000 : 180000);
         }
 
         function subscribeToAdminPermissions() {
@@ -2507,7 +2510,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let scrollSaveTimer = null;
         window.addEventListener('scroll', () => {
             clearTimeout(scrollSaveTimer);
-            scrollSaveTimer = setTimeout(saveCurrentScrollPosition, 160);
+            scrollSaveTimer = setTimeout(saveCurrentScrollPosition, MOBILE_FAST_MODE ? 280 : 160);
         }, { passive: true });
 
         window.addEventListener('beforeunload', saveCurrentScrollPosition);
@@ -2523,7 +2526,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         const uiAnimationTimers = new WeakMap();
 
         function replayUiAnimation(element, className = 'ui-refreshing', duration = 240) {
-            if (!element || reducedMotionQuery?.matches) return;
+            if (!element || reducedMotionQuery?.matches || MOBILE_FAST_MODE) return;
             const previousTimer = uiAnimationTimers.get(element);
             if (previousTimer) clearTimeout(previousTimer);
             element.classList.remove('ui-refreshing','ui-refreshing-soft','is-view-entering');
@@ -4742,7 +4745,7 @@ function syncRealtimeModules(){
 }
 const realtimeMaintenanceTimer=setInterval(()=>{
     if(document.visibilityState==='visible')syncRealtimeModules();
-},30000);
+},MOBILE_FAST_MODE?90000:30000);
 queueMicrotask(syncRealtimeModules);
 window.addEventListener('online',syncRealtimeModules);
 document.addEventListener('visibilitychange',()=>{
