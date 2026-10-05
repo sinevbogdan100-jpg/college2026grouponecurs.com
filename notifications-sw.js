@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-group-tools-v2';
+const CACHE_NAME = 'sbp-shell-20261005-mobile-hard-opt-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './group-tools.js?v=20261005-group-tools-v2',
@@ -9,17 +9,17 @@ const CORE_ASSETS = [
   './index.html',
   './release-notes.js?v=20261005-group-tools-v2',
   './release-data.js?v=20261005-group-tools-v2',
-  './app.js?v=20261005-group-tools-v2',
+  './app.js?v=20261005-mobile-hard-opt-v1',
   './style.css?v=20261005-live-progress-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261005-group-tools-v2',
+  './responsive-fit.css?v=20261005-mobile-hard-opt-v1',
   './firebase.js?v=20261005-group-tools-v2',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
   './schedule.js?v=20261005-group-tools-v2',
   './i18n.js?v=20261005-group-tools-v2',
-  './performance.js?v=20261005-mobile-bells-update-v1',
+  './performance.js?v=20261005-mobile-hard-opt-v1',
   './notification-center.js?v=20261005-performance-v2',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
