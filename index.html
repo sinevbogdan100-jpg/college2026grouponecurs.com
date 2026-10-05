@@ -659,6 +659,7 @@
         <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="schedule-ref-add hidden">
             <i class="fa-solid fa-plus"></i><span>Добавить пару</span>
         </button>
+                    <button onclick="openScheduleBellEditor()" class="schedule-add-btn"><i class="fa-solid fa-clock"></i><span>Расписание звонков</span></button>
 
         <div id="schedule-live-summary"></div>
         <div id="schedule-day-heading" class="schedule-ref-day-heading"></div>
@@ -782,6 +783,23 @@
                 <button type="button" class="primary" onclick="saveStudentProfile()">Сохранить</button>
             </div>
         </section>
+    </div>
+
+    <div id="schedule-bell-modal" onclick="if(event.target===this) closeScheduleBellEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <div><h2 class="font-bold text-base text-slate-900">Расписание звонков</h2><p class="text-[11px] text-slate-500 mt-0.5">Для выбранного учебного дня</p></div>
+                <button onclick="closeScheduleBellEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>
+            <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 text-[10px] text-indigo-800">Измените начало первой пары, длительность занятий и перемены. Время всех следующих пар пересчитается автоматически.</div>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="text-[11px] text-slate-600">Начало первой пары<input id="schedule-bell-start" type="time" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+                <label class="text-[11px] text-slate-600">Длительность пары, мин<input id="schedule-bell-duration" type="number" min="1" max="240" value="60" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
+            </div>
+            <div id="schedule-bell-breaks" class="grid grid-cols-2 gap-2"></div>
+            <div><div class="text-[11px] font-semibold text-slate-700 mb-2">Предпросмотр</div><div id="schedule-bell-preview" class="space-y-1.5 rounded-xl bg-slate-50 border border-slate-200 p-3 text-[10px] text-slate-700"></div></div>
+            <div class="flex gap-2"><button onclick="closeScheduleBellEditor()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Отмена</button><button onclick="saveScheduleBellEditor()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Применить ко всему дню</button></div>
+        </div>
     </div>
 
     <div id="schedule-editor-modal" onclick="if(event.target===this) closeScheduleEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
