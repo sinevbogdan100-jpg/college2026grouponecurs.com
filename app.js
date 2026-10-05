@@ -49,7 +49,7 @@ import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinContr
 import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
 
         
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.49-home-full-schedule-2026-10-05';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
@@ -4189,7 +4189,7 @@ function renderHomeDayTimeline(){
             return;
         }
         let html=renderHomeDayStatus({mode:'nearest',nextEntry:nearestActive.entry,nowMinutes:0});
-        const selected=entries.slice(nearestActive.index,nearestActive.index+3);
+        const selected=entries.slice(nearestActive.index);
         selected.forEach((entry,pos)=>{
             html+=renderHomeLessonCard(entry,-1,pos===0?'next':'');
             if(pos<selected.length-1){
@@ -4220,7 +4220,7 @@ function renderHomeDayTimeline(){
         startIndex=upcoming.index;
     }
 
-    const selected=entries.slice(startIndex,startIndex+3);
+    const selected=entries.slice(startIndex);
     let html='';
     if(activeLesson>=0){
         const nextActive=findNextActiveHomeEntry(entries,activeLesson+1);
