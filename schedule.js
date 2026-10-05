@@ -569,6 +569,104 @@ window.onScheduleTimeChanged = function() {
     const match = collectScheduleItems().find(item => String(item?.time || '').trim() === time && item?.breakDuration);
     if (match) breakInput.value = translateUI(String(match.breakDuration || '').trim());
 };
+function scheduleMinutesToClock(total) {
+    const minutes = ((Number(total) % 1440) + 1440) % 1440;
+    return `${String(Math.floor(minutes / 60)).padStart(2,'0')}:${String(minutes % 60).padStart(2,'0')}`;
+}
+
+function scheduleClockToMinutes(value) {
+    const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return null;
+    const h = Number(match[1]), m = Number(match[2]);
+    return h >= 0 && h < 24 && m >= 0 && m < 60 ? h * 60 + m : null;
+}
+
+function scheduleBellBreaks() {
+    return [...document.querySelectorAll('[data-bell-break]')].map(input => Math.max(0, Number(input.value) || 0));
+}
+
+window.renderScheduleBellPreview = function() {
+    const preview = document.getElementById('schedule-bell-preview');
+    const start = scheduleClockToMinutes(document.getElementById('schedule-bell-start')?.value);
+    const duration = Math.max(1, Number(document.getElementById('schedule-bell-duration')?.value) || 60);
+    const list = (getCurrentScheduleList() || []).filter(item => !item?.isClassHour);
+    if (!preview || start === null) return;
+    const breaks = scheduleBellBreaks();
+    let cursor = start;
+    preview.innerHTML = list.map((item, index) => {
+        const finish = cursor + duration;
+        const row = `<div class="flex justify-between gap-3"><span>${index + 1}. ${scheduleEscape(item.subject || 'Пара')}</span><b>${scheduleMinutesToClock(cursor)} – ${scheduleMinutesToClock(finish)}</b></div>`;
+        cursor = finish + (breaks[index] ?? 10);
+        return row;
+    }).join('');
+};
+
+window.openScheduleBellEditor = function() {
+    const list = (getCurrentScheduleList() || []).filter(item => !item?.isClassHour);
+    if (!list.length) { showToast('На выбранный день нет пар'); return; }
+    const first = scheduleParseRange(list[0]?.time);
+    document.getElementById('schedule-bell-start').value = first ? scheduleClock(first.start) : '08:00';
+    document.getElementById('schedule-bell-duration').value = first ? Math.max(1, first.end - first.start) : 60;
+    const breaks = document.getElementById('schedule-bell-breaks');
+    breaks.innerHTML = list.slice(0, -1).map((item, index) => {
+        const current = String(item?.breakDuration || '').match(/(\d+)/);
+        const fallback = index === 0 ? 10 : index === 1 ? 20 : 10;
+        return `<label class="text-[11px] text-slate-600">Перемена после ${index + 1} пары<input data-bell-break type="number" min="0" max="120" value="${current ? Number(current[1]) : fallback}" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>`;
+    }).join('');
+    const modal = document.getElementById('schedule-bell-modal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    window.renderScheduleBellPreview();
+};
+
+window.closeScheduleBellEditor = function() {
+    const modal = document.getElementById('schedule-bell-modal');
+    modal?.classList.add('hidden'); modal?.classList.remove('flex');
+};
+
+window.saveScheduleBellEditor = async function() {
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
+    const list = getCurrentScheduleList();
+    const start = scheduleClockToMinutes(document.getElementById('schedule-bell-start')?.value);
+    const duration = Math.max(1, Number(document.getElementById('schedule-bell-duration')?.value) || 0);
+    if (!list || start === null || !duration) { showToast('Проверьте время начала и длительность пары'); return; }
+    const breaks = scheduleBellBreaks();
+    const backup = list.map(cloneScheduleItem);
+    let cursor = start, pairIndex = 0;
+    list.forEach(item => {
+        if (item?.isClassHour) return;
+        const finish = cursor + duration;
+        const breakMinutes = breaks[pairIndex] ?? 10;
+        if (!item.originalTime) item.originalTime = item.time || '';
+        item.time = `${scheduleMinutesToClock(cursor)} - ${scheduleMinutesToClock(finish)}`;
+        item.breakDuration = pairIndex === list.filter(x => !x?.isClassHour).length - 1 ? 'Конец занятий' : `${pairIndex === 1 && breakMinutes === 20 ? 'Большая перемена' : 'Перемена'}: ${breakMinutes} мин`;
+        item.changeType = item.changeType === 'normal' ? 'time' : item.changeType;
+        item.changedAt = new Date().toISOString();
+        cursor = finish + breakMinutes;
+        pairIndex++;
+    });
+    try {
+        const date = scheduleDateForDay(currentScheduleDay);
+        const event = {
+            id:`bells_${Date.now()}`, type:'schedule_change', changeType:'bells', dayKey:currentScheduleDay,
+            weekType:currentScheduleWeekType, date:date.toISOString().slice(0,10),
+            title:'Изменено расписание звонков', titleKz:'Қоңырау кестесі өзгертілді',
+            text:`На ${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} изменено расписание звонков.`,
+            textKz:`${date.toLocaleDateString('kk-KZ',{day:'numeric',month:'long'})} күнгі қоңырау кестесі өзгертілді.`,
+            createdAt:new Date().toISOString()
+        };
+        const cloudSaved = await saveScheduleData(event);
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        window.closeScheduleBellEditor();
+        showToast(cloudSaved ? 'Расписание звонков сохранено в облако' : 'Расписание звонков сохранено на устройстве');
+    } catch (e) {
+        list.splice(0, list.length, ...backup);
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        console.error('Bell schedule save failed:', e);
+    }
+};
+
 
 
 function cloneScheduleItem(item = {}) {
