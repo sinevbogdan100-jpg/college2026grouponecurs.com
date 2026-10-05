@@ -884,6 +884,10 @@
         <section class="sheet-panel notification-panel">
             <div class="sheet-head"><div><span class="eyebrow">Центр событий</span><h2>Уведомления</h2></div><button onclick="closeNotifications()"><i class="fa-solid fa-xmark"></i></button></div>
             <div id="notification-admin-composer" class="hidden notification-composer">
+                <select id="notification-priority" aria-label="Тип объявления">
+                    <option value="normal">Обычное объявление</option>
+                    <option value="important">Важное объявление</option>
+                </select>
                 <input id="notification-title" placeholder="Заголовок, например: Изменение расписания">
                 <textarea id="notification-text" rows="3" placeholder="Текст объявления"></textarea>
                 <button id="notification-publish-button" type="button" onclick="publishNotification()"><i class="fa-solid fa-paper-plane"></i> Опубликовать для всех</button>
