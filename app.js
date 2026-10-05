@@ -43,13 +43,13 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-home-schedule-sync-v1";
+} from "./schedule.js?v=20261005-group-tools-v2";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-group-tools-v2";
 import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v2';
 import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
 
         
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.48-home-schedule-sync-2026-10-05';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
@@ -745,7 +745,6 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             setRealtimeDiagnostic: (detail) => { firebaseDiag.realtime = { ok: true, detail }; },
             setWriteDiagnostic: (ok, detail) => { firebaseDiag.write = { ok, detail }; },
             diagLog: (message, data) => diagLog(message, data),
-            refreshHomeSchedule: () => updateHomeTodayCard(),
             publishScheduleChange: async (event) => {
                 if (!event || !db || !auth?.currentUser) return false;
                 const id = `schedule_${event.id || Date.now()}`;
