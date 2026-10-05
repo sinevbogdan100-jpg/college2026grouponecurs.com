@@ -82,10 +82,20 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         if (FIREBASE_DIAGNOSTICS_ENABLED) queueMicrotask(() => { const t=document.getElementById('firebase-diagnostic-toggle'); if(t)t.hidden=false; });
         window.closeFirebaseDiagnostic = function(){ const p=document.getElementById('firebase-diagnostic-panel'); if(p){p.classList.add('hidden');p.classList.remove('flex');} };
         function updateCloudBadge(connected) {
-            // В текущем дизайне отдельный badge не обязателен. Функция нужна, чтобы ошибка badge не отключала Firebase.
+            const wasConnected = isCloudConnected;
             isCloudConnected = !!connected;
             diagLog(connected ? 'Облако подключено' : 'Облако отключено');
             renderFirebaseDiagnostic();
+
+            if (!navigator.onLine) {
+                syncSystemStatus();
+            } else if (isCloudConnected) {
+                syncSystemStatus({ recovered: !wasConnected && cloudProblemSeen });
+            } else {
+                cloudProblemSeen = true;
+                syncSystemStatus();
+            }
+            refreshSettingsSystem?.();
         }
         window.runFirebaseDiagnostic = async function(){
             firebaseDiag.events = []; firebaseDiag.error = null; firebaseDiag.read = null; firebaseDiag.write = null; firebaseDiag.realtime = null; // auth сохраняем: он уже проверен при инициализации
@@ -156,6 +166,227 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let app, db, auth;
         let userId = 'shared-group';
         let isCloudConnected = false;
+        let systemStatusTimer = null;
+        let lastReportedIssueKey = '';
+        let lastReportedIssueAt = 0;
+        let cloudProblemSeen = false;
+        let lastKnownOnlineState = navigator.onLine;
+
+        function statusIcon(kind) {
+            return ({
+                offline: 'fa-wifi',
+                warning: 'fa-triangle-exclamation',
+                error: 'fa-circle-exclamation',
+                success: 'fa-circle-check',
+                info: 'fa-circle-info'
+            })[kind] || 'fa-circle-info';
+        }
+
+        function setSystemStatus(kind, title, text, options = {}) {
+            const banner = document.getElementById('system-status-banner');
+            const icon = document.getElementById('system-status-icon');
+            const titleEl = document.getElementById('system-status-title');
+            const textEl = document.getElementById('system-status-text');
+            const close = document.getElementById('system-status-close');
+            if (!banner || !icon || !titleEl || !textEl || !close) return;
+
+            clearTimeout(systemStatusTimer);
+            systemStatusTimer = null;
+            banner.dataset.kind = kind || 'info';
+            banner.dataset.statusKey = String(options.key || kind || 'info');
+            icon.className = `fa-solid ${statusIcon(kind)}`;
+            titleEl.textContent = translateUI(title);
+            textEl.textContent = translateUI(text);
+            close.classList.toggle('hidden', options.dismissible !== true);
+            banner.classList.remove('hidden');
+
+            const autoHide = Number(options.autoHide || 0);
+            if (autoHide > 0) {
+                systemStatusTimer = setTimeout(() => {
+                    banner.classList.add('hidden');
+                    systemStatusTimer = null;
+                }, autoHide);
+            }
+        }
+
+        function clearSystemStatus(statusKey = '') {
+            const banner = document.getElementById('system-status-banner');
+            if (!banner) return;
+            if (statusKey && banner.dataset.statusKey && banner.dataset.statusKey !== statusKey) return;
+            clearTimeout(systemStatusTimer);
+            systemStatusTimer = null;
+            banner.classList.add('hidden');
+        }
+
+        window.dismissSystemStatus = function() {
+            clearSystemStatus();
+        };
+
+        function appErrorCode(error) {
+            return String(error?.code || '').toLowerCase();
+        }
+
+        function classifyAppError(error) {
+            if (!navigator.onLine) return 'offline';
+            const code = appErrorCode(error);
+            const message = String(error?.message || error || '').toLowerCase();
+
+            if (code.includes('permission-denied') || code.includes('unauthorized') || message.includes('permission')) return 'permission';
+            if (code.includes('unauthenticated') || code.includes('auth/invalid-user-token')) return 'auth';
+            if (code.includes('quota') || code.includes('resource-exhausted') || message.includes('quota')) return 'quota';
+            if (
+                code.includes('unavailable') ||
+                code.includes('deadline-exceeded') ||
+                code.includes('aborted') ||
+                code.includes('network') ||
+                message.includes('network') ||
+                message.includes('offline') ||
+                message.includes('firebase не подключ')
+            ) return 'temporary';
+            if (message.includes('localstorage') || message.includes('indexeddb') || message.includes('storage')) return 'storage';
+            return 'unknown';
+        }
+
+        function friendlyIssue(scope, error, options = {}) {
+            const type = classifyAppError(error);
+            const localSaved = options.localSaved === true;
+            if (type === 'offline') {
+                return {
+                    kind:'offline',
+                    title:'Нет интернета',
+                    text:localSaved
+                        ? 'Изменения сохранены на этом устройстве. Облачная синхронизация сейчас недоступна.'
+                        : 'Показываем сохранённые данные с устройства. Обновление из облака временно недоступно.',
+                    persistent:true
+                };
+            }
+            if (type === 'permission') {
+                return {
+                    kind:'error',
+                    title:'Недостаточно прав',
+                    text:'Это действие недоступно для текущей учётной записи.',
+                    persistent:false
+                };
+            }
+            if (type === 'auth') {
+                return {
+                    kind:'warning',
+                    title:'Нужно переподключение',
+                    text:'Не удалось подтвердить облачную сессию. Локальные данные остаются доступны.',
+                    persistent:true
+                };
+            }
+            if (type === 'quota') {
+                return {
+                    kind:'error',
+                    title:'Облако временно не принимает данные',
+                    text:localSaved
+                        ? 'Изменения сохранены на устройстве, но сейчас не отправлены в облако.'
+                        : 'Попробуйте повторить действие позже.',
+                    persistent:true
+                };
+            }
+            if (type === 'storage') {
+                return {
+                    kind:'error',
+                    title:'Не удалось сохранить на устройстве',
+                    text:'Проверьте свободное место и разрешения браузера, затем повторите действие.',
+                    persistent:true
+                };
+            }
+            if (type === 'temporary') {
+                return {
+                    kind:'warning',
+                    title:'Облако временно недоступно',
+                    text:localSaved
+                        ? 'Изменения сохранены на устройстве. Облачное сохранение не выполнено.'
+                        : 'Используем последнюю сохранённую версию данных и попробуем подключиться снова.',
+                    persistent:true
+                };
+            }
+            const isSave = String(scope || '').includes('save') || String(scope || '').includes('write');
+            return {
+                kind:'error',
+                title:isSave ? 'Не удалось сохранить изменения' : 'Не удалось обновить данные',
+                text:localSaved
+                    ? 'Локальная копия сохранена, но облачная операция не завершилась.'
+                    : 'Повторите действие. Если проблема останется, приложение продолжит использовать сохранённые данные.',
+                persistent:false
+            };
+        }
+
+        function reportAppError(scope, error, options = {}) {
+            const issue = friendlyIssue(scope, error, options);
+            const code = appErrorCode(error);
+            const dedupeKey = `${scope || 'app'}|${issue.kind}|${code || issue.title}`;
+            const now = Date.now();
+            console.warn('[App status]', scope, error);
+
+            if (dedupeKey === lastReportedIssueKey && now - lastReportedIssueAt < 4500) return issue;
+            lastReportedIssueKey = dedupeKey;
+            lastReportedIssueAt = now;
+
+            if (issue.persistent) {
+                setSystemStatus(issue.kind, issue.title, issue.text, {
+                    key: issue.kind === 'offline' ? 'offline' : 'cloud',
+                    dismissible: issue.kind !== 'offline'
+                });
+                if (issue.kind !== 'offline') cloudProblemSeen = true;
+            } else {
+                showToast(issue.text, issue.kind === 'error' ? 'error' : 'warning', 3200);
+            }
+            return issue;
+        }
+        window.reportAppError = reportAppError;
+
+        function syncSystemStatus(options = {}) {
+            if (!navigator.onLine) {
+                setSystemStatus(
+                    'offline',
+                    'Нет интернета',
+                    'Показываем сохранённые данные. Облачные обновления временно недоступны.',
+                    { key:'offline', dismissible:false }
+                );
+                return;
+            }
+
+            if (!isCloudConnected) {
+                setSystemStatus(
+                    'warning',
+                    'Облако временно недоступно',
+                    'Сохранённые данные на устройстве доступны. Подключение будет восстановлено автоматически.',
+                    { key:'cloud', dismissible:true }
+                );
+                cloudProblemSeen = true;
+                return;
+            }
+
+            if (options.recovered || cloudProblemSeen) {
+                cloudProblemSeen = false;
+                setSystemStatus(
+                    'success',
+                    'Соединение восстановлено',
+                    'Облачная синхронизация снова доступна.',
+                    { key:'recovered', autoHide:2600, dismissible:false }
+                );
+            } else {
+                clearSystemStatus();
+            }
+        }
+
+        window.addEventListener('offline', () => {
+            lastKnownOnlineState = false;
+            syncSystemStatus();
+            refreshSettingsSystem?.();
+        });
+
+        window.addEventListener('online', () => {
+            const wasOffline = lastKnownOnlineState === false;
+            lastKnownOnlineState = true;
+            if (wasOffline && isCloudConnected) syncSystemStatus({ recovered:true });
+            else syncSystemStatus();
+            refreshSettingsSystem?.();
+        });
         let attendanceUnsubscribe = null;
         let attendanceArchiveUnsubscribe = null;
         let attendanceArchiveReady = false;
@@ -303,6 +534,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         configureSchedule({
             getCloudState: () => ({ isCloudConnected, db, auth }),
             showToast: (message) => showToast(message),
+            reportError: (scope, error, options) => reportAppError(scope, error, options),
             createAutomaticBackup: () => createAutomaticBackup(),
             updateBackupStatus: () => updateBackupStatus(),
             setRealtimeDiagnostic: (detail) => { firebaseDiag.realtime = { ok: true, detail }; },
