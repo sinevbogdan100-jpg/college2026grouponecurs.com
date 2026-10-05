@@ -2123,3 +2123,468 @@
     animation:none!important;
   }
 }
+
+
+/* ===== FINAL RESPONSIVE AUDIT — step18.40 ===== */
+html,body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+:is(
+  #view-home,
+  #view-tracker,
+  #view-schedule,
+  #view-roster,
+  #view-home *,
+  #view-tracker *,
+  #view-schedule *,
+  #view-roster *,
+  .bottom-nav,
+  .bottom-nav *,
+  .app-overlay,
+  .app-overlay *
+){
+  box-sizing:border-box;
+}
+
+/* Phone frame: one predictable width regardless of older utility/classes. */
+@media(max-width:767px){
+  :root{
+    --section-page-pad-x:clamp(8px,2.6vw,12px);
+  }
+
+  :is(
+    #view-home.home-reference,
+    #view-tracker.journal-reference-page,
+    #view-schedule.schedule-reference-page,
+    #view-roster.roster-reference-page
+  ){
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0 auto!important;
+    padding-left:var(--section-page-pad-x)!important;
+    padding-right:var(--section-page-pad-x)!important;
+  }
+
+  :is(
+    #view-home .home-ref-shell,
+    #view-tracker .journal-editor-view,
+    #view-tracker .journal-assessment-view,
+    #view-schedule .schedule-ref-timeline,
+    #view-roster #roster-container
+  ){
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+
+  /* Five navigation items must always stay inside the viewport. */
+  #bottom-nav.bottom-nav{
+    left:50%!important;
+    right:auto!important;
+    width:calc(100% - 10px)!important;
+    max-width:620px!important;
+    min-width:0!important;
+    transform:translateX(-50%)!important;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:2px!important;
+    padding:5px!important;
+  }
+  #bottom-nav button[data-nav]{
+    width:100%!important;
+    min-width:0!important;
+    padding:4px 1px!important;
+    gap:3px!important;
+  }
+  #bottom-nav button[data-nav] i{
+    flex:0 0 auto;
+  }
+
+  /* Consistent top bars across all four primary pages. */
+  :is(
+    #view-home .home-ref-topbar,
+    #view-tracker .journal-ref-topbar,
+    #view-schedule .schedule-ref-topbar,
+    #view-roster .roster-ref-topbar
+  ){
+    grid-template-columns:44px minmax(0,1fr) 44px!important;
+    gap:5px!important;
+    min-width:0!important;
+  }
+  :is(
+    #view-home .home-ref-topbtn,
+    #view-tracker .journal-ref-topbtn,
+    #view-schedule .schedule-ref-topbtn,
+    #view-roster .roster-ref-topbtn
+  ){
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+  }
+  #view-home .home-ref-page-title,
+  #view-tracker .journal-ref-title h1,
+  #view-schedule .schedule-ref-title h1,
+  #view-roster .roster-ref-title h1{
+    font-size:20px!important;
+    line-height:1.1!important;
+    overflow-wrap:anywhere!important;
+  }
+  #view-tracker .journal-ref-title>span,
+  #view-schedule .schedule-ref-title>span:not(.hidden),
+  #view-roster .roster-ref-title>span{
+    font-size:9.5px!important;
+    line-height:1.2!important;
+    white-space:normal!important;
+  }
+
+  /* Journal date controls: primary date stays on row 1; helpers move to row 2. */
+  #view-tracker .journal-ref-datebar{
+    display:grid!important;
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    grid-template-areas:
+      "prev date next"
+      "calendar calendar today"!important;
+    gap:7px!important;
+    padding:8px!important;
+    min-width:0!important;
+  }
+  #view-tracker .journal-ref-datebar>.journal-ref-arrow:first-child{grid-area:prev!important}
+  #view-tracker .journal-ref-datebar>.journal-ref-datewrap{grid-area:date!important;min-width:0!important}
+  #view-tracker .journal-ref-datebar>.journal-ref-arrow:nth-of-type(2){grid-area:next!important}
+  #view-tracker .journal-ref-datebar>.journal-ref-calendar-btn{grid-area:calendar!important}
+  #view-tracker .journal-ref-datebar>.journal-ref-today-btn{grid-area:today!important}
+  #view-tracker :is(.journal-ref-arrow,.journal-ref-date-trigger,.journal-ref-calendar-btn,.journal-ref-today-btn){
+    min-width:0!important;
+    min-height:40px!important;
+    height:40px!important;
+  }
+  #view-tracker .journal-ref-date-trigger{
+    width:100%!important;
+    justify-content:center!important;
+    padding-inline:8px!important;
+  }
+  #view-tracker .journal-ref-date-trigger span{
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  #view-tracker .journal-ref-calendar-btn,
+  #view-tracker .journal-ref-today-btn{
+    width:100%!important;
+    justify-content:center!important;
+    padding-inline:8px!important;
+  }
+
+  /* Journal cards: preserve tap targets without horizontal overflow. */
+  #view-tracker .journal-ref-row{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  #view-tracker .journal-status-btn{
+    min-width:0!important;
+  }
+  #view-tracker .journal-inline-actions>div{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #view-tracker .journal-inline-actions button{
+    min-width:0!important;
+    white-space:normal!important;
+  }
+
+  /* Schedule days remain five equal compact cells. */
+  #view-schedule .schedule-ref-days{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:5px!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  #view-schedule .schedule-ref-days button{
+    min-width:0!important;
+    padding-inline:3px!important;
+  }
+  #view-schedule .schedule-ref-days button strong,
+  #view-schedule .schedule-ref-days button span{
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  #view-schedule .schedule-ref-datebar{
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    gap:7px!important;
+    min-width:0!important;
+  }
+  #view-schedule .schedule-ref-date-copy{
+    min-width:0!important;
+  }
+  #view-schedule .schedule-ref-date-copy :is(strong,span){
+    max-width:100%!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  /* Roster names keep the width; action buttons never push the card outside. */
+  #view-roster .roster-person-card{
+    width:100%!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+  }
+  #view-roster .roster-person-main{
+    width:100%!important;
+    min-width:0!important;
+  }
+  #view-roster .roster-admin-actions{
+    flex:0 0 auto!important;
+  }
+
+  /* Sheets/modals are always contained in the visual viewport. */
+  .sheet-panel{
+    width:min(100%,560px)!important;
+    max-width:100vw!important;
+  }
+  .leader-profile-modal-card,
+  .student-profile-modal-card{
+    max-width:calc(100vw - 14px)!important;
+  }
+}
+
+/* 320 / 360 px safety layer. */
+@media(max-width:360px){
+  :root{
+    --section-page-pad-x:7px;
+  }
+
+  :is(
+    #view-home .home-ref-topbar,
+    #view-tracker .journal-ref-topbar,
+    #view-schedule .schedule-ref-topbar,
+    #view-roster .roster-ref-topbar
+  ){
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    gap:3px!important;
+    min-height:54px!important;
+  }
+  :is(
+    #view-home .home-ref-topbtn,
+    #view-tracker .journal-ref-topbtn,
+    #view-schedule .schedule-ref-topbtn,
+    #view-roster .roster-ref-topbtn
+  ){
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+    font-size:17px!important;
+  }
+  #view-home .home-ref-page-title,
+  #view-tracker .journal-ref-title h1,
+  #view-schedule .schedule-ref-title h1,
+  #view-roster .roster-ref-title h1{
+    font-size:18px!important;
+  }
+
+  #bottom-nav.bottom-nav{
+    width:calc(100% - 6px)!important;
+    padding:4px 3px!important;
+    gap:1px!important;
+  }
+  #bottom-nav button[data-nav]{
+    min-height:52px!important;
+  }
+  #bottom-nav button[data-nav] i{
+    font-size:17px!important;
+  }
+  #bottom-nav button[data-nav] span{
+    font-size:7.5px!important;
+    line-height:1.05!important;
+  }
+
+  #view-home .home-ref-group-card{
+    padding:11px!important;
+    gap:9px!important;
+  }
+  #view-home .home-ref-group-copy #group-name{
+    font-size:19px!important;
+    line-height:1.1!important;
+  }
+  #view-home .home-ref-lesson-row{
+    grid-template-columns:38px minmax(0,1fr)!important;
+    padding:9px 8px!important;
+  }
+  #view-home .home-ref-lesson-number{
+    width:36px!important;
+    height:36px!important;
+  }
+  #view-home .home-day-status{
+    padding:8px!important;
+  }
+  #view-home .home-ref-notification-card{
+    padding:10px 9px!important;
+  }
+
+  #view-tracker .journal-section-tabs{
+    gap:4px!important;
+    padding:4px!important;
+  }
+  #view-tracker .journal-section-tabs button{
+    min-height:40px!important;
+    padding-inline:5px!important;
+    font-size:10px!important;
+  }
+  #view-tracker .journal-ref-datebar{
+    grid-template-columns:36px minmax(0,1fr) 36px!important;
+    gap:5px!important;
+    padding:6px!important;
+  }
+  #view-tracker :is(.journal-ref-arrow,.journal-ref-date-trigger,.journal-ref-calendar-btn,.journal-ref-today-btn){
+    height:38px!important;
+    min-height:38px!important;
+  }
+  #view-tracker .journal-ref-row{
+    gap:7px 4px!important;
+    padding:9px 8px!important;
+  }
+  #view-tracker .journal-ref-person{
+    grid-template-columns:38px minmax(0,1fr)!important;
+  }
+  #view-tracker .journal-ref-person .student-profile-avatar,
+  #view-tracker .journal-ref-person .journal-ref-avatar{
+    width:38px!important;
+    height:38px!important;
+    flex-basis:38px!important;
+  }
+  #view-tracker .journal-ref-person strong{
+    font-size:12px!important;
+  }
+  #view-tracker .journal-status-btn{
+    height:36px!important;
+    min-height:36px!important;
+    font-size:11px!important;
+  }
+
+  #view-schedule .schedule-ref-days{
+    gap:3px!important;
+  }
+  #view-schedule .schedule-ref-days button{
+    min-height:48px!important;
+    padding:5px 2px!important;
+  }
+  #view-schedule .schedule-ref-days button strong{
+    font-size:11px!important;
+  }
+  #view-schedule .schedule-ref-days button span{
+    font-size:8px!important;
+  }
+  #view-schedule .schedule-ref-row{
+    min-width:0!important;
+  }
+
+  #view-roster .leadership-card{
+    padding:10px!important;
+  }
+  #view-roster .roster-person-card{
+    gap:7px!important;
+    padding:10px!important;
+  }
+  #view-roster .roster-profile-avatar{
+    width:40px!important;
+    height:40px!important;
+    flex-basis:40px!important;
+  }
+  #view-roster .roster-person-text strong{
+    font-size:12.5px!important;
+  }
+  #view-roster .roster-person-actions{
+    gap:3px!important;
+  }
+  #view-roster .roster-person-actions button{
+    width:30px!important;
+    height:30px!important;
+  }
+
+  /* Notification header actions stack instead of squeezing long titles. */
+  .notification-item-head{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:7px!important;
+  }
+  .notification-item-actions{
+    justify-content:space-between!important;
+    width:100%!important;
+  }
+
+  /* Undo bar gets a second row for the action button. */
+  .undo-action-bar{
+    grid-template-columns:30px minmax(0,1fr) 26px!important;
+    grid-template-areas:
+      "undoicon undomessage undoclose"
+      ". undoaction undoaction"!important;
+    row-gap:6px!important;
+  }
+  .undo-action-icon{grid-area:undoicon!important}
+  .undo-action-message{grid-area:undomessage!important}
+  #undo-action-close{grid-area:undoclose!important}
+  #undo-action-button{
+    grid-area:undoaction!important;
+    justify-self:start!important;
+  }
+}
+
+/* 390 / 430 px phones: preserve comfort instead of using the ultra-narrow layer. */
+@media(min-width:361px) and (max-width:430px){
+  #bottom-nav button[data-nav] span{
+    font-size:8.5px!important;
+  }
+  #view-tracker .journal-ref-row{
+    padding:11px!important;
+  }
+  #view-schedule .schedule-ref-days button{
+    min-height:52px!important;
+  }
+}
+
+/* Tablet: keep desktop-style room while avoiding oversized desktop spacing. */
+@media(min-width:768px) and (max-width:1023px){
+  body:not(.layout-phone) :is(
+    #view-home.home-reference,
+    #view-tracker.journal-reference-page,
+    #view-schedule.schedule-reference-page,
+    #view-roster.roster-reference-page
+  ){
+    padding-left:20px!important;
+    padding-right:20px!important;
+    max-width:100%!important;
+  }
+
+  body:not(.layout-phone) .bottom-nav{
+    max-width:calc(100% - 20px)!important;
+  }
+  body:not(.layout-phone) .bottom-nav button{
+    padding-inline:14px!important;
+  }
+
+  body:not(.layout-phone) #view-home .home-ref-lesson-row{
+    grid-template-columns:52px minmax(0,1fr) minmax(170px,32%)!important;
+  }
+  body:not(.layout-phone) #view-tracker .journal-ref-table{
+    width:100%!important;
+  }
+  body:not(.layout-phone) #view-schedule .schedule-ref-meta{
+    grid-template-columns:minmax(140px,.65fr) minmax(0,1.35fr)!important;
+  }
+}
+
+/* Wide desktop: cap reading width for text-heavy sections while retaining 2-column roster. */
+@media(min-width:1440px){
+  body:not(.layout-phone) #view-tracker .journal-ref-grid,
+  body:not(.layout-phone) #view-schedule .schedule-ref-timeline{
+    width:100%!important;
+  }
+}
