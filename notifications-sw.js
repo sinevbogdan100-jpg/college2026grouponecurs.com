@@ -14,6 +14,9 @@ const CORE_ASSETS = [
   './storage.js?v=20261004-performance-v1',
   './schedule.js?v=20261005-error-system-v1',
   './i18n.js?v=20261005-live-progress-v2',
+  './i18n.js?v=20261004-schedule-change-v1',
+  './firebase.js?v=20261004-performance-v1',
+  './performance.js?v=20261004-speed-v1',
   './notification-center.js?v=20261004-console-fixes-v2',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
@@ -21,7 +24,14 @@ const CORE_ASSETS = [
   './tailwind-local.css?v=20261004-console-fixes-v1',
   './manifest.webmanifest?v=20261004-console-fixes-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js'
 ];
 
 self.addEventListener('install', event => {
@@ -96,7 +106,8 @@ self.addEventListener('fetch', event => {
   const externalOfflineHosts = new Set([
     'cdnjs.cloudflare.com',
     'fonts.googleapis.com',
-    'fonts.gstatic.com'
+    'fonts.gstatic.com',
+    'www.gstatic.com'
   ]);
 
   if (url.origin !== self.location.origin) {
