@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.31-live-lesson-progress-2026-10-05">
+    <meta name="app-build" content="step18.32-unified-sections-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-console-fixes-v1">
@@ -592,14 +592,17 @@
     </div>
 
     <div id="view-roster" class="hidden roster-reference-page min-h-screen flex flex-col max-w-2xl mx-auto p-4 pb-20">
-        <div class="roster-ref-topbar flex items-center justify-between mb-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
-            <div class="flex items-center space-x-3">
-                <button onclick="switchView('home')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
-                    <i class="fa-solid fa-house text-xs"></i>
-                </button>
-                <h1 class="font-bold text-lg text-slate-900">Группа <span id="roster-group-name" class="hidden">ТОЭ-26-9-1</span></h1>
+        <div class="roster-ref-topbar">
+            <button class="roster-ref-topbtn" onclick="openAppMenu()" aria-label="Меню">
+                <i class="fa-solid fa-bars"></i><span class="support-menu-dot hidden" aria-hidden="true"></span>
+            </button>
+            <div class="roster-ref-title">
+                <h1>Группа <span id="roster-group-name" class="hidden">ТОЭ-26-9-1</span></h1>
+                <span><span id="roster-student-count">19</span> студентов</span>
             </div>
-            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md"><span id="roster-student-count">19</span> студентов</span>
+            <button class="roster-ref-topbtn notification-bell" onclick="openNotifications()" aria-label="Уведомления">
+                <i class="fa-regular fa-bell"></i>
+            </button>
         </div>
 
         <div class="group-leadership-grid">
