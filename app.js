@@ -1207,6 +1207,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const today = datePicker?.value || getCurrentDateStr();
             if (isCloudConnected && db && auth?.currentUser) {
                 try {
+                    await flushOfflineQueue({ silent:true });
                     await loadAttendanceForDate(today);
                     subscribeToAttendance(today);
                     subscribeToAttendanceArchive();
@@ -1649,20 +1650,29 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         async function persistGroupInfoToCloud(info) {
             if (!canEditGroupInfo()) return false;
-            if (!isCloudConnected || !db || !auth?.currentUser) return false;
+            const localSnapshot = normalizeGroupInfoCloudData(info);
             const payload = {
                 ...DEFAULT_GROUP_INFO,
-                ...info,
+                ...localSnapshot,
                 updatedAt: new Date().toISOString(),
                 build: window.__SITE_BUILD__
             };
+
+            if (!navigator.onLine || !isCloudConnected || !db || !auth?.currentUser) {
+                await queueOfflineChange('groupInfo', localSnapshot);
+                syncSystemStatus();
+                return false;
+            }
+
             try {
                 // Используем тот же раздел attendance_records, где уже работает журнал.
                 // Специальное имя документа не пересекается с датами YYYY-MM-DD.
                 await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', GROUP_INFO_DOC_ID), payload, { merge: false });
                 lastGroupInfoUpdatedAt = payload.updatedAt;
+                await clearOfflineChange('groupInfo');
                 return true;
             } catch (e) {
+                await queueOfflineChange('groupInfo', localSnapshot);
                 reportAppError('group-save', e, { localSaved:true });
                 return false;
             }
@@ -1789,19 +1799,27 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             rosterStatsReady = false;
             scheduleRosterStatsRebuild(150);
 
-            if (!isCloudConnected || !db || !auth?.currentUser) return false;
             const payload = {
                 students: normalized,
                 emptyRosterConfirmed: confirmedEmpty,
                 updatedAt: new Date().toISOString(),
                 build: window.__SITE_BUILD__
             };
+
+            if (!navigator.onLine || !isCloudConnected || !db || !auth?.currentUser) {
+                await queueOfflineChange('students', normalized);
+                syncSystemStatus();
+                return false;
+            }
+
             try {
                 await setDoc(doc(db, ...CLOUD_ROOT, 'attendance_records', STUDENTS_DOC_ID), payload, { merge: false });
                 lastStudentsUpdatedAt = payload.updatedAt;
+                await clearOfflineChange('students');
                 await syncStudentCountToCloud();
                 return true;
             } catch (e) {
+                await queueOfflineChange('students', normalized);
                 reportAppError('roster-save', e, { localSaved:true });
                 return false;
             }
@@ -3238,6 +3256,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 const backupKey = `toe_att_backup_${dateVal}`;
                 await savePersistentValue(backupKey, serialized);
                 await cleanupOldAttendanceBackups(30);
+                await queueOfflineChange('attendance', dataToSave, dateVal);
             } catch (e) {
                 window.__journalDirty = true;
                 setSaveStatus('Ошибка сохранения', false);
@@ -3253,6 +3272,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                         subscribeToAttendance(dateVal);
                     }
                     cloudSaveOk = true;
+                    await clearOfflineChange('attendance', dateVal);
                     attendanceArchive[dateVal] = dataToSave;
                     renderRosterList();
                     scheduleRosterStatsRebuild(500);
