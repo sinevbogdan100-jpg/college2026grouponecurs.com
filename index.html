@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.45-mobile-bells-update-2026-10-05">
+    <meta name="app-build" content="step18.46-release-history-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261005-brand-icon-v1">
@@ -141,11 +141,11 @@
     <link rel="stylesheet" href="style.css?v=20261005-live-progress-v1">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-ui-polish-v1">
-    <link rel="stylesheet" href="responsive-fit.css?v=20261005-mobile-bells-update-v1">
+    <link rel="stylesheet" href="responsive-fit.css?v=20261005-release-history-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261005-mobile-bells-update-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261005-release-history-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261004-console-fixes-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261005-performance-v2">
@@ -867,6 +867,7 @@
                 <button id="menu-support-button" onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span><span id="support-menu-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></button>
                 <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
                 <button onclick="closeAppMenu();openHelpNavigation()"><i class="fa-regular fa-circle-question"></i><span>Помощь и навигация</span></button>
+                <button id="menu-release-history-button" type="button" onclick="openReleaseHistory()"><i class="fa-solid fa-clock-rotate-left"></i><span id="menu-release-history-label" data-i18n-skip>История обновлений</span></button>
                 <button id="menu-update-button" class="drawer-install-action" type="button">
                     <i class="fa-solid fa-arrow-rotate-right"></i>
                     <span class="drawer-install-copy"><strong>Обновить</strong><small id="menu-update-hint" data-i18n-skip>Загрузить актуальную версию</small></span>
@@ -896,6 +897,21 @@
 
             <div class="drawer-note">Сообщения поддержки и важные объявления доступны через колокольчик.</div>
         </aside>
+    </div>
+
+    <div id="release-notes-modal" class="release-notes-overlay hidden" data-i18n-skip>
+        <section class="release-notes-sheet" role="dialog" aria-modal="true" aria-labelledby="release-notes-heading">
+            <header class="release-notes-header">
+                <span class="release-notes-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <div><span class="release-notes-eyebrow">SBP Information</span><h2 id="release-notes-heading">Что нового</h2></div>
+                <button id="release-notes-close" type="button" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+            <div id="release-notes-content" class="release-notes-content"></div>
+            <footer class="release-notes-actions">
+                <button id="release-notes-history" type="button">История обновлений</button>
+                <button id="release-notes-acknowledge" type="button">Понятно</button>
+            </footer>
+        </section>
     </div>
 
     <div id="help-navigation-modal" class="app-overlay hidden" onclick="if(event.target===this) closeHelpNavigation()">
@@ -968,7 +984,8 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261005-mobile-bells-update-v1"></script>
+    <script type="module" src="release-notes.js?v=20261005-release-history-v1"></script>
+    <script type="module" src="app.js?v=20261005-release-history-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">

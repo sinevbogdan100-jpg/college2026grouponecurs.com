@@ -2826,3 +2826,58 @@ body.bell-editor-open{overflow:hidden}
   .bell-editor-fields{grid-template-columns:1fr}
   #schedule-bell-preview>div{align-items:flex-start;flex-direction:column;gap:3px}
 }
+
+/* Named releases and corrections, shared by the site and installed app. */
+body.release-notes-open{overflow:hidden}
+.release-notes-overlay{
+  position:fixed;inset:0;z-index:280;display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+  background:rgba(23,32,57,.38);backdrop-filter:blur(8px);
+}
+.release-notes-overlay.hidden{display:none!important}
+.release-notes-sheet{
+  display:flex;flex-direction:column;width:100%;max-width:500px;min-height:0;max-height:calc(100dvh - 32px);
+  overflow:hidden;box-sizing:border-box;border:1px solid #e6e8f5;border-radius:24px;
+  background:linear-gradient(145deg,#fff,#f7f8ff);box-shadow:0 24px 70px rgba(34,44,83,.22);
+}
+.release-notes-header{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid #e9edf6;flex-shrink:0}
+.release-notes-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:14px;background:linear-gradient(135deg,#818cf8,#a78bfa);color:#fff;font-size:18px}
+.release-notes-header>div{flex:1;min-width:0}
+.release-notes-eyebrow{display:block;margin-bottom:4px;font-size:10px;font-weight:700;letter-spacing:.06em;color:#939eb7}
+.release-notes-header h2{margin:0;color:#172440;font-size:19px;font-weight:750;line-height:1.3;letter-spacing:-.02em}
+#release-notes-close{display:grid;place-items:center;width:40px;height:40px;flex:none;border:0;border-radius:12px;background:#eef1f8;color:#69758f;font-size:16px}
+.release-notes-content{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px}
+.release-card{border:1px solid #e5e9f4;border-radius:18px;padding:18px;background:#fff}
+.release-card-meta{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+.release-version{color:#6774cd;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums}
+.release-card time{color:#96a1b5;font-size:11px}
+.release-type{display:inline-block;padding:5px 9px;border-radius:8px;font-size:10px;font-weight:700;line-height:1.3}
+.release-type.is-update{background:#efedff;color:#8a73cb}
+.release-type.is-fix{background:#edf5ff;color:#6f98c5}
+.release-type>span{display:block}
+.release-type>span+span{margin-top:2px;font-weight:500}
+.release-translation{display:block;margin-top:4px;color:#8a96aa;font-size:12px;font-weight:400;line-height:1.5}
+.release-card h3>.release-translation{font-size:14px;margin-top:6px}
+.release-change-group h4>.release-translation{font-size:11px;margin-top:2px}
+.release-card h3{margin:12px 0 16px;color:#243452;font-size:20px;font-weight:750;line-height:1.35;letter-spacing:-.02em}
+.release-change-group+.release-change-group{margin-top:16px;padding-top:14px;border-top:1px solid #edf0f7}
+.release-change-group h4{margin:0 0 8px;color:#75829c;font-size:11px;font-weight:700}
+.release-card ul{display:flex;flex-direction:column;gap:10px;margin:0;padding:0 0 0 18px;list-style:disc;color:#67748b;font-size:13px;line-height:1.6}
+.release-card li{padding-left:2px;overflow-wrap:anywhere}
+.release-card li::marker{color:#a1acee}
+.release-notes-actions{display:flex;align-items:stretch;gap:10px;padding:14px 20px;border-top:1px solid #e9edf6;flex-shrink:0;background:#fafbff}
+.release-notes-actions button{flex:1;min-height:46px;border:0;border-radius:13px;padding:10px 12px;font-size:12px;font-weight:700;line-height:1.4}
+.release-notes-actions button[hidden]{display:none!important}
+#release-notes-history{color:#74829a;background:#eef1f8}
+#release-notes-acknowledge{color:#fff;background:linear-gradient(135deg,#818cf8,#a78bfa);box-shadow:0 5px 16px rgba(129,140,248,.18)}
+.release-empty{margin:0;color:#7b879e;font-size:13px;line-height:1.6}
+@media(max-width:767px){
+  .release-notes-overlay{align-items:flex-end;padding:max(10px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))}
+  .release-notes-sheet{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:24px 24px 18px 18px}
+  .release-notes-header{padding:16px}
+  .release-notes-header h2{font-size:17px}
+  .release-notes-content{padding:16px}
+  .release-card{padding:16px}
+  .release-card h3{font-size:18px}
+  .release-notes-actions{padding:12px 16px}
+}

@@ -3769,6 +3769,7 @@ window.setInterfaceLanguage = function(lang) {
     refreshSettingsSystem();
     window.refreshNotificationSettings?.();
     window.updateInstallButton?.();
+    window.refreshReleaseNotes?.();
     applyKzTranslations();
 };
 function updateLanguageButtons() {
