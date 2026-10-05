@@ -3021,3 +3021,65 @@ body.group-tools-open { overflow: hidden; }
     will-change:auto!important;
   }
 }
+
+
+/* ===== HEADER + NOTIFICATION CENTERING HOTFIX — step18.51 ===== */
+@media(max-width:767px){
+  /* Keep all primary section headings on the exact visual centre line. */
+  :is(
+    #view-home .home-ref-topbar,
+    #view-tracker .journal-ref-topbar,
+    #view-schedule .schedule-ref-topbar,
+    #view-roster .roster-ref-topbar
+  ){
+    position:relative!important;
+    display:grid!important;
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    align-items:center!important;
+  }
+
+  #view-home .home-ref-topbar>.home-ref-page-title,
+  #view-tracker .journal-ref-topbar>.journal-ref-title,
+  #view-schedule .schedule-ref-topbar>.schedule-ref-title,
+  #view-roster .roster-ref-topbar>.roster-ref-title{
+    grid-column:2!important;
+    justify-self:stretch!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    text-align:center!important;
+    transform:none!important;
+  }
+
+  /* Notifications use the same symmetric 3-column header geometry. */
+  #notifications-modal .notification-panel>.sheet-head{
+    display:grid!important;
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    align-items:center!important;
+    gap:0!important;
+  }
+  #notifications-modal .notification-panel>.sheet-head::before{
+    content:"";
+    grid-column:1;
+    width:40px;
+    height:40px;
+  }
+  #notifications-modal .notification-panel>.sheet-head>div{
+    grid-column:2;
+    min-width:0!important;
+    width:100%!important;
+    text-align:center!important;
+  }
+  #notifications-modal .notification-panel>.sheet-head>div .eyebrow,
+  #notifications-modal .notification-panel>.sheet-head>div h2{
+    width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    text-align:center!important;
+  }
+  #notifications-modal .notification-panel>.sheet-head>button{
+    grid-column:3;
+    justify-self:end;
+    margin:0!important;
+  }
+}
