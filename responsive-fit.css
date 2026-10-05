@@ -626,3 +626,199 @@
     max-width:calc(100% - 174px);
   }
 }
+
+
+/* ===== UNIFIED MAIN SECTIONS — step18.32 ===== */
+:root{
+  --section-page-max:620px;
+  --section-page-pad-x:10px;
+  --section-topbar-height:60px;
+  --section-topbar-side:46px;
+  --section-topbar-button:44px;
+  --section-title-size:22px;
+  --section-subtitle-size:10.5px;
+  --section-radius:16px;
+  --section-soft-bg:#f8faff;
+  --section-text:#0f1833;
+  --section-muted:#687894;
+}
+
+/* One page frame on phones/tablets. */
+@media(max-width:767px){
+  :is(
+    #view-home.home-reference,
+    #view-tracker.journal-reference-page,
+    #view-schedule.schedule-reference-page,
+    #view-roster.roster-reference-page
+  ){
+    width:100%!important;
+    max-width:var(--section-page-max)!important;
+    margin-inline:auto!important;
+    padding-top:6px!important;
+    padding-left:var(--section-page-pad-x)!important;
+    padding-right:var(--section-page-pad-x)!important;
+    padding-bottom:calc(88px + env(safe-area-inset-bottom))!important;
+    background:var(--section-soft-bg)!important;
+    color:var(--section-text)!important;
+  }
+}
+
+/* One top bar geometry everywhere. */
+:is(
+  #view-home .home-ref-topbar,
+  #view-tracker .journal-ref-topbar,
+  #view-schedule .schedule-ref-topbar,
+  #view-roster .roster-ref-topbar
+){
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:var(--section-topbar-side) minmax(0,1fr) var(--section-topbar-side)!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+  min-height:var(--section-topbar-height)!important;
+  height:auto!important;
+  margin:0 0 8px!important;
+  padding:0 2px!important;
+  border:0!important;
+  border-radius:18px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+
+/* Same side controls. */
+:is(
+  #view-home .home-ref-topbtn,
+  #view-tracker .journal-ref-topbtn,
+  #view-schedule .schedule-ref-topbtn,
+  #view-roster .roster-ref-topbtn
+){
+  position:relative;
+  width:var(--section-topbar-button)!important;
+  height:var(--section-topbar-button)!important;
+  min-width:var(--section-topbar-button)!important;
+  min-height:var(--section-topbar-button)!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:13px!important;
+  background:transparent!important;
+  color:#13203e!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:19px!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+:is(
+  #view-home .home-ref-topbtn,
+  #view-tracker .journal-ref-topbtn,
+  #view-schedule .schedule-ref-topbtn,
+  #view-roster .roster-ref-topbtn
+):last-child{
+  justify-self:end!important;
+}
+
+/* Same centered title treatment. */
+#view-home .home-ref-page-title,
+#view-tracker .journal-ref-title,
+#view-schedule .schedule-ref-title,
+#view-roster .roster-ref-title{
+  min-width:0!important;
+  justify-self:stretch!important;
+  align-self:center!important;
+  text-align:center!important;
+  color:var(--section-text)!important;
+}
+#view-home .home-ref-page-title,
+#view-tracker .journal-ref-title h1,
+#view-schedule .schedule-ref-title h1,
+#view-roster .roster-ref-title h1{
+  margin:0!important;
+  padding:0!important;
+  font-size:var(--section-title-size)!important;
+  line-height:1.08!important;
+  font-weight:850!important;
+  letter-spacing:-.02em!important;
+  color:var(--section-text)!important;
+  transform:none!important;
+  position:static!important;
+  width:auto!important;
+  max-width:none!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  pointer-events:auto!important;
+}
+#view-tracker .journal-ref-title > span,
+#view-schedule .schedule-ref-title > span:not(.hidden),
+#view-roster .roster-ref-title > span{
+  display:block;
+  margin-top:4px!important;
+  color:var(--section-muted)!important;
+  font-size:var(--section-subtitle-size)!important;
+  line-height:1.15!important;
+  font-weight:600!important;
+}
+
+/* Common rhythm and rounded surfaces. */
+:is(
+  #view-home .home-ref-group-card,
+  #view-home .home-ref-role-card,
+  #view-home .home-ref-today,
+  #view-home .home-ref-notifications,
+  #view-tracker .journal-section-tabs,
+  #view-tracker .journal-ref-datebar,
+  #view-tracker .journal-ref-editor,
+  #view-schedule .schedule-ref-week-switch,
+  #view-schedule .schedule-ref-datebar,
+  #view-schedule .schedule-ref-timeline,
+  #view-roster .leadership-card,
+  #view-roster .roster-profile-tools,
+  #view-roster .roster-person-card
+){
+  border-radius:var(--section-radius)!important;
+}
+
+/* Group now follows the same header structure as the other sections. */
+#view-roster .roster-ref-topbar > .roster-ref-topbtn:first-child{
+  justify-self:start!important;
+}
+#view-roster .roster-ref-title{
+  grid-column:2!important;
+}
+#view-roster .roster-ref-title > span{
+  white-space:nowrap!important;
+}
+#view-roster .roster-ref-topbar > .roster-ref-topbtn:last-child{
+  grid-column:3!important;
+}
+
+/* Desktop keeps the same language, just scaled up. */
+@media(min-width:768px){
+  :root{
+    --section-topbar-height:74px;
+    --section-topbar-side:52px;
+    --section-topbar-button:52px;
+    --section-title-size:32px;
+    --section-subtitle-size:15px;
+  }
+  body:not(.layout-phone) :is(
+    #view-home .home-ref-topbar,
+    #view-tracker .journal-ref-topbar,
+    #view-schedule .schedule-ref-topbar,
+    #view-roster .roster-ref-topbar
+  ){
+    display:grid!important;
+    margin-bottom:18px!important;
+  }
+  body:not(.layout-phone) :is(
+    #view-home .home-ref-topbtn,
+    #view-tracker .journal-ref-topbtn,
+    #view-schedule .schedule-ref-topbtn,
+    #view-roster .roster-ref-topbtn
+  ){
+    font-size:24px!important;
+  }
+}
