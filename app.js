@@ -1116,8 +1116,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     diagLog('Realtime attendance ERROR', firebaseDiag.realtime.detail);
                     renderFirebaseDiagnostic();
                     reportAppError('journal-realtime', err, { localSaved:true });
-                    // Автоматически восстанавливаем listener. Даже если он временно падает,
-                    // резервная проверка продолжает синхронизацию каждые 2.5 секунды.
+                    // Автоматически восстанавливаем listener. Пока он недоступен,
+                    // редкая резервная проверка остаётся страховкой без постоянной нагрузки.
                     attendanceReconnectAttempt = Math.min(attendanceReconnectAttempt + 1, 8);
                     const delay = Math.min(1000 * Math.pow(2, attendanceReconnectAttempt - 1), 15000);
                     if (attendanceReconnectTimer) clearTimeout(attendanceReconnectTimer);
