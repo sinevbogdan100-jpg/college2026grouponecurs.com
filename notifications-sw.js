@@ -1,28 +1,26 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-home-nextday-navreload-v1';
+const CACHE_NAME = 'sbp-shell-20261005-mobile-bells-update-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './app.js?v=20261005-home-nextday-navreload-v1',
+  './app.js?v=20261005-mobile-bells-update-v1',
   './style.css?v=20261005-live-progress-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261005-navigation-focus-v1',
+  './responsive-fit.css?v=20261005-mobile-bells-update-v1',
   './firebase.js?v=20261004-console-fixes-v1',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
-  './schedule.js?v=20261005-performance-v2',
-  './i18n.js?v=20261005-live-progress-v2',
-  './i18n.js?v=20261004-schedule-change-v1',
-  './firebase.js?v=20261004-performance-v1',
-  './performance.js?v=20261005-performance-v2',
+  './schedule.js?v=20261005-mobile-bells-update-v1',
+  './i18n.js?v=20261005-mobile-bells-update-v1',
+  './performance.js?v=20261005-mobile-bells-update-v1',
   './notification-center.js?v=20261005-performance-v2',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
   './sbp-information.png?v=20261004-console-fixes-v1',
   './tailwind-local.css?v=20261004-console-fixes-v1',
-  './manifest.webmanifest?v=20261004-console-fixes-v1',
+  './manifest.webmanifest?v=20261005-brand-icon-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
@@ -107,6 +105,8 @@ async function staleWhileRevalidate(event) {
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
+  // Explicit update requests must reach the network, never stale cached code.
+  if (request.cache === 'reload' || request.cache === 'no-store') return;
   const url = new URL(request.url);
   const externalOfflineHosts = new Set([
     'cdnjs.cloudflare.com',
@@ -119,6 +119,11 @@ self.addEventListener('fetch', event => {
     if (externalOfflineHosts.has(url.hostname)) {
       event.respondWith(staleWhileRevalidate(event));
     }
+    return;
+  }
+
+  if (request.mode === 'navigate' && url.searchParams.has('app-refresh')) {
+    event.respondWith(fetch(request, { cache: 'reload' }));
     return;
   }
 
@@ -170,3 +175,4 @@ self.addEventListener('notificationclick', event => {
     await self.clients.openWindow(url.href);
   })());
 });
+

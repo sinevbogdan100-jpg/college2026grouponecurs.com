@@ -43,8 +43,8 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-performance-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-live-progress-v2";
+} from "./schedule.js?v=20261005-mobile-bells-update-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-mobile-bells-update-v1";
 
         
 window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.10';
@@ -2380,6 +2380,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             document.body.classList.toggle('owner-mode', owner);
             document.body.classList.toggle('journal-edit-mode', journalAllowed);
             document.body.classList.toggle('schedule-edit-mode', scheduleAllowed);
+            document.getElementById('schedule-bell-btn')?.classList.toggle('hidden', !scheduleAllowed);
+            if (!scheduleAllowed) window.closeScheduleBellEditor?.();
             document.body.classList.toggle('group-info-edit-mode', groupInfoAllowed);
             document.body.classList.toggle('students-edit-mode', studentsAllowed);
 
@@ -4726,3 +4728,4 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();
+

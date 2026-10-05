@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-schedule-change-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261005-mobile-bells-update-v1";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261004-performance-v1";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
@@ -602,6 +602,7 @@ window.renderScheduleBellPreview = function() {
 };
 
 window.openScheduleBellEditor = function() {
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
     const list = (getCurrentScheduleList() || []).filter(item => !item?.isClassHour);
     if (!list.length) { showToast('На выбранный день нет пар'); return; }
     const first = scheduleParseRange(list[0]?.time);
@@ -611,17 +612,34 @@ window.openScheduleBellEditor = function() {
     breaks.innerHTML = list.slice(0, -1).map((item, index) => {
         const current = String(item?.breakDuration || '').match(/(\d+)/);
         const fallback = index === 0 ? 10 : index === 1 ? 20 : 10;
-        return `<label class="text-[11px] text-slate-600">Перемена после ${index + 1} пары<input data-bell-break type="number" min="0" max="120" value="${current ? Number(current[1]) : fallback}" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>`;
+        return `<label>Перемена после ${index + 1} пары<input data-bell-break type="number" inputmode="numeric" min="0" max="120" value="${current ? Number(current[1]) : fallback}" oninput="renderScheduleBellPreview()"></label>`;
     }).join('');
     const modal = document.getElementById('schedule-bell-modal');
-    modal.classList.remove('hidden'); modal.classList.add('flex');
+    modal.classList.remove('hidden');
+    document.body.classList.add('bell-editor-open');
     window.renderScheduleBellPreview();
+    modal.querySelector('.bell-editor-close')?.focus({ preventScroll: true });
 };
 
 window.closeScheduleBellEditor = function() {
     const modal = document.getElementById('schedule-bell-modal');
-    modal?.classList.add('hidden'); modal?.classList.remove('flex');
+    const wasOpen = modal && !modal.classList.contains('hidden');
+    modal?.classList.add('hidden');
+    document.body.classList.remove('bell-editor-open');
+    if (wasOpen) document.getElementById('schedule-bell-btn')?.focus({ preventScroll: true });
 };
+
+document.addEventListener('keydown', event => {
+    const modal = document.getElementById('schedule-bell-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    if (event.key === 'Escape') { event.preventDefault(); window.closeScheduleBellEditor(); }
+    if (event.key === 'Tab') {
+        const controls = [...modal.querySelectorAll('button,input')].filter(node => !node.disabled);
+        const first = controls[0], last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+});
 
 window.saveScheduleBellEditor = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
@@ -1415,3 +1433,4 @@ if (typeof window !== 'undefined') {
         if (view && !view.classList.contains('hidden')) renderSchedule(currentScheduleDay);
     }, 60000);
 }
+

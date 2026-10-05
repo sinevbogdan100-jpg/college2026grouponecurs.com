@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.44-home-nextday-nav-reload-2026-10-05">
+    <meta name="app-build" content="step18.45-mobile-bells-update-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261005-brand-icon-v1">
@@ -141,15 +141,15 @@
     <link rel="stylesheet" href="style.css?v=20261005-live-progress-v1">
     <link rel="stylesheet" href="desktop.css?v=20261004-desktop-readability" media="(min-width: 768px)">
     <link rel="stylesheet" href="gradients.css?v=20261004-ui-polish-v1">
-    <link rel="stylesheet" href="responsive-fit.css?v=20261005-navigation-focus-v1">
+    <link rel="stylesheet" href="responsive-fit.css?v=20261005-mobile-bells-update-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261005-home-nextday-navreload-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261005-mobile-bells-update-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261004-console-fixes-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261005-performance-v2">
-    <script defer src="performance.js?v=20261005-performance-v2"></script>
+    <script defer src="performance.js?v=20261005-mobile-bells-update-v1"></script>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
@@ -375,7 +375,7 @@
         <span class="app-update-icon"><i class="fa-solid fa-arrow-rotate-right"></i></span>
         <div class="app-update-copy">
             <strong>Доступно обновление</strong>
-            <span>Новая версия приложения готова к установке.</span>
+            <span>Обновите сайт и приложение до актуальной версии.</span>
         </div>
         <button id="app-update-now" type="button">Обновить сейчас</button>
         <button id="app-update-later" type="button" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
@@ -659,7 +659,7 @@
         <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="schedule-ref-add hidden">
             <i class="fa-solid fa-plus"></i><span>Добавить пару</span>
         </button>
-                    <button id="schedule-bell-btn" onclick="openScheduleBellEditor()" class="schedule-bell-btn"><span class="schedule-bell-btn-icon"><i class="fa-solid fa-clock"></i></span><span class="schedule-bell-btn-copy"><strong>Расписание звонков</strong><small>Настроить время пар и перемен</small></span><i class="fa-solid fa-chevron-right schedule-bell-btn-arrow"></i></button>
+                    <button id="schedule-bell-btn" onclick="openScheduleBellEditor()" class="schedule-bell-btn hidden"><span class="schedule-bell-btn-icon"><i class="fa-solid fa-clock"></i></span><span class="schedule-bell-btn-copy"><strong>Расписание звонков</strong><small>Настроить время пар и перемен</small></span><i class="fa-solid fa-chevron-right schedule-bell-btn-arrow"></i></button>
 
         <div id="schedule-live-summary"></div>
         <div id="schedule-day-heading" class="schedule-ref-day-heading"></div>
@@ -785,21 +785,27 @@
         </section>
     </div>
 
-    <div id="schedule-bell-modal" onclick="if(event.target===this) closeScheduleBellEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between">
-                <div><h2 class="font-bold text-base text-slate-900">Расписание звонков</h2><p class="text-[11px] text-slate-500 mt-0.5">Для выбранного учебного дня</p></div>
-                <button onclick="closeScheduleBellEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+    <div id="schedule-bell-modal" class="bell-editor-overlay hidden" onclick="if(event.target===this) closeScheduleBellEditor()">
+        <section class="bell-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="schedule-bell-title">
+            <header class="bell-editor-header">
+                <span class="bell-editor-icon"><i class="fa-solid fa-clock"></i></span>
+                <div><h2 id="schedule-bell-title">Расписание звонков</h2><p>Для выбранного учебного дня</p></div>
+                <button type="button" class="bell-editor-close" onclick="closeScheduleBellEditor()" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+            </header>
+            <div class="bell-editor-body">
+                <p class="bell-editor-note">Измените начало первой пары, длительность занятий и перемены. Время всех следующих пар пересчитается автоматически.</p>
+                <div class="bell-editor-fields">
+                    <label>Начало первой пары<input id="schedule-bell-start" type="time" oninput="renderScheduleBellPreview()"></label>
+                    <label>Длительность пары, мин<input id="schedule-bell-duration" type="number" inputmode="numeric" min="1" max="240" value="60" oninput="renderScheduleBellPreview()"></label>
+                </div>
+                <div id="schedule-bell-breaks" class="bell-editor-fields"></div>
+                <div class="bell-editor-preview-section"><h3>Предпросмотр</h3><div id="schedule-bell-preview"></div></div>
             </div>
-            <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 text-[10px] text-indigo-800">Измените начало первой пары, длительность занятий и перемены. Время всех следующих пар пересчитается автоматически.</div>
-            <div class="grid grid-cols-2 gap-2">
-                <label class="text-[11px] text-slate-600">Начало первой пары<input id="schedule-bell-start" type="time" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
-                <label class="text-[11px] text-slate-600">Длительность пары, мин<input id="schedule-bell-duration" type="number" min="1" max="240" value="60" oninput="renderScheduleBellPreview()" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></label>
-            </div>
-            <div id="schedule-bell-breaks" class="grid grid-cols-2 gap-2"></div>
-            <div><div class="text-[11px] font-semibold text-slate-700 mb-2">Предпросмотр</div><div id="schedule-bell-preview" class="space-y-1.5 rounded-xl bg-slate-50 border border-slate-200 p-3 text-[10px] text-slate-700"></div></div>
-            <div class="flex gap-2"><button onclick="closeScheduleBellEditor()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Отмена</button><button onclick="saveScheduleBellEditor()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Применить ко всему дню</button></div>
-        </div>
+            <footer class="bell-editor-actions">
+                <button type="button" class="bell-editor-cancel" onclick="closeScheduleBellEditor()">Отмена</button>
+                <button type="button" class="bell-editor-save" onclick="saveScheduleBellEditor()">Применить ко всему дню</button>
+            </footer>
+        </section>
     </div>
 
     <div id="schedule-editor-modal" onclick="if(event.target===this) closeScheduleEditor()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[70] hidden items-center justify-center p-4">
@@ -861,6 +867,10 @@
                 <button id="menu-support-button" onclick="closeAppMenu();openSupport()"><i class="fa-regular fa-comments"></i><span>Поддержка</span><span id="support-menu-badge" class="support-unread-badge hidden" data-i18n-skip aria-live="polite">0</span></button>
                 <button onclick="closeAppMenu();openAdminSettings()"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
                 <button onclick="closeAppMenu();openHelpNavigation()"><i class="fa-regular fa-circle-question"></i><span>Помощь и навигация</span></button>
+                <button id="menu-update-button" class="drawer-install-action" type="button">
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                    <span class="drawer-install-copy"><strong>Обновить</strong><small id="menu-update-hint" data-i18n-skip>Загрузить актуальную версию</small></span>
+                </button>
                 <button id="menu-install-button" class="drawer-install-action" type="button" onclick="installSBPApp()">
                     <i class="fa-solid fa-arrow-down-to-line"></i>
                     <span class="drawer-install-copy">
@@ -958,7 +968,7 @@
         </section>
     </div>
 
-    <script type="module" src="app.js?v=20261005-home-nextday-navreload-v1"></script>
+    <script type="module" src="app.js?v=20261005-mobile-bells-update-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -1034,3 +1044,4 @@
 
 </body>
 </html>
+

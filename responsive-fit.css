@@ -2762,99 +2762,67 @@ body:has(.undo-action-bar:not(.hidden)) .app-update-bar:not(.hidden){
 }
 
 
-/* Bell schedule editor — SBP Information */
-#schedule-bell-modal{padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
-#schedule-bell-modal>div{
-  border:1px solid rgba(129,140,248,.18)!important;
-  border-radius:24px!important;
-  box-shadow:0 24px 70px rgba(51,65,85,.18)!important;
-  background:
-    radial-gradient(circle at 100% 0%,rgba(196,181,253,.22),transparent 34%),
-    radial-gradient(circle at 0% 100%,rgba(186,230,253,.18),transparent 34%),
-    #fff!important;
+/* Bell editor: the same controls and palette on phone and desktop. */
+body.bell-editor-open{overflow:hidden}
+#schedule-bell-modal.bell-editor-overlay{
+  position:fixed;inset:0;z-index:270;display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+  background:rgba(23,32,57,.38);backdrop-filter:blur(8px);
 }
-#schedule-bell-modal h2{font-size:18px;letter-spacing:-.025em}
+#schedule-bell-modal.hidden{display:none!important}
+.bell-editor-sheet{
+  width:100%;max-width:480px;max-height:calc(100dvh - 32px);min-height:0;overflow:hidden;
+  display:flex;flex-direction:column;box-sizing:border-box;border:1px solid #e6e8f5;border-radius:24px;
+  background:linear-gradient(145deg,#fff,#f7f8ff);box-shadow:0 24px 70px rgba(34,44,83,.22);
+}
+.bell-editor-header{display:flex;align-items:center;gap:12px;padding:20px;border-bottom:1px solid #e9edf6;flex-shrink:0}
+.bell-editor-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:14px;background:linear-gradient(135deg,#818cf8,#a78bfa);color:#fff;font-size:18px}
+.bell-editor-header>div{min-width:0;flex:1}
+.bell-editor-header h2{margin:0;color:#172440;font-size:18px;font-weight:750;line-height:1.3;letter-spacing:-.02em}
+.bell-editor-header p{margin:4px 0 0;color:#7b879e;font-size:12px}
+.bell-editor-close{display:grid;place-items:center;width:40px;height:40px;flex:none;border:0;border-radius:12px;background:#eef1f8;color:#69758f;font-size:16px}
+.bell-editor-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px;display:flex;flex-direction:column;gap:16px}
+.bell-editor-note{margin:0;padding:12px 14px;background:#eff2ff;border:1px solid #e2e7fa;border-radius:14px;color:#67749c;font-size:12px;line-height:1.6}
+.bell-editor-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bell-editor-fields:empty{display:none}
+#schedule-bell-modal .bell-editor-fields label{display:flex;flex-direction:column;gap:8px;min-width:0;padding:0;border:0;background:none;color:#5b6882;font-size:12px;font-weight:600;line-height:1.45}
 #schedule-bell-modal input{
-  min-height:44px;
-  border-radius:13px!important;
-  border-color:rgba(148,163,184,.28)!important;
-  background:rgba(248,250,252,.88)!important;
-  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+  width:100%;min-width:0;max-width:100%;min-height:46px;box-sizing:border-box;padding:10px 12px;margin:0;
+  border:1px solid #dfe5f1;border-radius:13px;background:#fff;color:#243452;font:inherit;font-size:16px;font-weight:600;
 }
-#schedule-bell-modal input:focus{
-  outline:none;
-  border-color:rgba(129,140,248,.7)!important;
-  box-shadow:0 0 0 3px rgba(129,140,248,.12);
-  background:#fff!important;
+#schedule-bell-modal input:focus-visible{outline:3px solid #e1e5ff;border-color:#939ef4}
+.bell-editor-preview-section h3{margin:0 0 10px;color:#263552;font-size:13px;font-weight:700}
+#schedule-bell-preview{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid #e5e9f4;border-radius:16px;background:#f0f3fa}
+#schedule-bell-preview>div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:11px 12px;border-radius:11px;background:#fff;font-size:12px;line-height:1.5}
+#schedule-bell-preview span{min-width:0;overflow-wrap:anywhere;color:#5b6882}
+#schedule-bell-preview b{flex:none;white-space:nowrap;color:#6572cf;font-size:12px;font-variant-numeric:tabular-nums}
+.bell-editor-actions{display:flex;gap:10px;padding:14px 20px;border-top:1px solid #e9edf6;background:#fafbff;flex-shrink:0}
+.bell-editor-actions button{min-height:46px;border:0;border-radius:13px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.4}
+.bell-editor-cancel{flex:1;color:#66738b;background:#eef1f8}
+.bell-editor-save{flex:2;color:#fff;background:linear-gradient(135deg,#818cf8,#a78bfa);box-shadow:0 5px 16px rgba(129,140,248,.18)}
+#view-schedule .schedule-bell-btn{
+  display:flex;align-items:center;gap:12px;box-sizing:border-box;width:100%;min-height:60px;margin:0 0 14px;padding:12px 14px;
+  border:1px solid #e3e8f5;border-radius:18px;text-align:left;background:linear-gradient(135deg,#f0f4ff,#f6f2ff);
+  color:#263552;box-shadow:0 5px 16px rgba(55,67,106,.045);transition:transform .16s ease;
 }
-#schedule-bell-breaks{gap:10px}
-#schedule-bell-breaks label{
-  padding:10px;
-  border:1px solid rgba(129,140,248,.12);
-  border-radius:16px;
-  background:rgba(248,250,252,.72);
-}
-#schedule-bell-preview{
-  border-radius:17px!important;
-  border-color:rgba(129,140,248,.14)!important;
-  background:rgba(248,250,252,.72)!important;
-  padding:6px!important;
-}
-#schedule-bell-preview>div{
-  align-items:center;
-  padding:9px 10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.88);
-}
-#schedule-bell-preview>div+div{margin-top:4px}
-#schedule-bell-preview span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#schedule-bell-preview b{flex:none;color:#4f46e5;font-variant-numeric:tabular-nums}
-#schedule-bell-modal button[onclick="saveScheduleBellEditor()"]{
-  background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;
-  box-shadow:0 8px 20px rgba(99,102,241,.22);
-}
-@media(max-width:480px){
-  #schedule-bell-modal{align-items:flex-end!important;padding:10px 8px max(8px,env(safe-area-inset-bottom))}
-  #schedule-bell-modal>div{max-height:92dvh!important;border-radius:24px 24px 18px 18px!important;padding:16px!important}
-  #schedule-bell-breaks{grid-template-columns:1fr 1fr}
-  #schedule-bell-preview>div{font-size:10px}
-}
-@media(max-width:350px){
-  #schedule-bell-breaks{grid-template-columns:1fr}
-}
-
-.schedule-bell-btn{
-  width:100%;display:flex;align-items:center;gap:12px;margin:12px 0 4px;padding:12px 14px;
-  border:1px solid rgba(129,140,248,.16);border-radius:18px;text-align:left;
-  background:linear-gradient(135deg,rgba(238,242,255,.88),rgba(250,245,255,.9));
-  box-shadow:0 5px 18px rgba(99,102,241,.07);color:#334155;
-  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
-}
-.schedule-bell-btn:hover{border-color:rgba(129,140,248,.32);box-shadow:0 8px 24px rgba(99,102,241,.11)}
+#view-schedule .schedule-bell-btn.hidden{display:none!important}
 .schedule-bell-btn:active{transform:scale(.985)}
-.schedule-bell-btn-icon{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#818cf8,#a78bfa);box-shadow:0 5px 14px rgba(129,140,248,.2)}
-.schedule-bell-btn-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
-.schedule-bell-btn-copy strong{font-size:12px;line-height:1.25;font-weight:750;color:#334155}
-.schedule-bell-btn-copy small{font-size:9px;line-height:1.25;color:#94a3b8}
-.schedule-bell-btn-arrow{font-size:10px;color:#a5b4fc}
-@media(max-width:480px){.schedule-bell-btn{margin-top:10px;padding:10px 12px;border-radius:16px}.schedule-bell-btn-icon{width:34px;height:34px;border-radius:11px}}
-
-/* Bell action: mobile layout follows schedule reference UI */
-@media (max-width:767px){
-  #view-schedule .schedule-bell-btn{
-    box-sizing:border-box!important;width:100%!important;max-width:none!important;
-    min-height:48px!important;margin:0 0 10px!important;padding:7px 10px!important;
-    gap:9px!important;border:0!important;border-radius:11px!important;
-    background:linear-gradient(145deg,#eef3ff,#f7f5ff)!important;
-    box-shadow:0 4px 15px rgba(32,49,82,.045)!important;
-  }
-  #view-schedule .schedule-bell-btn-icon{
-    width:34px!important;height:34px!important;border-radius:10px!important;
-    background:linear-gradient(145deg,#5b35ff,#3152f6)!important;
-    box-shadow:0 5px 13px rgba(70,66,246,.18)!important;
-  }
-  #view-schedule .schedule-bell-btn-copy{gap:1px!important}
-  #view-schedule .schedule-bell-btn-copy strong{font-size:10px!important;line-height:1.2!important;color:#111a35!important}
-  #view-schedule .schedule-bell-btn-copy small{font-size:8px!important;line-height:1.2!important;color:#677897!important}
-  #view-schedule .schedule-bell-btn-arrow{font-size:9px!important;color:#6d78a6!important;margin-right:2px}
+.schedule-bell-btn-icon{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#818cf8,#a78bfa);font-size:16px}
+.schedule-bell-btn-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.schedule-bell-btn-copy strong{font-size:13px;line-height:1.3;font-weight:700;color:#263552}
+.schedule-bell-btn-copy small{font-size:11px;line-height:1.3;color:#8995ac}
+.schedule-bell-btn-arrow{font-size:11px;color:#a1abcc}
+#menu-update-button:disabled{opacity:.65;cursor:wait}
+@media(max-width:767px){
+  #schedule-bell-modal.bell-editor-overlay{align-items:flex-end;padding:max(10px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))}
+  .bell-editor-sheet{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:24px 24px 18px 18px}
+  .bell-editor-header{padding:16px}
+  .bell-editor-header h2{font-size:17px}
+  .bell-editor-body{padding:16px;gap:14px}
+  .bell-editor-actions{padding:12px 16px}
+  #view-schedule .schedule-bell-btn{border-radius:16px;padding:10px 12px;min-height:58px}
+}
+@media(max-width:359px){
+  .bell-editor-fields{grid-template-columns:1fr}
+  #schedule-bell-preview>div{align-items:flex-start;flex-direction:column;gap:3px}
 }
