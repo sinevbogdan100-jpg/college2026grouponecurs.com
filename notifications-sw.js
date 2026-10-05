@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-schedule-title-v1';
+const CACHE_NAME = 'sbp-shell-20261005-schedule-typography-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './group-tools.js?v=20261005-group-tools-v2',
@@ -13,7 +13,7 @@ const CORE_ASSETS = [
   './style.css?v=20261005-live-progress-v1',
   './desktop.css?v=20261004-desktop-readability',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261005-schedule-title-v1',
+  './responsive-fit.css?v=20261005-schedule-typography-v1',
   './firebase.js?v=20261005-group-tools-v2',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
