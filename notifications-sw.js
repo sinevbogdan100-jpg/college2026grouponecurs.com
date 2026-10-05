@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-home-language-branding-v1';
+const CACHE_NAME = 'sbp-shell-20261005-hotfix-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './',
@@ -13,7 +13,7 @@ const CORE_ASSETS = [
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
   './schedule.js?v=20261005-performance-v2',
-  './i18n.js?v=20261005-home-language-branding-v1',
+  './i18n.js?v=20261005-hotfix-v1',
   './i18n.js?v=20261004-schedule-change-v1',
   './firebase.js?v=20261004-performance-v1',
   './performance.js?v=20261005-performance-v2',
@@ -22,7 +22,7 @@ const CORE_ASSETS = [
   './support-state.js?v=20261004-performance-v1',
   './sbp-information-icon-20261004-v4.png?v=20261005-branding-v1',
   './tailwind-local.css?v=20261004-console-fixes-v1',
-  './manifest.webmanifest?v=20261005-branding-v1',
+  './manifest.webmanifest?v=20261005-hotfix-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
