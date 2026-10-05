@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.33-loading-states-2026-10-05">
+    <meta name="app-build" content="step18.34-error-system-2026-10-05">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261004-console-fixes-v1">
@@ -363,6 +363,17 @@
             <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
             <span id="toast-message" class="text-xs font-medium">Скопировано в буфер обмена</span>
         </div>
+    </div>
+
+    <div id="system-status-banner" class="system-status-banner hidden" role="status" aria-live="polite" aria-atomic="true">
+        <span class="system-status-icon"><i id="system-status-icon" class="fa-solid fa-circle-info"></i></span>
+        <div class="system-status-copy">
+            <strong id="system-status-title">Состояние системы</strong>
+            <span id="system-status-text">—</span>
+        </div>
+        <button id="system-status-close" type="button" class="system-status-close hidden" onclick="dismissSystemStatus()" aria-label="Скрыть сообщение">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 
     <div id="view-home" class="home-reference max-w-md mx-auto min-h-screen flex flex-col pb-20">
