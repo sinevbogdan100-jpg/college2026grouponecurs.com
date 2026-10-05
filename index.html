@@ -124,7 +124,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261005-admin-safety-v1">
+    <link rel="modulepreload" href="app.js?v=20261005-admin-safety-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261004-console-fixes-v1">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
     <link rel="modulepreload" href="schedule.js?v=20261005-admin-safety-v1">
@@ -149,13 +149,13 @@
         const splash = document.getElementById('sbp-launch-animation');
         if (!splash) return;
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const visibleFor = reduced ? 180 : 920;
+        const visibleFor = reduced ? 60 : 240;
         window.setTimeout(() => {
           splash.classList.add('is-leaving');
           window.setTimeout(() => {
             splash.remove();
             document.documentElement.classList.remove('sbp-app-launch');
-          }, reduced ? 90 : 340);
+          }, reduced ? 40 : 150);
         }, visibleFor);
       })();
     </script>
