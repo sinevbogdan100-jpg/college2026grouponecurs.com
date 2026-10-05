@@ -20,7 +20,7 @@ const CORE_ASSETS = [
   './notification-center.js?v=20261005-performance-v2',
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
-  './sbp-information-icon.svg?v=20261004-console-fixes-v1',
+  './sbp-information.png?v=20261004-console-fixes-v1',
   './tailwind-local.css?v=20261004-console-fixes-v1',
   './manifest.webmanifest?v=20261004-console-fixes-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -140,7 +140,7 @@ self.addEventListener('push', event => {
     payload ||= { title: 'SBP Information', body: 'Новое уведомление', key: 'toe-new', kind: 'events' };
     await self.registration.showNotification(payload.title || 'SBP Information', {
       body: payload.body || '',
-      icon: './sbp-information-icon.svg',
+      icon: './sbp-information.png',
       
       tag: payload.key || 'toe-new',
       silent: false,
