@@ -19,7 +19,9 @@ const CORE_ASSETS = [
   './support-state.js?v=20261004-performance-v1',
   './sbp-information-icon.svg?v=20261004-console-fixes-v1',
   './tailwind-local.css?v=20261004-console-fixes-v1',
-  './manifest.webmanifest?v=20261004-console-fixes-v1'
+  './manifest.webmanifest?v=20261004-console-fixes-v1',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
 self.addEventListener('install', event => {
@@ -27,8 +29,8 @@ self.addEventListener('install', event => {
     const cache = await caches.open(CACHE_NAME);
     await Promise.all(CORE_ASSETS.map(async url => {
       try {
-        const response = await fetch(url, { cache: 'reload' });
-        if (response.ok) await cache.put(url, response);
+        const response = await fetch(url, { cache: 'reload', mode: url.startsWith('http') ? 'cors' : 'same-origin' });
+        if (response.ok || response.type === 'opaque') await cache.put(url, response);
       } catch (_) {}
     }));
     await self.skipWaiting();
@@ -76,7 +78,7 @@ async function staleWhileRevalidate(event) {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(event.request);
   const networkPromise = fetch(event.request).then(async response => {
-    if (response?.ok) await cache.put(event.request, response.clone());
+    if (response && (response.ok || response.type === 'opaque')) await cache.put(event.request, response.clone());
     return response;
   }).catch(() => null);
 
@@ -91,7 +93,18 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
+  const externalOfflineHosts = new Set([
+    'cdnjs.cloudflare.com',
+    'fonts.googleapis.com',
+    'fonts.gstatic.com'
+  ]);
+
+  if (url.origin !== self.location.origin) {
+    if (externalOfflineHosts.has(url.hostname)) {
+      event.respondWith(staleWhileRevalidate(event));
+    }
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstNavigation(event));
