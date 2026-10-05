@@ -1,5 +1,5 @@
 import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
-import { createNotificationCenter } from './notification-center.js?v=20261004-console-fixes-v2';
+import { createNotificationCenter } from './notification-center.js?v=20261005-performance-v2';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
 import {
     createFirebaseServices,
@@ -43,7 +43,7 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-admin-safety-v1";
+} from "./schedule.js?v=20261005-performance-v2";
 import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-live-progress-v2";
 
         
