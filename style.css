@@ -4672,3 +4672,32 @@ button[onclick="openAppMenu()"]{position:relative}
     font-size:14px!important;
   }
 }
+
+
+/* ===== HOME SCHEDULE LIVE — step18.57 ===== */
+/* Keep up to four lessons visible on Home; the running lesson mirrors Schedule's green live state. */
+#view-home .home-ref-lesson-card.current{
+  border-color:#cfeedd!important;
+  background:linear-gradient(100deg,#f0fbf4 0%,#e7f8ee 100%)!important;
+  box-shadow:0 8px 28px rgba(36,155,91,.08)!important;
+}
+#view-home .home-ref-lesson-card.current .home-ref-lesson-number{
+  background:#dff7e8!important;
+  color:#13823e!important;
+}
+#view-home .home-ref-lesson-card.current .home-ref-lesson-main strong{
+  color:#116f38!important;
+}
+#view-home .home-ref-lesson-card.current .home-ref-progress-row{
+  border-color:rgba(36,185,104,.10)!important;
+}
+#view-home .home-ref-progress>i{
+  background:#24b968!important;
+  box-shadow:0 0 9px rgba(36,185,104,.22)!important;
+}
+#view-home .home-ref-progress-percent{
+  color:#13823e!important;
+}
+#view-home .home-ref-progress-remaining b{
+  color:#13823e!important;
+}
