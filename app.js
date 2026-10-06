@@ -44,7 +44,7 @@ import {
     restoreScheduleSelection,
     syncPendingScheduleData
 } from "./schedule.js?v=20261005-group-tools-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261005-group-tools-v2";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261006-home-focus-v1";
 import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v2';
 import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
 
@@ -4165,6 +4165,19 @@ function renderHomeBreakCard(info,state='normal',nowMinutes=0){
         <div class="home-ref-break-duration">${homeMinutesLabel(remaining)}</div>
     </article>`;
 }
+let homeScheduleExpanded=false;
+function renderHomeScheduleExpandControl(total,shown){
+    if(homeScheduleExpanded||total<=shown)return '';
+    return `<div class="home-ref-expand-lessons">
+        <button type="button" onclick="expandHomeSchedule()"><i class="fa-solid fa-chevron-down"></i><span>${translateUI('Показать остальные пары')}</span></button>
+    </div>`;
+}
+window.expandHomeSchedule=function(){
+    homeScheduleExpanded=true;
+    renderHomeDayTimeline();
+    refreshHomeTimers();
+};
+
 function renderHomeDayTimeline(){
     const box=document.getElementById('home-day-timeline');
     if(!box)return;
@@ -4192,7 +4205,8 @@ function renderHomeDayTimeline(){
             return;
         }
         let html=renderHomeDayStatus({mode:'nearest',nextEntry:nearestActive.entry,nowMinutes:0});
-        const selected=entries.slice(nearestActive.index);
+        const allSelected=entries.slice(nearestActive.index);
+        const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,2);
         selected.forEach((entry,pos)=>{
             html+=renderHomeLessonCard(entry,-1,pos===0?'next':'');
             if(pos<selected.length-1){
@@ -4201,6 +4215,7 @@ function renderHomeDayTimeline(){
                 if(bi)html+=renderHomeBreakCard(bi,pos===0?'nearest':'normal',0);
             }
         });
+        html+=renderHomeScheduleExpandControl(allSelected.length,selected.length);
         box.innerHTML=html;
         applyKzTranslations(box);
         return;
@@ -4223,7 +4238,8 @@ function renderHomeDayTimeline(){
         startIndex=upcoming.index;
     }
 
-    const selected=entries.slice(startIndex);
+    const allSelected=entries.slice(startIndex);
+    const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,2);
     let html='';
     if(activeLesson>=0){
         const nextActive=findNextActiveHomeEntry(entries,activeLesson+1);
@@ -4271,6 +4287,7 @@ function renderHomeDayTimeline(){
             if(bi)html+=renderHomeBreakCard(bi,isNearestBreak?'nearest':'normal',mins);
         }
     });
+    html+=renderHomeScheduleExpandControl(allSelected.length,selected.length);
     box.innerHTML=html;
     applyKzTranslations(box);
 }
@@ -4417,22 +4434,25 @@ function updateNotificationBadge(){const badge=document.getElementById('notifica
 function renderHomeLatestNotification(){
     const box=document.getElementById('home-latest-notification');
     if(!box)return;
-    const n=notificationsCache[0];
-    if(!n){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
-    const title=escapeNotificationText(notificationTitleForLocale(n));
-    const body=escapeNotificationText(notificationTextForLocale(n));
-    const meta=notificationVisualMeta(n);
-    const unread=!getReadNotificationIds().has(n.id);
-    let time='';
-    if(n.createdAt){
-        const d=new Date(n.createdAt);
-        if(!Number.isNaN(d.getTime()))time=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-    }
-    box.innerHTML=`<button class="home-ref-notification-card notification-kind-${meta.key} ${unread?'unread':''}" onclick="openNotifications()">
-        <span class="home-ref-notification-icon"><i class="fa-solid ${meta.icon}"></i>${unread?'<b class="notification-unread-dot" aria-hidden="true"></b>':''}</span>
-        <span class="home-ref-notification-copy"><em class="home-ref-notification-kind">${translateUI(meta.label)}</em><strong>${title}</strong><span>${body||'Открыть уведомление'}</span></span>
-        <span class="home-ref-notification-time">${time}</span>
-    </button>`;
+    const items=notificationsCache.slice(0,3);
+    if(!items.length){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
+    const read=getReadNotificationIds();
+    box.innerHTML=items.map(n=>{
+        const title=escapeNotificationText(notificationTitleForLocale(n));
+        const body=escapeNotificationText(notificationTextForLocale(n));
+        const meta=notificationVisualMeta(n);
+        const unread=!read.has(n.id);
+        let time='';
+        if(n.createdAt){
+            const d=new Date(n.createdAt);
+            if(!Number.isNaN(d.getTime()))time=d.toLocaleTimeString(interfaceLocale(),{hour:'2-digit',minute:'2-digit'});
+        }
+        return `<button class="home-ref-notification-card notification-kind-${meta.key} ${unread?'unread':''}" onclick="openNotifications()">
+            <span class="home-ref-notification-icon"><i class="fa-solid ${meta.icon}"></i>${unread?'<b class="notification-unread-dot" aria-hidden="true"></b>':''}</span>
+            <span class="home-ref-notification-copy"><em class="home-ref-notification-kind">${translateUI(meta.label)}</em><strong>${title}</strong><span>${body||translateUI('Открыть уведомление')}</span></span>
+            <span class="home-ref-notification-time">${time}</span>
+        </button>`;
+    }).join('');
 }
 function renderNotifications(){
     updateGroupAnnouncements(notificationsCache);
