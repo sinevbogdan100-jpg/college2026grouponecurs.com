@@ -4206,7 +4206,7 @@ function renderHomeDayTimeline(){
         }
         let html=renderHomeDayStatus({mode:'nearest',nextEntry:nearestActive.entry,nowMinutes:0});
         const allSelected=entries.slice(nearestActive.index);
-        const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,2);
+        const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,4);
         selected.forEach((entry,pos)=>{
             html+=renderHomeLessonCard(entry,-1,pos===0?'next':'');
             if(pos<selected.length-1){
@@ -4239,7 +4239,7 @@ function renderHomeDayTimeline(){
     }
 
     const allSelected=entries.slice(startIndex);
-    const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,2);
+    const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,4);
     let html='';
     if(activeLesson>=0){
         const nextActive=findNextActiveHomeEntry(entries,activeLesson+1);
