@@ -4637,3 +4637,38 @@ button[onclick="openAppMenu()"]{position:relative}
   #view-home .home-ref-progress-remaining{font-size:9px}
 }
 
+
+
+/* ===== HOME FOCUS — step18.56 ===== */
+#view-home #home-latest-notification{
+  display:grid;
+  gap:8px;
+}
+#view-home .home-ref-expand-lessons{
+  display:flex;
+  justify-content:center;
+  padding:10px 12px 3px;
+  border-top:1px solid #eef0f6;
+}
+#view-home .home-ref-expand-lessons button{
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:8px 14px!important;
+  border:0!important;
+  border-radius:11px!important;
+  background:#f3f0ff!important;
+  color:#5833ff!important;
+  font-size:11px!important;
+  font-weight:800!important;
+}
+#view-home .home-ref-expand-lessons button i{font-size:10px}
+@media(min-width:768px){
+  body:not(.layout-phone) #view-home .home-ref-expand-lessons button{
+    min-height:44px;
+    padding:10px 18px!important;
+    font-size:14px!important;
+  }
+}
