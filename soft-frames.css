@@ -1,0 +1,80 @@
+/* SBP Information: lighter decorative frames, shared by phone and desktop layouts.
+   The base reset removes browser outset borders; these rules soften authored frames.
+   Status fills, active buttons, keyboard focus and layout are kept independent. */
+:root { --frame-soft: #ece7f2; --frame-control: #e2d9ed; --frame-active: #b39bd1; }
+
+/* Existing surfaces keep their own border width and radius. */
+html:root body :is(#view-home,#view-tracker,#view-schedule,#view-roster,#admin-settings-modal,#notifications-modal,#support-modal,#help-navigation-modal,#app-menu-drawer) :is(
+  .home-ref-group-card,.home-ref-today,.home-ref-notifications,.home-ref-role-card,
+  .journal-ref-editor,.journal-ref-panel,.journal-inline-actions,.journal-ref-table,
+  .journal-ref-datebar,.journal-ref-edit-tools,.journal-ref-head,.journal-ref-row,
+  .journal-section-tabs,.journal-student-card,.analytics-detail-card,.metric-card,
+  .assessment-student-list,.assessment-student-row,.assessment-history-row,
+  .roster-person-card,.leadership-card,.roster-section-divider,
+  .settings-reference-card,.notification-composer,.support-thread-btn,
+  .support-thread-btn.active,.support-msg,.support-intro,.help-navigation-card,
+  .help-navigation-hero,.help-navigation-tip,.help-beta-note,.drawer-beta-card,
+  .drawer-nav-section,.drawer-note,.settings-reference-content
+) { border-color:var(--frame-soft)!important; }
+
+html:root body :is(#view-home,#view-schedule) :is(
+  .home-ref-lesson-card,.home-ref-lesson-meta,.home-ref-section-head,
+  .home-ref-notification-empty,.schedule-ref-card,.schedule-timeline-card,
+  .schedule-ref-meta,.schedule-ref-datebar,.schedule-ref-empty,
+  .schedule-ref-week-switch,.schedule-ref-days
+):not(.current):not(.cancelled):not(.next):not(.nearest):not(.changed) {
+  border-color:var(--frame-soft)!important;
+}
+
+html:root body :is(#view-home,#view-tracker,#view-schedule,#view-roster) :is(
+  .home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,.roster-ref-topbar
+) { border-color:var(--frame-soft)!important; box-shadow:0 5px 18px rgba(86,65,124,.045)!important; }
+
+html:root body :is(.sheet-head,.modal-sticky-header,.bell-editor-header,.release-notes-header,
+  .group-tools-sheet>header,.student-profile-modal-head,.report-preview-head,
+  .sheet-panel,.bell-editor-sheet,.release-notes-sheet,.group-tools-sheet,.report-preview-sheet,
+  .app-drawer,.release-card,.release-change-group,.release-notes-actions,.bell-editor-actions,
+  .mini-calendar,.gt-history-event,.gt-field
+) { border-color:var(--frame-soft)!important; }
+
+/* Icon tiles are defined by their soft fill, rather than a second enclosing stroke. */
+html:root body :is(#view-home,#view-tracker,#view-schedule,#view-roster,#admin-settings-modal,#app-menu-drawer) :is(
+  .home-ref-topbtn,.journal-ref-topbtn,.schedule-ref-topbtn,.roster-ref-topbtn,.top-icon-btn,
+  .home-ref-group-icon,.home-ref-lesson-number,.home-ref-break-icon,
+  .journal-ref-avatar,.roster-avatar,.schedule-ref-number,.settings-reference-icon,
+  .settings-group-icon-preview,.settings-group-icon-options button,.drawer-install-action>i
+) { border-color:transparent!important; }
+html:root body #admin-settings-modal .settings-group-icon-options button[aria-pressed="true"] {
+  border-color:var(--frame-active)!important;
+}
+
+/* Secondary controls retain a quiet, single-pixel boundary. */
+html:root body :is(.calendar-trigger,.journal-ref-note,.journal-note-btn,.student-gender-switch button,
+  .student-profile-field>input,.student-profile-actions button,.schedule-bell-btn,
+  .assessment-back-btn,.journal-score-select,.analytics-select,.schedule-ref-date-arrow,
+  .schedule-ref-add,.schedule-admin-actions button,.gt-selects select,.gt-selects button,
+  .group-tools-body select,.gt-share-button,.gt-pin-button,.notification-composer input,
+  .notification-composer textarea,.notification-composer select,.support-input,.support-compose textarea,
+  .settings-group-form input,.student-photo-actions button,.lang-toggle button:not(.active)
+) { border-color:var(--frame-control)!important; }
+html:root body :is(.student-gender-switch button.active,.support-thread-btn.active,
+  .settings-group-icon-options button[aria-pressed="true"]
+) { border-color:var(--frame-active)!important; }
+
+/* Retain the type color and unread marker, with a lighter notification edge. */
+html:root body .notification-item,
+html:root body #view-home .home-ref-notification-card { border-left-width:2px!important; }
+html:root body #view-tracker .journal-ref-row:hover {
+  box-shadow:inset 1px 0 0 rgba(102,78,220,.13)!important;
+}
+
+/* A deliberate keyboard indicator is not a permanent decorative frame. */
+html:root body :is(button,input,select,textarea,summary,a[href],[tabindex]):focus-visible {
+  outline:2px solid #9572bd!important;
+  outline-offset:3px!important;
+}
+@media (forced-colors: active) {
+  html:root body :is(button,input,select,textarea,summary,a[href],[tabindex]):focus-visible {
+    outline-color:Highlight!important;
+  }
+}

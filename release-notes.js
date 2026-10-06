@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261005-group-tools-v2';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261006-soft-frames-v1';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);
@@ -106,3 +106,4 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.refreshReleaseNotes();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePrompt, { once:true });
 else schedulePrompt();
+

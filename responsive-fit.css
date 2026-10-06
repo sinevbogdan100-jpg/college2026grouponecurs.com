@@ -1744,7 +1744,7 @@
   right:-2px;
   width:10px;
   height:10px;
-  border:2px solid #fff;
+  border:1px solid #fff;
   border-radius:50%;
   background:#5b6cff;
   box-shadow:0 1px 4px rgba(50,64,130,.22);
@@ -3310,3 +3310,4 @@ body.layout-phone #view-schedule .schedule-ref-meta>span b,
 body.layout-phone #view-schedule .schedule-ref-meta span{font-size:13px!important;line-height:1.38!important}
 body.layout-phone #view-schedule .schedule-ref-break-card strong{font-size:12.5px!important}
 body.layout-phone #view-schedule .schedule-ref-break-card time{font-size:11.5px!important}
+

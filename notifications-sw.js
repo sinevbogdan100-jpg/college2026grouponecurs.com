@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261005-schedule-typography-v1';
+const CACHE_NAME = 'sbp-shell-20261006-soft-frames-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './group-tools.js?v=20261005-group-tools-v2',
@@ -7,13 +7,14 @@ const CORE_ASSETS = [
   './action-history.js?v=20261005-group-tools-v2',
   './',
   './index.html',
-  './release-notes.js?v=20261005-group-tools-v2',
-  './release-data.js?v=20261005-group-tools-v2',
+  './soft-frames.css?v=20261006-soft-frames-v1',
+  './release-notes.js?v=20261006-soft-frames-v1',
+  './release-data.js?v=20261006-soft-frames-v1',
   './app.js?v=20261005-mobile-hard-opt-v1',
-  './style.css?v=20261005-live-progress-v1',
-  './desktop.css?v=20261004-desktop-readability',
+  './style.css?v=20261006-soft-frames-v1',
+  './desktop.css?v=20261006-soft-frames-v1',
   './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261005-schedule-typography-v1',
+  './responsive-fit.css?v=20261006-soft-frames-v1',
   './firebase.js?v=20261005-group-tools-v2',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
@@ -24,7 +25,7 @@ const CORE_ASSETS = [
   './notification-state.js?v=20261004-performance-v1',
   './support-state.js?v=20261004-performance-v1',
   './sbp-information.png?v=20261004-console-fixes-v1',
-  './tailwind-local.css?v=20261004-console-fixes-v1',
+  './tailwind-local.css?v=20261006-soft-frames-v1',
   './manifest.webmanifest?v=20261005-brand-icon-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
@@ -180,4 +181,5 @@ self.addEventListener('notificationclick', event => {
     await self.clients.openWindow(url.href);
   })());
 });
+
 
