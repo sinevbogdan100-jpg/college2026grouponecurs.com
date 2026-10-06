@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261006-home-focus-v1';
+const CACHE_NAME = 'sbp-shell-20261006-home-schedule-live-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './group-tools.js?v=20261005-group-tools-v2',
@@ -8,10 +8,10 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './soft-frames.css?v=20261006-soft-frames-v1',
-  './release-notes.js?v=20261006-home-focus-v1',
-  './release-data.js?v=20261006-home-focus-v1',
-  './app.js?v=20261006-home-focus-v1',
-  './style.css?v=20261006-home-focus-v1',
+  './release-notes.js?v=20261006-home-schedule-live-v1',
+  './release-data.js?v=20261006-home-schedule-live-v1',
+  './app.js?v=20261006-home-schedule-live-v1',
+  './style.css?v=20261006-home-schedule-live-v1',
   './desktop.css?v=20261006-soft-frames-v1',
   './gradients.css?v=20261004-ui-polish-v1',
   './responsive-fit.css?v=20261006-soft-frames-v1',
