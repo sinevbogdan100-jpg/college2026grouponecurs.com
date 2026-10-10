@@ -43,10 +43,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261005-group-tools-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261006-home-focus-v1";
+} from "./schedule.js?v=20261010-date-overrides-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v1";
 import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v2';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261005-group-tools-v2';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v1';
 
         
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
@@ -3149,7 +3149,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const dayKey = getScheduleDayKey(date);
             if (!dayKey) return [];
             const weekType = getWeekTypeForDate(date);
-            const source = getScheduleDataForWeek(weekType);
+            const source = getScheduleDataForWeek(weekType, date);
             return (source[dayKey] || []).filter(item =>
                 !item.isClassHour &&
                 !item.cancelled &&
@@ -4191,7 +4191,7 @@ function renderHomeDayTimeline(){
     if(!dayKey){box.innerHTML='<div class="home-ref-empty">Учебных занятий нет.</div>';return;}
 
     const type=getWeekTypeForDate(studyDate);
-    const source=getScheduleDataForWeek(type);
+    const source=getScheduleDataForWeek(type, studyDate);
     const raw=(source[dayKey]||[]).filter(x=>!x.isClassHour);
     if(!raw.length){box.innerHTML='<div class="home-ref-empty">На ближайший учебный день занятий нет.</div>';return;}
 
@@ -4777,3 +4777,4 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();
+

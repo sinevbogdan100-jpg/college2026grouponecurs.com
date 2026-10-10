@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBP Information</title>
-    <meta name="app-build" content="step18.57-home-schedule-live-2026-10-06">
+    <meta name="app-build" content="step18.58-date-overrides-2026-10-10">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261005-brand-icon-v1">
@@ -145,10 +145,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261006-home-schedule-live-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261010-date-overrides-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261005-group-tools-v2">
     <link rel="modulepreload" href="utils.js?v=20261004-performance-v1">
-    <link rel="modulepreload" href="schedule.js?v=20261005-group-tools-v2">
+    <link rel="modulepreload" href="schedule.js?v=20261010-date-overrides-v1">
     <script defer src="performance.js?v=20261005-mobile-hard-opt-v1"></script>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
@@ -643,6 +643,14 @@
         <div id="home-week-banner-text" class="hidden">—</div>
         <span id="home-week-dates" class="hidden">—</span>
 
+        <div id="schedule-edit-scope-box" class="hidden" style="margin:12px 16px;padding:12px;background:#f5f3ff;border-radius:14px">
+            <label for="schedule-edit-scope">Режим изменений</label>
+            <select id="schedule-edit-scope" onchange="setScheduleEditScope(this.value)" style="display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #e9e5f3;border-radius:10px;background:white">
+                <option value="date">Только на выбранную дату</option>
+                <option value="template">Постоянное расписание</option>
+            </select>
+            <p id="schedule-scope-hint" data-i18n-skip style="font-size:12px;margin:8px 0 0"></p>
+        </div>
         <button id="schedule-add-btn" onclick="openScheduleEditor(-1)" class="schedule-ref-add hidden">
             <i class="fa-solid fa-plus"></i><span>Добавить пару</span>
         </button>
@@ -781,6 +789,7 @@
                 <button type="button" class="bell-editor-close" onclick="closeScheduleBellEditor()" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
             </header>
             <div class="bell-editor-body">
+                <p id="schedule-bell-scope" data-i18n-skip></p>
                 <p class="bell-editor-note">Измените начало первой пары, длительность занятий и перемены. Время всех следующих пар пересчитается автоматически.</p>
                 <div class="bell-editor-fields">
                     <label>Начало первой пары<input id="schedule-bell-start" type="time" oninput="renderScheduleBellPreview()"></label>
@@ -802,6 +811,7 @@
                 <div><h2 id="schedule-editor-title" class="font-bold text-base text-slate-900">Редактирование пары</h2><p class="text-[11px] text-slate-500 mt-0.5">Только для администратора</p></div>
                 <button onclick="closeScheduleEditor()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
             </div>
+            <p id="schedule-editor-scope" data-i18n-skip class="text-xs text-indigo-700"></p>
             <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3 text-[10px] text-indigo-800">
                 Текущие данные пары подставляются автоматически. Выберите тип изменения — редактор оставит активными только нужные поля.
             </div>
@@ -975,8 +985,8 @@
         </section>
     </div>
 
-    <script type="module" src="release-notes.js?v=20261006-home-schedule-live-v1"></script>
-    <script type="module" src="app.js?v=20261006-home-schedule-live-v1"></script>
+    <script type="module" src="release-notes.js?v=20261010-date-overrides-v1"></script>
+    <script type="module" src="app.js?v=20261010-date-overrides-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -1052,4 +1062,5 @@
 
 </body>
 </html>
+
 

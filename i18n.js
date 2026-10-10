@@ -4,6 +4,9 @@ export function currentLang() { return localStorage.getItem(UI_LANG_KEY) === 'kz
 export function interfaceLocale() { return currentLang() === 'kz' ? 'kk-KZ' : 'ru-RU'; }
 
 export const KZ_EXACT = Object.freeze({
+  'Режим изменений':'Өзгерту режимі',
+  'Только на выбранную дату':'Тек таңдалған күнге',
+  'Постоянное расписание':'Тұрақты сабақ кестесі',
   'Отмена пары':'Сабақ тоқтатылды',
   'Загрузить актуальную версию':'Актуалды нұсқаны жүктеу',
   'Доступно обновление':'Жаңарту қолжетімді',
@@ -270,3 +273,4 @@ export function startInterfaceTranslations() {
   });
   applyKzTranslations();
 }
+

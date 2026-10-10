@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261006-home-schedule-live-v1';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261010-date-overrides-v1';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);
@@ -106,4 +106,5 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.refreshReleaseNotes();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePrompt, { once:true });
 else schedulePrompt();
+
 

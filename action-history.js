@@ -1,7 +1,7 @@
 import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261005-group-tools-v2';
-import { currentLang, translateUI } from './i18n.js?v=20261005-group-tools-v2';
+import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v1';
 import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261005-group-tools-v2';
-import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261005-group-tools-v2';
+import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261010-date-overrides-v1';
 
 let bridge = {}, context = '', entries = [], remote = [], unsubscribe = null, cloudStatus = 'offline', flushing = false, flushAgain = false;
 const byId = id => document.getElementById(id);
@@ -96,7 +96,7 @@ async function flushAuditEntries() {
 }
 function label(change,kind) {
   if(kind==='attendance')return `${change.student} · ${gt(change.field)}`;
-  return `${gt(change.week)} · ${gt(change.day)} · ${gt('row')} ${change.row} · ${gt(change.field)}`;
+  return `${change.date ? change.date+' · ' : ''}${gt(change.week)} · ${gt(change.day)} · ${gt('row')} ${change.row} · ${gt(change.field)}`;
 }
 function value(change,raw) {
   if(raw==='')return gt('unset');if(typeof raw==='boolean')return gt(raw?'yes':'no');
@@ -121,3 +121,4 @@ function renderHistory() {
     return `<article class="gt-history-event"><div class="gt-history-meta"><strong>${escapeGT(actor)} · ${gt(event.kind)}</strong><time>${escapeGT(date)}</time><span class="gt-history-chip">${gt(event.status==='synced'?'synced':event.status==='pending'?'pending':'localData')}</span></div>${event.kind==='attendance'?`<p>${escapeGT(event.target)}</p>`:''}<ul>${event.changes.slice(0,3).map(changeHTML).join('')}</ul>${event.changes.length>3?`<details><summary>${gt('allChanges')} (${event.changes.length})</summary><ul>${event.changes.slice(3).map(changeHTML).join('')}</ul></details>`:''}</article>`;
   }).join(''):`<p class="gt-history-empty">${gt('auditEmpty')}</p>`;
 }
+

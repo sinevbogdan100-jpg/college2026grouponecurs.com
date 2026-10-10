@@ -28,6 +28,11 @@ export function attendanceChanges(before = {}, after = {}) {
 }
 export function scheduleChanges(before = {}, after = {}) {
   const changes = [];
+  for (const date of new Set([...Object.keys(before.dateOverrides || {}),...Object.keys(after.dateOverrides || {})])) {
+    const old = before.dateOverrides?.[date], next = after.dateOverrides?.[date];
+    const diff = scheduleChanges({[old?.weekType || next?.weekType]:{mon:old?.lessons || []}}, {[next?.weekType || old?.weekType]:{mon:next?.lessons || []}});
+    for (const change of diff) changes.push({...change,date,day:SHARE_DAYS[new Date(date+'T12:00:00').getDay()-1]});
+  }
   for (const week of ['numerator','denominator']) for (const day of SHARE_DAYS) {
     const old = before[week]?.[day] || [], next = after[week]?.[day] || [];
     for (let row = 0; row < Math.max(old.length,next.length); row++) {

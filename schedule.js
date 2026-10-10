@@ -1,8 +1,9 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261005-group-tools-v2";
+import { SCHEDULE_SCHEMA_VERSION, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261010-date-overrides-v1';
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261010-date-overrides-v1";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261005-group-tools-v2";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
-import { scheduleShareSnapshot } from './group-tools-data.js?v=20261005-group-tools-v2';
+import { scheduleShareSnapshot } from './group-tools-data.js?v=20261010-date-overrides-v1';
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
@@ -146,6 +147,33 @@ const scheduleDataDenominator = {
     ]
 };
 
+const scheduleDefaults = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+let scheduleDateOverrides = {};
+let scheduleLegacyArchive = null;
+let scheduleMigrationNeeded = false;
+let scheduleEditScope = 'date';
+function schedulePayload() {
+    return { numerator:scheduleDataNumerator,denominator:scheduleDataDenominator,dateOverrides:scheduleDateOverrides,scheduleSchemaVersion:SCHEDULE_SCHEMA_VERSION,legacyScheduleArchive:scheduleLegacyArchive };
+}
+function installSchedulePayload(input) {
+    const result = migrateLegacySchedule(input, scheduleDefaults);
+    const data = result.data;
+    for (const [key,target] of [['numerator',scheduleDataNumerator],['denominator',scheduleDataDenominator]]) {
+        if (data[key]) { Object.keys(target).forEach(k=>delete target[k]); Object.assign(target,data[key]); }
+    }
+    scheduleDateOverrides = data.dateOverrides || {};
+    scheduleLegacyArchive = data.legacyScheduleArchive || null;
+    scheduleMigrationNeeded = result.migrated;
+    return data;
+}
+async function persistScheduleMigration() {
+    if (!scheduleMigrationNeeded || sessionStorage.getItem('toe_can_schedule') !== '1' || readPendingSchedule()) return;
+    const cloud = getCloudState();
+    if (!navigator.onLine || !cloud.isCloudConnected || !cloud.db || !cloud.auth?.currentUser) return;
+    scheduleMigrationNeeded = false;
+    // The normal verified save retains a backup and uses the existing editor permission.
+    try { await saveScheduleData(); } catch(error) { scheduleMigrationNeeded = true; console.warn('Schedule migration save',error); }
+}
 let currentScheduleDay = 'mon';
 let currentScheduleWeekType = 'denominator';
 let editingScheduleIndex = -1;
@@ -157,7 +185,7 @@ let scheduleReconnectTimer = null;
 let scheduleReconnectAttempt = 0;
 let lastScheduleAppliedUpdatedAt = '';
 let lastScheduleLocalWriteAt = '';
-let scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+let scheduleAuditBaseline = JSON.parse(JSON.stringify(schedulePayload()));
 
 window.__scheduleDebug = window.__scheduleDebug || { lastSnapshotAt:'', lastUpdatedAt:'', lastSource:'', lastSaveOk:false };
 window.__scheduleListenerActive = false;
@@ -265,6 +293,12 @@ function updateScheduleReferenceControls() {
     });
 
     const selectedDate = scheduleDateForDay(currentScheduleDay);
+    document.getElementById('schedule-edit-scope-box')?.classList.toggle('hidden',sessionStorage.getItem('toe_can_schedule') !== '1');
+    const scopeText = scheduleEditScope === 'template' ? translateUI('Постоянное расписание') : translateUI('Только на выбранную дату');
+    for (const id of ['schedule-scope-hint','schedule-editor-scope','schedule-bell-scope']) {
+        const node = document.getElementById(id);
+        if (node) node.textContent = `${scopeText} · ${scheduleFormatFullDate(selectedDate)}`;
+    }
     const dateEl = document.getElementById('schedule-reference-date');
     const rangeEl = document.getElementById('schedule-week-range');
     if (dateEl) dateEl.textContent = scheduleFormatFullDate(selectedDate);
@@ -406,12 +440,21 @@ export function getCurrentScheduleWeekType() {
 }
 
 export function getScheduleShareData(mode = 'day') {
-    return scheduleShareSnapshot(getScheduleDataForWeek(currentScheduleWeekType), currentScheduleDay, currentScheduleWeekType, scheduleReferenceDate, mode);
+    return scheduleShareSnapshot(getScheduleDataForWeek(currentScheduleWeekType, scheduleReferenceDate), currentScheduleDay, currentScheduleWeekType, scheduleReferenceDate, mode);
 }
 
-export function getScheduleDataForWeek(type) {
-    return type === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator;
+export function getScheduleDataForWeek(type, reference = new Date()) {
+    const monday = scheduleMonday(reference);
+    return Object.fromEntries(SCHEDULE_DAY_KEYS.map((day,index) => {
+        const date = new Date(monday); date.setDate(date.getDate()+index);
+        return [day,scheduleForDate(schedulePayload(),date,type)];
+    }));
 }
+window.setScheduleEditScope = function(scope) {
+    scheduleEditScope = scope === 'template' ? 'template' : 'date';
+    window.closeScheduleEditor?.(); window.closeScheduleBellEditor?.();
+    lastScheduleRenderKey = ''; renderSchedule(currentScheduleDay);
+};
 
 export function restoreScheduleSelection(savedDay, savedWeek) {
     if (savedWeek === 'numerator' || savedWeek === 'denominator') currentScheduleWeekType = savedWeek;
@@ -433,6 +476,8 @@ export function syncScheduleToToday() {
 
 window.setScheduleWeekType = function(type) {
     if (type !== 'numerator' && type !== 'denominator') return;
+    window.closeScheduleEditor?.(); window.closeScheduleBellEditor?.();
+    if (getWeekTypeForDate(scheduleReferenceDate) !== type) scheduleReferenceDate.setDate(scheduleReferenceDate.getDate()+(type === 'numerator' ? 7 : -7));
     currentScheduleWeekType = type;
     try { localStorage.setItem('toe_schedule_week_type', type); } catch(e) {}
     updateScheduleReferenceControls();
@@ -442,6 +487,7 @@ window.setScheduleWeekType = function(type) {
 
 window.setScheduleDay = function(day) {
     if (!SCHEDULE_DAY_KEYS.includes(day)) return;
+    window.closeScheduleEditor?.(); window.closeScheduleBellEditor?.();
     currentScheduleDay = day;
     scheduleReferenceDate = scheduleDateForDay(day);
     try { localStorage.setItem('toe_current_schedule_day', day); } catch(e) {}
@@ -451,6 +497,7 @@ window.setScheduleDay = function(day) {
 };
 
 window.shiftScheduleReferenceDate = function(delta) {
+    window.closeScheduleEditor?.(); window.closeScheduleBellEditor?.();
     const step = Number(delta) < 0 ? -1 : 1;
     const previousMonday = scheduleMonday(scheduleReferenceDate).getTime();
     let next = scheduleMidnight(scheduleDateForDay(currentScheduleDay));
@@ -651,7 +698,7 @@ document.addEventListener('keydown', event => {
 
 window.saveScheduleBellEditor = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
-    const list = getCurrentScheduleList();
+    const list = getCurrentScheduleList(true);
     const start = scheduleClockToMinutes(document.getElementById('schedule-bell-start')?.value);
     const duration = Math.max(1, Number(document.getElementById('schedule-bell-duration')?.value) || 0);
     if (!list || start === null || !duration) { showToast('Проверьте время начала и длительность пары'); return; }
@@ -674,7 +721,7 @@ window.saveScheduleBellEditor = async function() {
         const date = scheduleDateForDay(currentScheduleDay);
         const event = {
             id:`bells_${Date.now()}`, type:'schedule_change', changeType:'bells', dayKey:currentScheduleDay,
-            weekType:currentScheduleWeekType, date:date.toISOString().slice(0,10),
+            weekType:currentScheduleWeekType, date:scheduleDateKey(date),
             title:'Изменено расписание звонков', titleKz:'Қоңырау кестесі өзгертілді',
             text:`На ${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} изменено расписание звонков.`,
             textKz:`${date.toLocaleDateString('kk-KZ',{day:'numeric',month:'long'})} күнгі қоңырау кестесі өзгертілді.`,
@@ -762,7 +809,7 @@ function scheduleChangeEvent(oldItem, newItem, index) {
         changeType: newItem.changeType,
         dayKey: currentScheduleDay,
         weekType: currentScheduleWeekType,
-        date: date.toISOString().slice(0,10),
+        date: scheduleDateKey(date),
         pairNumber,
         title: pairNumber === 'КЧ' ? 'Изменение расписания · Классный час' : `Изменение расписания · ${pairNumber} пара`,
         titleKz: pairNumber === 'КЧ' ? 'Сабақ кестесі өзгерді · Сынып сағаты' : `Сабақ кестесі өзгерді · ${pairNumber}-сабақ`,
@@ -877,13 +924,13 @@ window.onScheduleChangeTypeChanged = function() {
 
 let lastScheduleRenderKey = '';
 export function renderSchedule(dayKey = currentScheduleDay) {
+    if (scheduleMigrationNeeded) void persistScheduleMigration();
     const container = document.getElementById('schedule-container');
     if (!container) return;
     if (SCHEDULE_DAY_KEYS.includes(dayKey)) currentScheduleDay = dayKey;
 
     updateScheduleReferenceControls();
-    const source = currentScheduleWeekType === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator;
-    const list = Array.isArray(source[currentScheduleDay]) ? source[currentScheduleDay] : [];
+    const list = getCurrentScheduleList() || [];
     const entries = buildScheduleEntries(list);
     const selectedDate = scheduleDateForDay(currentScheduleDay);
     const liveState = scheduleCurrentState(entries);
@@ -1025,8 +1072,10 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     lastScheduleRenderKey = renderKey;
 }
 
-function getCurrentScheduleList() {
-    return (currentScheduleWeekType === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator)[currentScheduleDay];
+function getCurrentScheduleList(forWrite = false) {
+    if (scheduleEditScope === 'template') return (currentScheduleWeekType === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator)[currentScheduleDay];
+    const date = scheduleDateForDay(currentScheduleDay);
+    return forWrite ? ensureDateSchedule(schedulePayload(),date,currentScheduleWeekType) : scheduleForDate(schedulePayload(),date,currentScheduleWeekType);
 }
 
 window.openScheduleEditor = function(index) {
@@ -1065,7 +1114,7 @@ window.closeScheduleEditor = function() {
 
 window.saveScheduleLesson = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
-    const list=getCurrentScheduleList();
+    const list=getCurrentScheduleList(true);
     if (!list) { showToast('Не удалось определить день расписания'); return; }
     const changeType = document.getElementById('edit-change-type')?.value || 'normal';
     const oldItem = editingScheduleIndex >= 0 ? cloneScheduleItem(list[editingScheduleIndex]) : null;
@@ -1116,7 +1165,7 @@ window.saveScheduleLesson = async function() {
 
 window.moveScheduleLesson = async function(index, delta) {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
-    const list = getCurrentScheduleList();
+    const list = getCurrentScheduleList(true);
     if (!list || !Number.isInteger(index) || !Number.isInteger(delta)) return;
     const target = index + delta;
     if (target < 0 || target >= list.length) return;
@@ -1135,7 +1184,7 @@ window.moveScheduleLesson = async function(index, delta) {
 
 window.deleteScheduleLesson = async function() {
     if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
-    const list=getCurrentScheduleList();
+    const list=getCurrentScheduleList(true);
     if(editingScheduleIndex<0 || !list)return;
     if(!confirm(translateUI('Удалить эту пару из расписания?')))return;
 
@@ -1176,7 +1225,9 @@ function saveScheduleHistorySnapshot() {
         history.unshift({
             savedAt: new Date().toISOString(),
             num: scheduleDataNumerator,
-            den: scheduleDataDenominator
+            den: scheduleDataDenominator,
+            dateOverrides:scheduleDateOverrides,
+            legacyScheduleArchive:scheduleLegacyArchive
         });
         localStorage.setItem('toe_schedule_history', JSON.stringify(history.slice(0, 50)));
     } catch (e) { console.warn('Не удалось сохранить историю расписания', e); }
@@ -1187,19 +1238,19 @@ export async function saveScheduleData(changeEvent = null){
     const updatedAt = new Date().toISOString();
     let before = scheduleAuditBaseline;
     const auditActorUid = getCloudState().auth?.currentUser?.uid;
-    const auditAfter = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+    const auditAfter = JSON.parse(JSON.stringify(schedulePayload()));
     const num = JSON.stringify(scheduleDataNumerator);
     const den = JSON.stringify(scheduleDataDenominator);
     await savePersistentValue('toe_schedule_num', num);
     await savePersistentValue('toe_schedule_den', den);
     await savePersistentValue('toe_schedule_last_saved', updatedAt);
+    await savePersistentValue('toe_schedule_dated_v2', JSON.stringify(schedulePayload()));
     dependencies.recordActionHistory?.({kind:'schedule',target:'main',before,after:auditAfter,operationId:updatedAt,actorUid:auditActorUid});
     scheduleAuditBaseline = auditAfter;
     lastScheduleLocalWriteAt = updatedAt;
 
     const payload = {
-        numerator: scheduleDataNumerator,
-        denominator: scheduleDataDenominator,
+        ...schedulePayload(),
         lastChange: changeEvent || null,
         updatedAt
     };
@@ -1279,12 +1330,9 @@ export async function syncPendingScheduleData(){
     try {
         const updatedAt = String(pending.updatedAt || new Date().toISOString());
         const ref = doc(db, ...CLOUD_ROOT, 'schedule', 'main');
-        await setDoc(ref, {
-            numerator: pending.numerator || scheduleDataNumerator,
-            denominator: pending.denominator || scheduleDataDenominator,
-            lastChange: pending.lastChange || null,
-            updatedAt
-        }, { merge:false });
+        const normalized = installSchedulePayload(pending);
+        await setDoc(ref, { ...schedulePayload(), lastChange: normalized.lastChange || null, updatedAt }, { merge:false });
+        await savePersistentValue('toe_schedule_dated_v2', JSON.stringify(schedulePayload()));
 
         lastScheduleAppliedUpdatedAt = updatedAt;
         lastScheduleLocalWriteAt = updatedAt;
@@ -1304,39 +1352,24 @@ export async function syncPendingScheduleData(){
 
 export async function loadScheduleData(){
     try {
-        let num = localStorage.getItem('toe_schedule_num');
-        let den = localStorage.getItem('toe_schedule_den');
-        if (!num) { num = await dbGet('toe_schedule_num'); if (num) localStorage.setItem('toe_schedule_num', num); }
-        if (!den) { den = await dbGet('toe_schedule_den'); if (den) localStorage.setItem('toe_schedule_den', den); }
-        const parsedNum = num ? JSON.parse(num) : null;
-        const parsedDen = den ? JSON.parse(den) : null;
-        if (parsedNum) Object.keys(scheduleDataNumerator).forEach(k => { if (Array.isArray(parsedNum[k])) scheduleDataNumerator[k] = parsedNum[k]; });
-        if (parsedDen) Object.keys(scheduleDataDenominator).forEach(k => { if (Array.isArray(parsedDen[k])) scheduleDataDenominator[k] = parsedDen[k]; });
-        const { isCloudConnected, db, auth } = getCloudState();
-        if (!readPendingSchedule() && navigator.onLine && isCloudConnected && db && auth?.currentUser) {
-            try {
-                const snap = await getDoc(doc(db, ...CLOUD_ROOT, 'schedule', 'main'));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.numerator) {
-                        Object.keys(scheduleDataNumerator).forEach(k => delete scheduleDataNumerator[k]);
-                        Object.assign(scheduleDataNumerator, data.numerator);
-                    }
-                    if (data.denominator) {
-                        Object.keys(scheduleDataDenominator).forEach(k => delete scheduleDataDenominator[k]);
-                        Object.assign(scheduleDataDenominator, data.denominator);
-                    }
-                    localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
-                    localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
-                }
-            } catch (e) {
-                reportError('schedule-load', e, { localSaved:true, fallback:'Не удалось обновить расписание из облака' });
-            }
+        const stored = localStorage.getItem('toe_schedule_dated_v2') || await dbGet('toe_schedule_dated_v2');
+        if (stored) installSchedulePayload(JSON.parse(stored));
+        else {
+            const num = localStorage.getItem('toe_schedule_num') || await dbGet('toe_schedule_num');
+            const den = localStorage.getItem('toe_schedule_den') || await dbGet('toe_schedule_den');
+            installSchedulePayload({numerator:num?JSON.parse(num):scheduleDataNumerator,denominator:den?JSON.parse(den):scheduleDataDenominator});
         }
-    } catch(e) {
-        reportError('schedule-local-load', e, { localSaved:false, fallback:'Не удалось загрузить сохранённое расписание' });
-    }
-    scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+        const pending = readPendingSchedule();
+        if (pending) installSchedulePayload(pending);
+        const {isCloudConnected,db,auth} = getCloudState();
+        if (!pending && navigator.onLine && isCloudConnected && db && auth?.currentUser) {
+            const snap = await getDoc(doc(db,...CLOUD_ROOT,'schedule','main'));
+            if (snap.exists()) installSchedulePayload(snap.data());
+        }
+        await savePersistentValue('toe_schedule_dated_v2',JSON.stringify(schedulePayload()));
+    } catch(error) { reportError('schedule-load',error,{localSaved:true,fallback:'Не удалось обновить расписание из облака'}); }
+    scheduleAuditBaseline = JSON.parse(JSON.stringify(schedulePayload()));
+    await persistScheduleMigration();
 }
 
 export function applyCloudScheduleData(data, source = 'cloud') {
@@ -1346,22 +1379,15 @@ export function applyCloudScheduleData(data, source = 'cloud') {
     if (remoteUpdatedAt && lastScheduleLocalWriteAt && remoteUpdatedAt < lastScheduleLocalWriteAt) return false;
     if (remoteUpdatedAt && lastScheduleAppliedUpdatedAt && remoteUpdatedAt < lastScheduleAppliedUpdatedAt) return false;
 
-    let changed = false;
-    if (data.numerator && JSON.stringify(data.numerator) !== JSON.stringify(scheduleDataNumerator)) {
-        Object.keys(scheduleDataNumerator).forEach(k => delete scheduleDataNumerator[k]);
-        Object.assign(scheduleDataNumerator, data.numerator);
-        changed = true;
-    }
-    if (data.denominator && JSON.stringify(data.denominator) !== JSON.stringify(scheduleDataDenominator)) {
-        Object.keys(scheduleDataDenominator).forEach(k => delete scheduleDataDenominator[k]);
-        Object.assign(scheduleDataDenominator, data.denominator);
-        changed = true;
-    }
+    const beforePayload = JSON.stringify(schedulePayload());
+    installSchedulePayload(data);
+    const changed = beforePayload !== JSON.stringify(schedulePayload());
     if (remoteUpdatedAt) lastScheduleAppliedUpdatedAt = remoteUpdatedAt;
 
     if (changed) {
         localStorage.setItem('toe_schedule_num', JSON.stringify(scheduleDataNumerator));
         localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
+        localStorage.setItem('toe_schedule_dated_v2', JSON.stringify(schedulePayload()));
         renderSchedule(currentScheduleDay);
         if (window.__scheduleDebug) {
             window.__scheduleDebug.lastSource = source;
@@ -1369,7 +1395,8 @@ export function applyCloudScheduleData(data, source = 'cloud') {
             window.__scheduleDebug.lastSnapshotAt = new Date().toISOString();
         }
     }
-    scheduleAuditBaseline = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+    scheduleAuditBaseline = JSON.parse(JSON.stringify(schedulePayload()));
+    if (scheduleMigrationNeeded) setTimeout(persistScheduleMigration,0);
     return changed;
 }
 
@@ -1450,3 +1477,4 @@ if (typeof window !== 'undefined') {
         if (view && !view.classList.contains('hidden')) renderSchedule(currentScheduleDay);
     }, 60000);
 }
+
