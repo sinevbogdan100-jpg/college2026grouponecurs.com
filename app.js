@@ -1,3 +1,4 @@
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v3';
 import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
 import { createNotificationCenter } from './notification-center.js?v=20261005-performance-v2';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
@@ -43,10 +44,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261010-date-overrides-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v2";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v2';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v2';
+} from "./schedule.js?v=20261010-date-overrides-v3";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v3";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v3';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v3';
 
         
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
@@ -4000,8 +4001,8 @@ function renderHomeReferenceDate(displayDate=new Date(),isNearestStudyDay=false)
     const titleEl=document.getElementById('home-reference-title');
     if(!dateEl||!weekdayEl)return;
     const locale=currentLang()==='kz'?'kk-KZ':'ru-RU';
-    dateEl.textContent=displayDate.toLocaleDateString(locale,{day:'numeric',month:'long',year:'numeric'});
-    const weekday=displayDate.toLocaleDateString(locale,{weekday:'long'});
+    dateEl.textContent=scheduleCalendarLabel(displayDate, locale,{day:'numeric',month:'long',year:'numeric'});
+    const weekday=scheduleCalendarLabel(displayDate, locale,{weekday:'long'});
     weekdayEl.textContent=weekday.charAt(0).toUpperCase()+weekday.slice(1);
     if(titleEl) titleEl.textContent=isNearestStudyDay?'Ближайший учебный день':'Сегодня';
 }

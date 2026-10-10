@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261010-date-overrides-v2';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261010-date-overrides-v3';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);

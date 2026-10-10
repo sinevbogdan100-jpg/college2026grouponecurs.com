@@ -1,7 +1,8 @@
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v3';
 import { doc, writeBatch } from './firebase.js?v=20261005-group-tools-v2';
-import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v2';
-import { getScheduleShareData } from './schedule.js?v=20261010-date-overrides-v2';
-import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261010-date-overrides-v2';
+import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v3';
+import { getScheduleShareData } from './schedule.js?v=20261010-date-overrides-v3';
+import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261010-date-overrides-v3';
 
 export const WORDS = {
   share: ['Поделиться расписанием','Сабақ кестесімен бөлісу'], day: ['День','Күн'], week: ['Неделя','Апта'],
@@ -139,7 +140,7 @@ function imageText(value, lang) { return lang==='kz'?translateUI(String(value||'
 export function scheduleImageRows(snapshot, language) {
   const rows=[];
   for(const day of snapshot.days){
-    rows.push({heading:true,text:`${gt(day.key,language)} · ${new Date(day.date+'T12:00:00').toLocaleDateString(language==='kz'?'kk-KZ':'ru-RU',{day:'numeric',month:'long',year:'numeric'})}`});
+    rows.push({heading:true,text:`${gt(day.key,language)} · ${scheduleCalendarLabel(new Date(day.date+'T12:00:00'),language==='kz'?'kk-KZ':'ru-RU',{day:'numeric',month:'long',year:'numeric'})}`});
     if(!day.lessons.length)rows.push({text:gt('empty',language),meta:''});
     for(const lesson of day.lessons){
       rows.push({text:`${lesson.time||'—'}   ${imageText(lesson.subject,language)}`,meta:[lesson.teacher,imageText(lesson.room,language)].filter(Boolean).join(' · '),

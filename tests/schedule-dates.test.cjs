@@ -2,6 +2,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const root=path.join(__dirname,'..');
 async function main(){
  const pure=await import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(path.join(root,'schedule-dates.js'),'utf8')).toString('base64'));
+ assert.equal(pure.scheduleCalendarLabel(new Date('2026-10-20T12:00:00'),'kk-KZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'Сейсенбі, 20 қазан 2026 ж.');
+ const imports=new Set();for(const file of fs.readdirSync(root).filter(name=>name.endsWith('.js')))for(const [,version] of fs.readFileSync(path.join(root,file),'utf8').matchAll(/schedule\.js\?v=([\w-]+)/g))imports.add(version);assert.equal(imports.size,1,'all consumers must share the same stateful schedule module');
  const writes=[],store=new Map(),nodes=new Map();
  const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',checked:false,textContent:'',classList:{add(){},remove(){},toggle(){},contains:()=>true},setAttribute(){},addEventListener(){}});return nodes.get(id);};
  const localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};

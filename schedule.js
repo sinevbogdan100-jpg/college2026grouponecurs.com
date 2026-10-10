@@ -1,9 +1,9 @@
-import { SCHEDULE_SCHEMA_VERSION, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261010-date-overrides-v2';
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261010-date-overrides-v2";
+import { SCHEDULE_SCHEMA_VERSION, scheduleCalendarLabel, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261010-date-overrides-v3';
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261010-date-overrides-v3";
 import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261005-group-tools-v2";
 import { getWeekTypeForDate } from "./utils.js?v=20261004-performance-v1";
 import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
-import { scheduleShareSnapshot } from './group-tools-data.js?v=20261010-date-overrides-v2';
+import { scheduleShareSnapshot } from './group-tools-data.js?v=20261010-date-overrides-v3';
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
@@ -228,20 +228,20 @@ function scheduleSameDay(a, b) {
 }
 
 function scheduleFormatFullDate(date) {
-    const text = date.toLocaleDateString(interfaceLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const text = scheduleCalendarLabel(date, interfaceLocale(), { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 }
 
 function scheduleFormatShortDate(date) {
-    return date.toLocaleDateString(interfaceLocale(), { day:'numeric', month:'short' }).replace(/\s*г\.?$/i,'');
+    return scheduleCalendarLabel(date, interfaceLocale(), { day:'numeric', month:'short' }).replace(/\s*г\.?$/i,'');
 }
 
 function scheduleFormatRange(date = scheduleReferenceDate) {
     const monday = scheduleMonday(date);
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
-    const left = monday.toLocaleDateString(interfaceLocale(), { day:'numeric' });
-    const right = friday.toLocaleDateString(interfaceLocale(), { day:'numeric', month:'long', year:'numeric' });
+    const left = scheduleCalendarLabel(monday, interfaceLocale(), { day:'numeric' });
+    const right = scheduleCalendarLabel(friday, interfaceLocale(), { day:'numeric', month:'long', year:'numeric' });
     return `${left} – ${right}`;
 }
 
@@ -427,7 +427,7 @@ function renderScheduleDayHeading(selectedDate) {
         return;
     }
     heading.classList.remove('hidden');
-    const text = selectedDate.toLocaleDateString(interfaceLocale(), { weekday:'long', day:'numeric', month:'long' });
+    const text = scheduleCalendarLabel(selectedDate, interfaceLocale(), { weekday:'long', day:'numeric', month:'long' });
     heading.textContent = text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -723,8 +723,8 @@ window.saveScheduleBellEditor = async function() {
             id:`bells_${Date.now()}`, type:'schedule_change', changeType:'bells', dayKey:currentScheduleDay,
             weekType:currentScheduleWeekType, date:scheduleDateKey(date),
             title:'Изменено расписание звонков', titleKz:'Қоңырау кестесі өзгертілді',
-            text:`На ${date.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} изменено расписание звонков.`,
-            textKz:`${date.toLocaleDateString('kk-KZ',{day:'numeric',month:'long'})} күнгі қоңырау кестесі өзгертілді.`,
+            text:`На ${scheduleCalendarLabel(date, 'ru-RU',{day:'numeric',month:'long'})} изменено расписание звонков.`,
+            textKz:`${scheduleCalendarLabel(date, 'kk-KZ',{day:'numeric',month:'long'})} күнгі қоңырау кестесі өзгертілді.`,
             createdAt:new Date().toISOString()
         };
         const cloudSaved = await saveScheduleData(event);
@@ -772,8 +772,8 @@ function scheduleChangeEvent(oldItem, newItem, index) {
     const entries = buildScheduleEntries(getCurrentScheduleList());
     const pairNumber = entries.find(entry => entry.index === index)?.number || String(index + 1);
     const date = scheduleDateForDay(currentScheduleDay);
-    const ruDate = date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
-    const kzDate = date.toLocaleDateString('kk-KZ',{weekday:'long',day:'numeric',month:'long'});
+    const ruDate = scheduleCalendarLabel(date, 'ru-RU',{weekday:'long',day:'numeric',month:'long'});
+    const kzDate = scheduleCalendarLabel(date, 'kk-KZ',{weekday:'long',day:'numeric',month:'long'});
     const oldSubject = scheduleOriginalValue(newItem,'subject') || oldItem?.subject || newItem.subject || 'Пара';
     const oldRoom = scheduleOriginalValue(newItem,'room') || oldItem?.room || '';
     const oldTeacher = scheduleOriginalValue(newItem,'teacher') || oldItem?.teacher || '';
@@ -1033,7 +1033,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
                     ${stateBadge}
                 </div>
                 ${routeHtml}
-                ${cancelled ? '' : `<span class="schedule-now-label">${isSubjectReplacement ? translateUI('Теперь') : ''}</span><strong class="schedule-ref-subject">${scheduleEscape(item.subject || 'Занятие')}</strong>`}
+                ${cancelled ? '' : `<span class="schedule-now-label">${isSubjectReplacement ? translateUI('Теперь') : ''}</span><strong class="schedule-ref-subject">${scheduleEscape(translateUI(item.subject || 'Занятие'))}</strong>`}
                 ${metaHtml}
                 ${changeHtml}
                 <div class="schedule-admin-actions">

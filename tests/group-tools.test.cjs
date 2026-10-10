@@ -15,7 +15,7 @@ async function main(){
     navigator:{onLine:true},document:{getElementById:node,fonts:{ready:Promise.resolve()},createElement(type){
       assert.equal(type,'canvas');const canvas=createCanvas(1,1);canvas.toBlob=callback=>canvas.encode('png').then(bytes=>callback(new Blob([bytes],{type:'image/png'})));return canvas;
     }},window:{}};
-  vm.createContext(context);vm.runInContext(source('i18n.js')+'\n'+source('group-tools-data.js')+'\n'+source('group-tools.js')+`
+  vm.createContext(context);vm.runInContext(source('i18n.js')+'\n'+source('schedule-dates.js')+'\n'+source('group-tools-data.js')+'\n'+source('group-tools.js')+`
     globalThis.api={scheduleShareSnapshot,pinnedAnnouncement,attendanceChanges,scheduleChanges,wrapCanvasText,scheduleImageRows,WORDS,gt,generateShare,sendShare,
       setup(snapshot,language){shareSnapshot=snapshot;byId('gt-share-language').value=language;bridge={groupName:()=> 'ТОЭ-26-9-1',toast:value=>toasts.push(value)};},
       blob(){return shareBlob;},preview(){return shareURL;}};`,Object.assign(context,{toasts}));

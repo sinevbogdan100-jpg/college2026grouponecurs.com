@@ -4,6 +4,11 @@ export function currentLang() { return localStorage.getItem(UI_LANG_KEY) === 'kz
 export function interfaceLocale() { return currentLang() === 'kz' ? 'kk-KZ' : 'ru-RU'; }
 
 export const KZ_EXACT = Object.freeze({
+  'Русский язык':'Орыс тілі',
+  'Всемирная история':'Дүниежүзі тарихы',
+  'Графика и проектирование':'Графика және жобалау',
+  'Физвоспитание':'Дене шынықтыру',
+  'Зал':'Спорт залы',
   'Режим изменений':'Өзгерту режимі',
   'Только на выбранную дату':'Тек таңдалған күнге',
   'Постоянное расписание':'Тұрақты сабақ кестесі',

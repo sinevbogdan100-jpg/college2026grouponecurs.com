@@ -1,6 +1,18 @@
 // Date-specific changes are separate from the recurring numerator/denominator.
 export const SCHEDULE_SCHEMA_VERSION = 2;
 export const SCHEDULE_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
+export function scheduleCalendarLabel(date, locale, options) {
+    if (locale !== 'kk-KZ') return date.toLocaleDateString(locale,options);
+    const months = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+    const short = ['қаң.','ақп.','нау.','сәу.','мам.','мау.','шіл.','там.','қыр.','қаз.','қар.','жел.'];
+    const weekdays = ['Жексенбі','Дүйсенбі','Сейсенбі','Сәрсенбі','Бейсенбі','Жұма','Сенбі'];
+    const parts = [];
+    if (options.day) parts.push(String(date.getDate()));
+    if (options.month) parts.push((options.month === 'short' ? short : months)[date.getMonth()]);
+    if (options.year) parts.push(`${date.getFullYear()} ж.`);
+    const label = parts.join(' ');
+    return options.weekday ? weekdays[date.getDay()]+(label ? ', '+label : '') : label;
+}
 const clone = value => JSON.parse(JSON.stringify(value));
 export function scheduleDateKey(date) {
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
