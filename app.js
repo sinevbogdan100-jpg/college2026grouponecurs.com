@@ -43,10 +43,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261010-date-overrides-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v1";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261005-group-tools-v2';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v1';
+} from "./schedule.js?v=20261010-date-overrides-v2";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v2";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v2';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v2';
 
         
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
