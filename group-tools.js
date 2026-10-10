@@ -1,8 +1,8 @@
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v3';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v4';
 import { doc, writeBatch } from './firebase.js?v=20261005-group-tools-v2';
-import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v3';
-import { getScheduleShareData } from './schedule.js?v=20261010-date-overrides-v3';
-import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261010-date-overrides-v3';
+import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v4';
+import { getScheduleShareData } from './schedule.js?v=20261010-date-overrides-v4';
+import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261010-date-overrides-v4';
 
 export const WORDS = {
   share: ['Поделиться расписанием','Сабақ кестесімен бөлісу'], day: ['День','Күн'], week: ['Неделя','Апта'],

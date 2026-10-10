@@ -1,17 +1,17 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261010-date-overrides-v3';
+const CACHE_NAME = 'sbp-shell-20261010-date-overrides-v4';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
-  './schedule-dates.js?v=20261010-date-overrides-v3',
-  './group-tools.js?v=20261010-date-overrides-v3',
-  './group-tools-data.js?v=20261010-date-overrides-v3',
-  './action-history.js?v=20261010-date-overrides-v3',
+  './schedule-dates.js?v=20261010-date-overrides-v4',
+  './group-tools.js?v=20261010-date-overrides-v4',
+  './group-tools-data.js?v=20261010-date-overrides-v4',
+  './action-history.js?v=20261010-date-overrides-v4',
   './',
   './index.html',
   './soft-frames.css?v=20261006-soft-frames-v1',
-  './release-notes.js?v=20261010-date-overrides-v3',
-  './release-data.js?v=20261010-date-overrides-v3',
-  './app.js?v=20261010-date-overrides-v3',
+  './release-notes.js?v=20261010-date-overrides-v4',
+  './release-data.js?v=20261010-date-overrides-v4',
+  './app.js?v=20261010-date-overrides-v4',
   './style.css?v=20261006-home-schedule-live-v1',
   './desktop.css?v=20261006-soft-frames-v1',
   './gradients.css?v=20261004-ui-polish-v1',
@@ -19,8 +19,8 @@ const CORE_ASSETS = [
   './firebase.js?v=20261005-group-tools-v2',
   './utils.js?v=20261004-performance-v1',
   './storage.js?v=20261004-performance-v1',
-  './schedule.js?v=20261010-date-overrides-v3',
-  './i18n.js?v=20261010-date-overrides-v3',
+  './schedule.js?v=20261010-date-overrides-v4',
+  './i18n.js?v=20261010-date-overrides-v4',
   './performance.js?v=20261005-mobile-hard-opt-v1',
   './notification-center.js?v=20261005-performance-v2',
   './notification-state.js?v=20261004-performance-v1',

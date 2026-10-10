@@ -1,4 +1,4 @@
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v3';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v4';
 import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
 import { createNotificationCenter } from './notification-center.js?v=20261005-performance-v2';
 import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
@@ -44,10 +44,10 @@ import {
     getScheduleDataForWeek,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261010-date-overrides-v3";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v3";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v3';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v3';
+} from "./schedule.js?v=20261010-date-overrides-v4";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v4";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v4';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v4';
 
         
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;

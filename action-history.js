@@ -1,7 +1,7 @@
 import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261005-group-tools-v2';
-import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v3';
-import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261010-date-overrides-v3';
-import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261010-date-overrides-v3';
+import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v4';
+import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261010-date-overrides-v4';
+import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261010-date-overrides-v4';
 
 let bridge = {}, context = '', entries = [], remote = [], unsubscribe = null, cloudStatus = 'offline', flushing = false, flushAgain = false;
 const byId = id => document.getElementById(id);
