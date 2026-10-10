@@ -42,6 +42,7 @@ import {
     renderSchedule,
     getCurrentScheduleDay,
     getScheduleDataForWeek,
+    getSchedulePauseState,
     restoreScheduleSelection,
     syncPendingScheduleData
 } from "./schedule.js?v=20261010-date-overrides-v4";
@@ -4028,6 +4029,7 @@ function getHomeStudyDate(now=new Date()){
         candidate.setDate(candidate.getDate()+1);
         candidate.setHours(0,0,0,0);
         if(!getScheduleDayKey(candidate)) continue;
+        if(getSchedulePauseState(candidate).active) continue;
         const hasLessons=getLessonsForScheduleDate(candidate).some(item=>!!parseScheduleTimeRange(item.time));
         if(hasLessons) return new Date(candidate);
     }
@@ -4179,11 +4181,32 @@ window.expandHomeSchedule=function(){
     refreshHomeTimers();
 };
 
+function renderHomePauseCard(pauseState){
+    const meta = pauseState.type === 'vacation'
+        ? {label:'Каникулы',icon:'fa-umbrella-beach'}
+        : pauseState.type === 'maintenance'
+            ? {label:'Технические работы',icon:'fa-screwdriver-wrench'}
+            : {label:'Временная пауза',icon:'fa-pause'};
+    const locale=interfaceLocale();
+    const format=value=>{
+        const date=new Date(String(value||'')+'T12:00:00');
+        return Number.isNaN(date.getTime())?'':scheduleCalendarLabel(date,locale,{day:'numeric',month:'long',year:'numeric'});
+    };
+    const period=[format(pauseState.startDate),format(pauseState.endDate)].filter(Boolean).join(' – ');
+    return `<section class="home-schedule-pause-card"><span class="home-schedule-pause-icon"><i class="fa-solid ${meta.icon}"></i></span><div><span>${translateUI('Расписание приостановлено')}</span><strong>${translateUI(meta.label)}</strong><small>${period}</small><p>${translateUI('Расписание автоматически возобновится после окончания периода.')}</p></div></section>`;
+}
 function renderHomeDayTimeline(){
     const box=document.getElementById('home-day-timeline');
     if(!box)return;
 
     const now=new Date();
+    const pauseState=getSchedulePauseState(now);
+    if(pauseState.active){
+        renderHomeReferenceDate(now,false);
+        box.innerHTML=renderHomePauseCard(pauseState);
+        applyKzTranslations(box);
+        return;
+    }
     const studyDate=getHomeStudyDate(now);
     const isNearestStudyDay=studyDate.toDateString()!==new Date(now.getFullYear(),now.getMonth(),now.getDate()).toDateString();
     renderHomeReferenceDate(studyDate,isNearestStudyDay);
@@ -4377,6 +4400,7 @@ function refreshHomeTimers(){
 }
 window.refreshHomeTimers=refreshHomeTimers;
 document.addEventListener('visibilitychange',refreshHomeTimers);
+window.addEventListener('sbp:schedule-pause-change',()=>{renderHomeDayTimeline();refreshHomeTimers();});
 setTimeout(()=>{renderHomeDayTimeline();refreshHomeTimers();},80);
 function canPublishNotifications(){return currentAccessRole==='owner'||canPublishNotificationsPermission();}
 const NOTIFICATIONS_READ_KEY='toe_notifications_read_v1';

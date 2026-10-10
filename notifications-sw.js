@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261010-date-overrides-v4';
+const CACHE_NAME = 'sbp-shell-20261010-schedule-pause-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './schedule-dates.js?v=20261010-date-overrides-v4',
@@ -9,10 +9,10 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './soft-frames.css?v=20261006-soft-frames-v1',
-  './release-notes.js?v=20261010-date-overrides-v4',
-  './release-data.js?v=20261010-date-overrides-v4',
-  './app.js?v=20261010-date-overrides-v4',
-  './style.css?v=20261006-home-schedule-live-v1',
+  './release-notes.js?v=20261010-schedule-pause-v1',
+  './release-data.js?v=20261010-schedule-pause-v1',
+  './app.js?v=20261010-schedule-pause-v1',
+  './style.css?v=20261010-schedule-pause-v1',
   './desktop.css?v=20261006-soft-frames-v1',
   './gradients.css?v=20261004-ui-polish-v1',
   './responsive-fit.css?v=20261006-soft-frames-v1',

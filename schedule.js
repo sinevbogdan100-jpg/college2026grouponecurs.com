@@ -148,12 +148,55 @@ const scheduleDataDenominator = {
 };
 
 const scheduleDefaults = JSON.parse(JSON.stringify({numerator:scheduleDataNumerator,denominator:scheduleDataDenominator}));
+const SCHEDULE_PAUSE_TYPES = new Set(['vacation','maintenance','temporary']);
+const SCHEDULE_PAUSE_META = Object.freeze({
+    vacation:{ru:'Каникулы',kz:'Демалыс',icon:'fa-umbrella-beach'},
+    maintenance:{ru:'Технические работы',kz:'Техникалық жұмыстар',icon:'fa-screwdriver-wrench'},
+    temporary:{ru:'Временная пауза',kz:'Уақытша үзіліс',icon:'fa-pause'}
+});
 let scheduleDateOverrides = {};
+let schedulePause = {enabled:false,type:'vacation',startDate:'',endDate:''};
 let scheduleLegacyArchive = null;
 let scheduleMigrationNeeded = false;
 let scheduleEditScope = 'date';
+
+function normalizeSchedulePause(input = {}) {
+    const type = SCHEDULE_PAUSE_TYPES.has(String(input?.type || '')) ? String(input.type) : 'vacation';
+    const cleanDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : '';
+    return {
+        enabled: input?.enabled === true,
+        type,
+        startDate: cleanDate(input?.startDate),
+        endDate: cleanDate(input?.endDate)
+    };
+}
+function schedulePauseLocaleIsKz(locale = interfaceLocale()) {
+    return String(locale || '').toLowerCase().startsWith('kk');
+}
+function schedulePauseMeta(pause = schedulePause, locale = interfaceLocale()) {
+    const meta = SCHEDULE_PAUSE_META[pause?.type] || SCHEDULE_PAUSE_META.temporary;
+    return {label:schedulePauseLocaleIsKz(locale) ? meta.kz : meta.ru,icon:meta.icon};
+}
+function schedulePausePeriodLabel(pause = schedulePause, locale = interfaceLocale()) {
+    const format = value => {
+        if (!value) return '';
+        const date = new Date(value + 'T12:00:00');
+        return Number.isNaN(date.getTime()) ? value : scheduleCalendarLabel(date, locale, {day:'numeric',month:'long',year:'numeric'});
+    };
+    const start = format(pause?.startDate), end = format(pause?.endDate);
+    return start && end ? `${start} – ${end}` : (start || end || '');
+}
+function schedulePauseIncludesDate(pause, date = new Date()) {
+    if (!pause?.enabled || !pause.startDate || !pause.endDate) return false;
+    const key = scheduleDateKey(date);
+    return key >= pause.startDate && key <= pause.endDate;
+}
+export function getSchedulePauseState(date = new Date()) {
+    const pause = normalizeSchedulePause(schedulePause);
+    return {...pause,active:schedulePauseIncludesDate(pause,date),dateKey:scheduleDateKey(date)};
+}
 function schedulePayload() {
-    return { numerator:scheduleDataNumerator,denominator:scheduleDataDenominator,dateOverrides:scheduleDateOverrides,scheduleSchemaVersion:SCHEDULE_SCHEMA_VERSION,legacyScheduleArchive:scheduleLegacyArchive };
+    return { numerator:scheduleDataNumerator,denominator:scheduleDataDenominator,dateOverrides:scheduleDateOverrides,pause:schedulePause,scheduleSchemaVersion:SCHEDULE_SCHEMA_VERSION,legacyScheduleArchive:scheduleLegacyArchive };
 }
 function installSchedulePayload(input) {
     const result = migrateLegacySchedule(input, scheduleDefaults);
@@ -162,6 +205,7 @@ function installSchedulePayload(input) {
         if (data[key]) { Object.keys(target).forEach(k=>delete target[k]); Object.assign(target,data[key]); }
     }
     scheduleDateOverrides = data.dateOverrides || {};
+    schedulePause = normalizeSchedulePause(data.pause);
     scheduleLegacyArchive = data.legacyScheduleArchive || null;
     scheduleMigrationNeeded = result.migrated;
     return data;
@@ -447,7 +491,7 @@ export function getScheduleDataForWeek(type, reference = new Date()) {
     const monday = scheduleMonday(reference);
     return Object.fromEntries(SCHEDULE_DAY_KEYS.map((day,index) => {
         const date = new Date(monday); date.setDate(date.getDate()+index);
-        return [day,scheduleForDate(schedulePayload(),date,type)];
+        return [day,getSchedulePauseState(date).active ? [] : scheduleForDate(schedulePayload(),date,type)];
     }));
 }
 window.setScheduleEditScope = function(scope) {
@@ -922,6 +966,105 @@ window.onScheduleChangeTypeChanged = function() {
     refreshScheduleChangeNote(true);
 };
 
+function renderSchedulePauseStatus(selectedDate, pauseState, adminCanEdit) {
+    const manage = document.getElementById('schedule-pause-manage-btn');
+    if (manage) manage.classList.toggle('hidden', !adminCanEdit);
+    const host = document.getElementById('schedule-pause-status');
+    const share = document.getElementById('schedule-share-button');
+    if (share) share.classList.toggle('hidden', !!pauseState?.active);
+    if (!host) return;
+    if (!pauseState?.active) {
+        host.classList.add('hidden');
+        host.replaceChildren();
+        return;
+    }
+    const meta = schedulePauseMeta(pauseState);
+    const period = schedulePausePeriodLabel(pauseState);
+    host.className = 'schedule-pause-status';
+    host.innerHTML = `<span class="schedule-pause-status-icon"><i class="fa-solid ${meta.icon}"></i></span><div><span>${translateUI('Расписание приостановлено')}</span><strong>${meta.label}</strong><small>${period}</small></div>`;
+}
+function schedulePausePlaceholder(pauseState) {
+    const meta = schedulePauseMeta(pauseState);
+    return `<div class="schedule-pause-placeholder"><span><i class="fa-solid ${meta.icon}"></i></span><strong>${meta.label}</strong><p>${translateUI('Расписание временно не работает')}</p><small>${schedulePausePeriodLabel(pauseState)}</small><em>${translateUI('Расписание автоматически возобновится после окончания периода.')}</em></div>`;
+}
+
+window.openSchedulePauseEditor = function() {
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') { showToast('Нет права на редактирование расписания'); return; }
+    const pause = normalizeSchedulePause(schedulePause);
+    const today = scheduleDateKey(new Date());
+    const type = document.getElementById('schedule-pause-type');
+    const start = document.getElementById('schedule-pause-start');
+    const end = document.getElementById('schedule-pause-end');
+    if (type) type.value = pause.type;
+    if (start) start.value = pause.startDate || today;
+    if (end) end.value = pause.endDate || pause.startDate || today;
+    document.getElementById('schedule-pause-disable-btn')?.classList.toggle('hidden', !pause.enabled);
+    const modal = document.getElementById('schedule-pause-modal');
+    modal?.classList.remove('hidden');
+};
+window.closeSchedulePauseEditor = function() {
+    document.getElementById('schedule-pause-modal')?.classList.add('hidden');
+};
+window.saveSchedulePause = async function() {
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
+    const type = document.getElementById('schedule-pause-type')?.value || 'vacation';
+    const startDate = document.getElementById('schedule-pause-start')?.value || '';
+    const endDate = document.getElementById('schedule-pause-end')?.value || '';
+    if (!startDate || !endDate) { showToast('Выберите даты паузы'); return; }
+    if (endDate < startDate) { showToast('Дата окончания не может быть раньше даты начала'); return; }
+    const previous = schedulePause;
+    schedulePause = normalizeSchedulePause({enabled:true,type,startDate,endDate});
+    const ruMeta = schedulePauseMeta(schedulePause,'ru-RU');
+    const kzMeta = schedulePauseMeta(schedulePause,'kk-KZ');
+    const eventId = `pause_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    const changeEvent = {
+        id:eventId,changeType:'pause',date:startDate,
+        title:`Расписание: ${ruMeta.label}`,
+        titleKz:`Сабақ кестесі: ${kzMeta.label}`,
+        text:`Расписание приостановлено: ${schedulePausePeriodLabel(schedulePause,'ru-RU')}.`,
+        textKz:`Сабақ кестесі уақытша тоқтатылды: ${schedulePausePeriodLabel(schedulePause,'kk-KZ')}.`,
+        createdAt:new Date().toISOString()
+    };
+    try {
+        const cloudSaved = await saveScheduleData(changeEvent);
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        window.dispatchEvent(new CustomEvent('sbp:schedule-pause-change'));
+        window.closeSchedulePauseEditor();
+        showToast(cloudSaved ? 'Пауза расписания сохранена в облако' : 'Пауза расписания сохранена на устройстве');
+    } catch (error) {
+        schedulePause = previous;
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        reportError('schedule-pause-save', error, {localSaved:false,fallback:'Не удалось сохранить паузу расписания'});
+    }
+};
+window.disableSchedulePause = async function() {
+    if (sessionStorage.getItem('toe_can_schedule') !== '1') return;
+    const previous = schedulePause;
+    schedulePause = normalizeSchedulePause({...schedulePause,enabled:false});
+    const changeEvent = {
+        id:`pause_resume_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+        changeType:'pause',date:scheduleDateKey(new Date()),
+        title:'Расписание возобновлено',titleKz:'Сабақ кестесі қайта қосылды',
+        text:'Пауза расписания отключена.',textKz:'Сабақ кестесінің үзілісі өшірілді.',
+        createdAt:new Date().toISOString()
+    };
+    try {
+        const cloudSaved = await saveScheduleData(changeEvent);
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        window.dispatchEvent(new CustomEvent('sbp:schedule-pause-change'));
+        window.closeSchedulePauseEditor();
+        showToast(cloudSaved ? 'Расписание возобновлено' : 'Пауза отключена на устройстве');
+    } catch (error) {
+        schedulePause = previous;
+        lastScheduleRenderKey = '';
+        renderSchedule(currentScheduleDay);
+        reportError('schedule-pause-disable', error, {localSaved:false,fallback:'Не удалось отключить паузу расписания'});
+    }
+};
+
 let lastScheduleRenderKey = '';
 export function renderSchedule(dayKey = currentScheduleDay) {
     if (scheduleMigrationNeeded) void persistScheduleMigration();
@@ -933,6 +1076,7 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     const list = getCurrentScheduleList() || [];
     const entries = buildScheduleEntries(list);
     const selectedDate = scheduleDateForDay(currentScheduleDay);
+    const pauseState = getSchedulePauseState(selectedDate);
     const liveState = scheduleCurrentState(entries);
     const isActualToday = liveState.type !== 'other-day';
     const now = new Date();
@@ -953,13 +1097,28 @@ export function renderSchedule(dayKey = currentScheduleDay) {
         selectedDate instanceof Date ? selectedDate.toISOString() : String(selectedDate),
         stateSignature,
         adminCanEdit,
+        pauseState,
         list
     ]);
+
+    renderScheduleDayHeading(selectedDate);
+    renderSchedulePauseStatus(selectedDate, pauseState, adminCanEdit);
+    if (pauseState.active) {
+        const summary = document.getElementById('schedule-live-summary');
+        if (summary) summary.replaceChildren();
+        if (renderKey === lastScheduleRenderKey) return;
+        const fragment = document.createDocumentFragment();
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = schedulePausePlaceholder(pauseState);
+        fragment.appendChild(wrapper.firstElementChild);
+        container.replaceChildren(fragment);
+        lastScheduleRenderKey = renderKey;
+        return;
+    }
 
     // The live summary changes with the clock. The heavier lesson-card DOM only
     // rebuilds when the data or a lesson state actually changes.
     renderScheduleSummary(entries, selectedDate);
-    renderScheduleDayHeading(selectedDate);
     if (renderKey === lastScheduleRenderKey) return;
 
     const fragment = document.createDocumentFragment();
@@ -1228,6 +1387,7 @@ function saveScheduleHistorySnapshot() {
             num: scheduleDataNumerator,
             den: scheduleDataDenominator,
             dateOverrides:scheduleDateOverrides,
+            pause:schedulePause,
             legacyScheduleArchive:scheduleLegacyArchive
         });
         localStorage.setItem('toe_schedule_history', JSON.stringify(history.slice(0, 50)));
@@ -1390,6 +1550,7 @@ export function applyCloudScheduleData(data, source = 'cloud') {
         localStorage.setItem('toe_schedule_den', JSON.stringify(scheduleDataDenominator));
         localStorage.setItem('toe_schedule_dated_v2', JSON.stringify(schedulePayload()));
         renderSchedule(currentScheduleDay);
+        window.dispatchEvent(new CustomEvent('sbp:schedule-pause-change'));
         if (window.__scheduleDebug) {
             window.__scheduleDebug.lastSource = source;
             window.__scheduleDebug.lastUpdatedAt = remoteUpdatedAt;
