@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261011-interface-fixes-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261011-interface-fixes-v2";
 // Общие независимые функции проекта.
 // Здесь нет доступа к Firebase и состоянию журнала.
 
