@@ -1,0 +1,80 @@
+/* Home overview: compact group identity, upcoming schedule and recent notices. */
+html:root body #view-home.home-overview .home-ref-shell {
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:16px!important;
+}
+html:root body #view-home.home-overview .home-ref-group-card {
+  min-height:0!important;
+  padding:12px 14px!important;
+  gap:12px!important;
+  border-color:#ece7f2!important;
+}
+html:root body #view-home.home-overview .home-ref-group-icon {
+  width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+  flex:0 0 36px!important;font-size:18px!important;
+}
+html:root body #view-home.home-overview .home-ref-group-copy {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 14px;
+}
+html:root body #view-home.home-overview .home-ref-group-copy #group-name {
+  margin:0;font-size:20px!important;line-height:1.35!important;
+}
+html:root body #view-home.home-overview .home-ref-student-line {
+  margin:0;font-size:14px!important;line-height:1.4;
+}
+html:root body #view-home.home-overview .home-ref-today-head {
+  min-height:0!important;padding:16px!important;gap:12px;
+}
+html:root body #view-home.home-overview #home-reference-title {
+  max-width:60%;font-size:20px!important;line-height:1.3!important;
+}
+html:root body #view-home.home-overview .home-ref-date :is(strong,span) {
+  font-size:14px!important;line-height:1.4;
+}
+html:root body #view-home.home-overview .home-ref-notifications {
+  padding-top:0!important;min-width:0;
+}
+html:root body #view-home.home-overview .home-ref-section-head {
+  flex-wrap:wrap;gap:8px 12px;
+}
+html:root body #view-home.home-overview .home-ref-section-head h2 {
+  font-size:20px!important;line-height:1.3;
+}
+html:root body #view-home.home-overview .home-ref-section-head button {
+  min-height:40px;font-size:14px!important;padding:8px 10px!important;
+}
+html:root body #view-home.home-overview #home-latest-notification {
+  display:grid;gap:10px;min-width:0;
+}
+html:root body #view-home.home-overview .home-ref-notification-copy :is(strong,span) {
+  overflow-wrap:anywhere;
+}
+html:root body #view-home.home-overview .home-ref-notification-copy > span {
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+}
+#home-schedule-toggle {
+  display:block;width:calc(100% - 24px);min-height:44px;margin:10px 12px 12px;
+  padding:10px 14px;border:1px solid #e2d9ed;border-radius:12px;
+  background:#f4eefb;color:#70548a;font-size:14px!important;font-weight:650;
+}
+#home-schedule-toggle[hidden] { display:none!important; }
+#home-schedule-toggle:hover { background:#ede2f8; }
+#home-schedule-toggle:focus-visible { outline:2px solid #9572bd;outline-offset:3px; }
+@media(min-width:900px) {
+  html:root body:not(.layout-phone) #view-home.home-overview .home-ref-shell {
+    grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr)!important;align-items:start;
+  }
+  html:root body:not(.layout-phone) #view-home.home-overview :is(.home-ref-group-card,.gt-pinned-announcement) {
+    grid-column:1 / -1;
+  }
+  html:root body:not(.layout-phone) #view-home.home-overview .home-ref-today {
+    grid-column:1;grid-row:auto;
+  }
+  html:root body:not(.layout-phone) #view-home.home-overview .home-ref-notifications {
+    grid-column:2;grid-row:auto;
+  }
+}
+@media(max-width:400px) {
+  html:root body #view-home.home-overview #home-reference-title { font-size:18px!important; }
+  html:root body #view-home.home-overview .home-ref-today-head { padding:14px!important; }
+}

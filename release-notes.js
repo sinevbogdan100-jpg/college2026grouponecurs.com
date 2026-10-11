@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261010-schedule-pause-v1';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261011-redesign-v1';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);
@@ -106,5 +106,6 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.refreshReleaseNotes();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePrompt, { once:true });
 else schedulePrompt();
+
 
 

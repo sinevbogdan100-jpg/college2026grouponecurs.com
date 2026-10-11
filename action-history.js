@@ -1,7 +1,7 @@
-import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261005-group-tools-v2';
-import { currentLang, translateUI } from './i18n.js?v=20261010-date-overrides-v4';
-import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261010-date-overrides-v4';
-import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261010-date-overrides-v4';
+import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261011-redesign-v1';
+import { currentLang, translateUI } from './i18n.js?v=20261011-redesign-v1';
+import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261011-redesign-v1';
+import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261011-redesign-v1';
 
 let bridge = {}, context = '', entries = [], remote = [], unsubscribe = null, cloudStatus = 'offline', flushing = false, flushAgain = false;
 const byId = id => document.getElementById(id);
@@ -121,4 +121,5 @@ function renderHistory() {
     return `<article class="gt-history-event"><div class="gt-history-meta"><strong>${escapeGT(actor)} · ${gt(event.kind)}</strong><time>${escapeGT(date)}</time><span class="gt-history-chip">${gt(event.status==='synced'?'synced':event.status==='pending'?'pending':'localData')}</span></div>${event.kind==='attendance'?`<p>${escapeGT(event.target)}</p>`:''}<ul>${event.changes.slice(0,3).map(changeHTML).join('')}</ul>${event.changes.length>3?`<details><summary>${gt('allChanges')} (${event.changes.length})</summary><ul>${event.changes.slice(3).map(changeHTML).join('')}</ul></details>`:''}</article>`;
   }).join(''):`<p class="gt-history-empty">${gt('auditEmpty')}</p>`;
 }
+
 

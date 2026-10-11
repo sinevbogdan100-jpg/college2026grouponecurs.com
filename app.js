@@ -1,7 +1,9 @@
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261010-date-overrides-v4';
-import { createArrivalTracker } from './notification-state.js?v=20261004-performance-v1';
-import { createNotificationCenter } from './notification-center.js?v=20261005-performance-v2';
-import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261004-performance-v1';
+import { initRedesign } from './redesign.js?v=20261011-redesign-v1';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261011-redesign-v1';
+import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261011-redesign-v1';
+import { createArrivalTracker } from './notification-state.js?v=20261011-redesign-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261011-redesign-v1';
+import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261011-redesign-v1';
 import {
     createFirebaseServices,
     signInAnonymously,
@@ -19,7 +21,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261005-group-tools-v2";
+} from "./firebase.js?v=20261011-redesign-v1";
 
 import {
     getWeekTypeForDate,
@@ -31,8 +33,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261004-performance-v1";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261004-performance-v1";
+} from "./utils.js?v=20261011-redesign-v1";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261011-redesign-v1";
 import {
     configureSchedule,
     loadScheduleData,
@@ -45,15 +47,17 @@ import {
     getSchedulePauseState,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261010-date-overrides-v4";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261010-date-overrides-v4";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261010-date-overrides-v4';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261010-date-overrides-v4';
+} from "./schedule.js?v=20261011-redesign-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261011-redesign-v1";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261011-redesign-v1';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261011-redesign-v1';
 
         
+let homeScheduleExpanded=false;
+let homeOverviewStudyDate='';
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
 window.__MOBILE_FAST_MODE__ = MOBILE_FAST_MODE;
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step18.50-mobile-hard-opt-2026-10-05';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.00-redesign-2026-10-11-v1';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
@@ -1290,7 +1294,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const savedDay = localStorage.getItem('toe_current_schedule_day');
             const savedWeek = localStorage.getItem('toe_schedule_week_type');
             const savedView = localStorage.getItem('toe_current_view');
-            const initialView = savedView && ['home','tracker','roster','schedule'].includes(savedView) ? savedView : 'home';
+            const initialView = savedView && ['home','tracker','roster','schedule','college'].includes(savedView) ? savedView : 'home';
             restoreScheduleSelection(savedDay, savedWeek);
 
             // Show the last-used screen immediately. Its skeleton masks the short
@@ -1310,7 +1314,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 renderApp(true);
                 syncScheduleToToday();
                 renderSchedule(getCurrentScheduleDay());
-                if (savedView && ['home','tracker','roster','schedule'].includes(savedView)) switchView(savedView, true);
+                if (savedView && ['home','tracker','roster','schedule','college'].includes(savedView)) switchView(savedView, true);
                 else {
                     switchView('home', true);
                     restoreScrollPosition('home');
@@ -2521,7 +2525,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             home: document.getElementById('view-home'),
             tracker: document.getElementById('view-tracker'),
             roster: document.getElementById('view-roster'),
-            schedule: document.getElementById('view-schedule')
+            schedule: document.getElementById('view-schedule'),
+            college: document.getElementById('view-college')
         };
 
         const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -3790,6 +3795,7 @@ window.setInterfaceLanguage = function(lang) {
     window.refreshNotificationSettings?.();
     window.updateInstallButton?.();
     window.refreshReleaseNotes?.();
+    window.refreshRedesign?.();
     refreshGroupTools();
     renderNotifications();
     applyKzTranslations();
@@ -4005,7 +4011,7 @@ function renderHomeReferenceDate(displayDate=new Date(),isNearestStudyDay=false)
     dateEl.textContent=scheduleCalendarLabel(displayDate, locale,{day:'numeric',month:'long',year:'numeric'});
     const weekday=scheduleCalendarLabel(displayDate, locale,{weekday:'long'});
     weekdayEl.textContent=weekday.charAt(0).toUpperCase()+weekday.slice(1);
-    if(titleEl) titleEl.textContent=isNearestStudyDay?'Ближайший учебный день':'Сегодня';
+    if(titleEl) titleEl.textContent=translateUI(isNearestStudyDay?'Ближайший учебный день':'Сегодня');
 }
 
 function getHomeStudyDate(now=new Date()){
@@ -4168,19 +4174,17 @@ function renderHomeBreakCard(info,state='normal',nowMinutes=0){
         <div class="home-ref-break-duration">${homeMinutesLabel(remaining)}</div>
     </article>`;
 }
-let homeScheduleExpanded=false;
-function renderHomeScheduleExpandControl(total,shown){
-    if(homeScheduleExpanded||total<=shown)return '';
-    return `<div class="home-ref-expand-lessons">
-        <button type="button" onclick="expandHomeSchedule()"><i class="fa-solid fa-chevron-down"></i><span>${translateUI('Показать остальные пары')}</span></button>
-    </div>`;
-}
-window.expandHomeSchedule=function(){
-    homeScheduleExpanded=true;
+window.toggleHomeScheduleOverview=function(){
+    homeScheduleExpanded=!homeScheduleExpanded;
     renderHomeDayTimeline();
-    refreshHomeTimers();
 };
-
+function updateHomeScheduleOverviewToggle(hasMore){
+    const button=document.getElementById('home-schedule-toggle');
+    if(!button)return;
+    button.hidden=!hasMore;
+    button.setAttribute('aria-expanded',String(homeScheduleExpanded));
+    button.textContent=homeOverviewToggleLabel(homeScheduleExpanded,currentLang());
+}
 function renderHomePauseCard(pauseState){
     const meta = pauseState.type === 'vacation'
         ? {label:'Каникулы',icon:'fa-umbrella-beach'}
@@ -4198,6 +4202,7 @@ function renderHomePauseCard(pauseState){
 function renderHomeDayTimeline(){
     const box=document.getElementById('home-day-timeline');
     if(!box)return;
+    updateHomeScheduleOverviewToggle(false);
 
     const now=new Date();
     const pauseState=getSchedulePauseState(now);
@@ -4208,6 +4213,10 @@ function renderHomeDayTimeline(){
         return;
     }
     const studyDate=getHomeStudyDate(now);
+    if(homeOverviewStudyDate!==studyDate.toDateString()){
+        homeOverviewStudyDate=studyDate.toDateString();
+        homeScheduleExpanded=false;
+    }
     const isNearestStudyDay=studyDate.toDateString()!==new Date(now.getFullYear(),now.getMonth(),now.getDate()).toDateString();
     renderHomeReferenceDate(studyDate,isNearestStudyDay);
 
@@ -4229,8 +4238,9 @@ function renderHomeDayTimeline(){
             return;
         }
         let html=renderHomeDayStatus({mode:'nearest',nextEntry:nearestActive.entry,nowMinutes:0});
-        const allSelected=entries.slice(nearestActive.index);
-        const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,4);
+        const overview=selectHomeOverviewEntries(entries.slice(nearestActive.index),homeScheduleExpanded,isHomeEntryCancelled);
+        const selected=overview.visible;
+        updateHomeScheduleOverviewToggle(overview.hasMore);
         selected.forEach((entry,pos)=>{
             html+=renderHomeLessonCard(entry,-1,pos===0?'next':'');
             if(pos<selected.length-1){
@@ -4239,7 +4249,6 @@ function renderHomeDayTimeline(){
                 if(bi)html+=renderHomeBreakCard(bi,pos===0?'nearest':'normal',0);
             }
         });
-        html+=renderHomeScheduleExpandControl(allSelected.length,selected.length);
         box.innerHTML=html;
         applyKzTranslations(box);
         return;
@@ -4262,8 +4271,9 @@ function renderHomeDayTimeline(){
         startIndex=upcoming.index;
     }
 
-    const allSelected=entries.slice(startIndex);
-    const selected=homeScheduleExpanded?allSelected:allSelected.slice(0,4);
+    const overview=selectHomeOverviewEntries(entries.slice(startIndex),homeScheduleExpanded,isHomeEntryCancelled);
+    const selected=overview.visible;
+    updateHomeScheduleOverviewToggle(overview.hasMore);
     let html='';
     if(activeLesson>=0){
         const nextActive=findNextActiveHomeEntry(entries,activeLesson+1);
@@ -4311,7 +4321,6 @@ function renderHomeDayTimeline(){
             if(bi)html+=renderHomeBreakCard(bi,isNearestBreak?'nearest':'normal',mins);
         }
     });
-    html+=renderHomeScheduleExpandControl(allSelected.length,selected.length);
     box.innerHTML=html;
     applyKzTranslations(box);
 }
@@ -4459,10 +4468,10 @@ function updateNotificationBadge(){const badge=document.getElementById('notifica
 function renderHomeLatestNotification(){
     const box=document.getElementById('home-latest-notification');
     if(!box)return;
-    const items=notificationsCache.slice(0,3);
-    if(!items.length){box.innerHTML='<div class="home-ref-notification-empty">Новых уведомлений пока нет.</div>';return;}
+    const recent=notificationsCache.slice(0,3);
+    if(!recent.length){box.innerHTML=`<div class="home-ref-notification-empty">${translateUI('Новых уведомлений пока нет.')}</div>`;return;}
     const read=getReadNotificationIds();
-    box.innerHTML=items.map(n=>{
+    box.innerHTML=recent.map(n=>{
         const title=escapeNotificationText(notificationTitleForLocale(n));
         const body=escapeNotificationText(notificationTextForLocale(n));
         const meta=notificationVisualMeta(n);
@@ -4472,12 +4481,13 @@ function renderHomeLatestNotification(){
             const d=new Date(n.createdAt);
             if(!Number.isNaN(d.getTime()))time=d.toLocaleTimeString(interfaceLocale(),{hour:'2-digit',minute:'2-digit'});
         }
-        return `<button class="home-ref-notification-card notification-kind-${meta.key} ${unread?'unread':''}" onclick="openNotifications()">
+        return `<button type="button" class="home-ref-notification-card notification-kind-${meta.key} ${unread?'unread':''}" onclick="openNotifications()">
             <span class="home-ref-notification-icon"><i class="fa-solid ${meta.icon}"></i>${unread?'<b class="notification-unread-dot" aria-hidden="true"></b>':''}</span>
             <span class="home-ref-notification-copy"><em class="home-ref-notification-kind">${translateUI(meta.label)}</em><strong>${title}</strong><span>${body||translateUI('Открыть уведомление')}</span></span>
             <span class="home-ref-notification-time">${time}</span>
         </button>`;
     }).join('');
+    applyKzTranslations(box);
 }
 function renderNotifications(){
     updateGroupAnnouncements(notificationsCache);
@@ -4803,3 +4813,4 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{const saved=JSON.parse(event.newValue||'{}');supportReadCounts=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:{};}catch(_){supportReadCounts={};}updateSupportBadge();if(isSupportStaff())renderSupportInbox();}});
 window.refreshSupportNotifications();
 
+initRedesign();

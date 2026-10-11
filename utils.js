@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261004-performance-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261011-redesign-v1";
 // Общие независимые функции проекта.
 // Здесь нет доступа к Firebase и состоянию журнала.
 
@@ -96,4 +96,5 @@ export function getStatusBadgeClass(status) {
         default: return 'bg-slate-50 text-slate-700 border border-slate-100';
     }
 }
+
 

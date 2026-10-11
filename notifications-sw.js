@@ -1,33 +1,39 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261010-schedule-pause-v1';
+const CACHE_NAME = 'sbp-shell-20261011-redesign-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
-  './schedule-dates.js?v=20261010-date-overrides-v4',
-  './group-tools.js?v=20261010-date-overrides-v4',
-  './group-tools-data.js?v=20261010-date-overrides-v4',
-  './action-history.js?v=20261010-date-overrides-v4',
+  './redesign.css?v=20261011-redesign-v1',
+  './redesign.js?v=20261011-redesign-v1',
+  './college-data.js?v=20261011-redesign-v1',
+  './college-illustration.svg',
+  './home-overview.css?v=20261011-redesign-v1',
+  './home-overview.js?v=20261011-redesign-v1',
+  './schedule-dates.js?v=20261011-redesign-v1',
+  './group-tools.js?v=20261011-redesign-v1',
+  './group-tools-data.js?v=20261011-redesign-v1',
+  './action-history.js?v=20261011-redesign-v1',
   './',
   './index.html',
-  './soft-frames.css?v=20261006-soft-frames-v1',
-  './release-notes.js?v=20261010-schedule-pause-v1',
-  './release-data.js?v=20261010-schedule-pause-v1',
-  './app.js?v=20261010-schedule-pause-v1',
-  './style.css?v=20261010-schedule-pause-v1',
-  './desktop.css?v=20261006-soft-frames-v1',
-  './gradients.css?v=20261004-ui-polish-v1',
-  './responsive-fit.css?v=20261006-soft-frames-v1',
-  './firebase.js?v=20261005-group-tools-v2',
-  './utils.js?v=20261004-performance-v1',
-  './storage.js?v=20261004-performance-v1',
-  './schedule.js?v=20261010-date-overrides-v4',
-  './i18n.js?v=20261010-date-overrides-v4',
-  './performance.js?v=20261005-mobile-hard-opt-v1',
-  './notification-center.js?v=20261005-performance-v2',
-  './notification-state.js?v=20261004-performance-v1',
-  './support-state.js?v=20261004-performance-v1',
-  './sbp-information.png?v=20261004-console-fixes-v1',
-  './tailwind-local.css?v=20261006-soft-frames-v1',
-  './manifest.webmanifest?v=20261005-brand-icon-v1',
+  './soft-frames.css?v=20261011-redesign-v1',
+  './release-notes.js?v=20261011-redesign-v1',
+  './release-data.js?v=20261011-redesign-v1',
+  './app.js?v=20261011-redesign-v1',
+  './style.css?v=20261011-redesign-v1',
+  './desktop.css?v=20261011-redesign-v1',
+  './gradients.css?v=20261011-redesign-v1',
+  './responsive-fit.css?v=20261011-redesign-v1',
+  './firebase.js?v=20261011-redesign-v1',
+  './utils.js?v=20261011-redesign-v1',
+  './storage.js?v=20261011-redesign-v1',
+  './schedule.js?v=20261011-redesign-v1',
+  './i18n.js?v=20261011-redesign-v1',
+  './performance.js?v=20261011-redesign-v1',
+  './notification-center.js?v=20261011-redesign-v1',
+  './notification-state.js?v=20261011-redesign-v1',
+  './support-state.js?v=20261011-redesign-v1',
+  './sbp-information.png?v=20261011-redesign-v1',
+  './tailwind-local.css?v=20261011-redesign-v1',
+  './manifest.webmanifest?v=20261011-redesign-v1',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
@@ -182,6 +188,7 @@ self.addEventListener('notificationclick', event => {
     await self.clients.openWindow(url.href);
   })());
 });
+
 
 
 
