@@ -1,4 +1,4 @@
-import { COLLEGE, COLLEGE_SOURCES } from './college-data.js?v=20261011-redesign-v1';
+import { COLLEGE, COLLEGE_SOURCES } from './college-data.js?v=20261011-interface-fixes-v1';
 const labels={
  ru:{college:'О колледже',theme:'Тема оформления',themeHint:'Выберите удобный внешний вид',light:'Светлая',dark:'Тёмная',system:'Как на устройстве',language:'Язык',menu:'Меню',group:'Группа',home:'Главная',settings:'Настройки',notifications:'Уведомления'},
  kz:{college:'Колледж туралы',theme:'Безендіру тақырыбы',themeHint:'Ыңғайлы көріністі таңдаңыз',light:'Ашық',dark:'Қараңғы',system:'Құрылғыдағыдай',language:'Тіл',menu:'Мәзір',group:'Топ',home:'Басты бет',settings:'Баптаулар',notifications:'Хабарландырулар'}
@@ -22,13 +22,16 @@ export function collegeMarkup(lang='ru'){
  </div><footer class="college-footnote"><p>${esc(w.checked)}</p><p>${esc(w.note)}</p></footer>`;
 }
 export function initRedesign(){
- const lang=()=>window.localStorage.getItem('toe_ui_language')==='kz'?'kz':'ru';
+ const read=(key,fallback)=>{try{return window.localStorage.getItem(key)||fallback;}catch(_){return fallback;}};
+ const lang=()=>read('toe_ui_language','ru')==='kz'?'kz':'ru';
  const query=window.matchMedia?.('(prefers-color-scheme: dark)');
- const choice=()=>window.localStorage.getItem('sbp_design_theme')||'light';
+ let selected=read('sbp_design_theme','light');
+ if(!['light','dark','system'].includes(selected))selected='light';
+ const choice=()=>selected;
  function applyTheme(){
   const theme=resolvedTheme(choice(),query?.matches);document.documentElement.dataset.sbpTheme=theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#171922':'#ffffff');
-  document.querySelectorAll('[data-sbp-theme]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sbpTheme===choice())));
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#13151e':'#fafafe');
+  document.querySelectorAll('button[data-sbp-theme]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sbpTheme===choice())));
  }
  function refresh(){
   const w=redesignLabels(lang());document.querySelectorAll('[data-sbp-text]').forEach(n=>{if(w[n.dataset.sbpText])n.textContent=w[n.dataset.sbpText];});
@@ -39,9 +42,10 @@ export function initRedesign(){
   if(host){const opened=[...host.querySelectorAll('details')].map((n,i)=>n.open?i:-1).filter(i=>i>=0);host.innerHTML=collegeMarkup(lang());opened.forEach(i=>{const n=host.querySelectorAll('details')[i];if(n)n.open=true;});}
   applyTheme();
  }
- window.setSBPTheme=value=>{if(!['light','dark','system'].includes(value))return;window.localStorage.setItem('sbp_design_theme',value);applyTheme();};
+ window.setSBPTheme=value=>{if(!['light','dark','system'].includes(value))return;selected=value;try{window.localStorage.setItem('sbp_design_theme',value);}catch(_){}applyTheme();};
  window.refreshRedesign=refresh;
- document.querySelectorAll('[data-sbp-theme]').forEach(b=>b.addEventListener('click',()=>window.setSBPTheme(b.dataset.sbpTheme)));
+ document.querySelectorAll('button[data-sbp-theme]').forEach(b=>b.addEventListener('click',()=>window.setSBPTheme(b.dataset.sbpTheme)));
  document.querySelectorAll('[data-sbp-lang]').forEach(b=>b.addEventListener('click',()=>window.setInterfaceLanguage(b.dataset.sbpLang)));
- query?.addEventListener?.('change',applyTheme);refresh();
+ if(query?.addEventListener)query.addEventListener('change',applyTheme);else query?.addListener?.(applyTheme);
+ window.addEventListener?.('storage',event=>{if(event.key!=='sbp_design_theme'&&event.key!==null)return;selected=read('sbp_design_theme','light');if(!['light','dark','system'].includes(selected))selected='light';applyTheme();});refresh();
 }
