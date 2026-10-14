@@ -1,9 +1,11 @@
-import { initRedesign } from './redesign.js?v=20261011-interface-fixes-v2';
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261011-interface-fixes-v2';
-import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261011-interface-fixes-v2';
-import { createArrivalTracker } from './notification-state.js?v=20261011-interface-fixes-v2';
-import { createNotificationCenter } from './notification-center.js?v=20261011-interface-fixes-v2';
-import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261011-interface-fixes-v2';
+import { nextCalendarDay, summarizeScheduleChanges, scheduleSummaryMarkup } from './schedule-summary.js?v=20261014-admin-summary-v1';
+import { initAdminDrawer } from './admin-drawer.js?v=20261014-admin-summary-v1';
+import { initRedesign } from './redesign.js?v=20261014-admin-summary-v1';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261014-admin-summary-v1';
+import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261014-admin-summary-v1';
+import { createArrivalTracker } from './notification-state.js?v=20261014-admin-summary-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261014-admin-summary-v1';
+import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261014-admin-summary-v1';
 import {
     createFirebaseServices,
     signInAnonymously,
@@ -21,7 +23,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261011-interface-fixes-v2";
+} from "./firebase.js?v=20261014-admin-summary-v1";
 
 import {
     getWeekTypeForDate,
@@ -33,8 +35,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261011-interface-fixes-v2";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261011-interface-fixes-v2";
+} from "./utils.js?v=20261014-admin-summary-v1";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261014-admin-summary-v1";
 import {
     configureSchedule,
     loadScheduleData,
@@ -45,19 +47,21 @@ import {
     getCurrentScheduleDay,
     getScheduleDataForWeek,
     getSchedulePauseState,
+    getScheduleChangeSource,
+    getScheduleAdminSnapshot,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261011-interface-fixes-v2";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261011-interface-fixes-v2";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261011-interface-fixes-v2';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261011-interface-fixes-v2';
+} from "./schedule.js?v=20261014-admin-summary-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261014-admin-summary-v1";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261014-admin-summary-v1';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261014-admin-summary-v1';
 
         
 let homeScheduleExpanded=false;
 let homeOverviewStudyDate='';
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
 window.__MOBILE_FAST_MODE__ = MOBILE_FAST_MODE;
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.01-interface-fixes-2026-10-11-v2';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.02-admin-summary-2026-10-14-v1';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
@@ -2144,6 +2148,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             }
         };
         window.openGroupSettings = function() {
+            if (isEditorRole() && window.openAdminDrawer) { window.openAdminDrawer('group'); loadGroupInfoToAdminForm(); return; }
             openAdminSettings();
             const section = document.getElementById('settings-group-section');
             if (section) { section.open = true; section.scrollIntoView({block:'start',behavior:'smooth'}); }
@@ -2168,6 +2173,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
 
         // Настройки доступа: владелец + два администратора. Обычные посетители работают без входа.
         window.openAdminSettings = function() {
+            window.closeAdminDrawer?.(false);
             const modal = document.getElementById('admin-settings-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -2468,6 +2474,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             // После восстановления Firebase-роли ни один сценарий не должен оставлять приложение без видимого раздела.
             setTimeout(ensureMainViewVisible, 0);
             window.refreshSupportNotifications?.();
+            window.refreshAdminDrawer?.();
         }
 
         window.adminLogout = async function() {
@@ -2604,6 +2611,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         };
 
         window.switchView = function(viewName, fromReload = false) {
+            window.closeAdminDrawer?.(false);
             const settingsModal = document.getElementById('admin-settings-modal');
             const settingsOpen = !!settingsModal && !settingsModal.classList.contains('hidden');
             if (settingsOpen) window.closeAdminSettings?.();
@@ -4199,7 +4207,21 @@ function renderHomePauseCard(pauseState){
     const period=[format(pauseState.startDate),format(pauseState.endDate)].filter(Boolean).join(' – ');
     return `<section class="home-schedule-pause-card"><span class="home-schedule-pause-icon"><i class="fa-solid ${meta.icon}"></i></span><div><span>${translateUI('Расписание приостановлено')}</span><strong>${translateUI(meta.label)}</strong><small>${period}</small><p>${translateUI('Расписание автоматически возобновится после окончания периода.')}</p></div></section>`;
 }
+let tomorrowSummaryDateKey = '';
+function renderTomorrowChanges(now = new Date()) {
+    tomorrowSummaryDateKey = formatLocalDate(now);
+    const host = document.getElementById('home-tomorrow-changes');
+    if (!host) return;
+    const date = nextCalendarDay(now);
+    const source = getScheduleChangeSource(date, getWeekTypeForDate(date));
+    const changes = source ? summarizeScheduleChanges(source.baseline, source.actual) : [];
+    const markup = scheduleSummaryMarkup(changes, scheduleCalendarLabel(date, interfaceLocale(), {day:'numeric',month:'long'}), currentLang(), translateUI);
+    if (host.innerHTML !== markup) host.innerHTML = markup;
+    host.hidden = changes.length === 0;
+}
+window.refreshTomorrowChanges = renderTomorrowChanges;
 function renderHomeDayTimeline(){
+    renderTomorrowChanges();
     const box=document.getElementById('home-day-timeline');
     if(!box)return;
     updateHomeScheduleOverviewToggle(false);
@@ -4330,6 +4352,7 @@ function updateHomeLiveProgress(){
     if(!homeView||homeView.classList.contains('hidden')) return;
 
     const now=new Date();
+    if (tomorrowSummaryDateKey !== formatLocalDate(now)) renderTomorrowChanges(now);
     const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
 
     const statusCountdown=homeView.querySelector('[data-home-status-countdown]');
@@ -4814,3 +4837,22 @@ window.addEventListener('storage',event=>{if(event.key===supportReadKey()){try{c
 window.refreshSupportNotifications();
 
 initRedesign();
+initAdminDrawer({
+    access: () => ({role:currentAccessRole, schedule:canEditSchedule(), journal:canEditJournal(), students:canManageStudents(), groupInfo:canEditGroupInfo(), backups:canUseBackups(), manageAdmins:canManageAdminPermissions(), notifications:canPublishNotificationsPermission()}),
+    language:currentLang,
+    snapshot:getScheduleAdminSnapshot,
+    journalDate:() => document.getElementById('date-picker')?.value || '',
+    formatDate:date => scheduleCalendarLabel(date, interfaceLocale(), {day:'numeric',month:'long',year:'numeric'}),
+    translate:translateUI,
+    applyTranslations:applyKzTranslations,
+    actions:{
+        beforeOpen:() => {window.closeAppMenu?.();window.closeAdminSettings?.();},
+        openSchedule:() => window.switchView('schedule'),
+        openJournal:() => window.switchView('tracker'),
+        openRoster:() => window.switchView('roster'),
+        publish:() => window.openNotifications(),
+        editLesson:index => window.openScheduleEditor(index),
+        moveLesson:(index,delta) => window.moveScheduleLesson(index,delta)
+    }
+});
+renderTomorrowChanges();

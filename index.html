@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBP Information</title>
-    <meta name="app-build" content="step19.01-interface-fixes-2026-10-11-v2">
+    <meta name="app-build" content="step19.02-admin-summary-2026-10-14-v1">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
-    <link rel="manifest" href="manifest.webmanifest?v=20261011-interface-fixes-v2">
+    <link rel="manifest" href="manifest.webmanifest?v=20261014-admin-summary-v1">
     <meta name="theme-color" content="#ffffff">
     <script>try { const t=localStorage.getItem("sbp_design_theme")||"light";const theme=t==="dark"||(t==="system"&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.dataset.sbpTheme=theme;document.querySelector('meta[name="theme-color"]')?.setAttribute("content",theme==="dark"?"#13151e":"#fafafe"); } catch (_) {}</script>
     <script>
@@ -136,29 +136,30 @@
         #sbp-launch-animation .sbp-launch-orb{animation-duration:.18s!important}
       }
     </style>
-    <link rel="icon" type="image/png" href="sbp-information.png?v=20261011-interface-fixes-v2">
-    <link rel="apple-touch-icon" href="sbp-information.png?v=20261011-interface-fixes-v2">
-    <link rel="stylesheet" href="tailwind-local.css?v=20261011-interface-fixes-v2">
+    <link rel="icon" type="image/png" href="sbp-information.png?v=20261014-admin-summary-v1">
+    <link rel="apple-touch-icon" href="sbp-information.png?v=20261014-admin-summary-v1">
+    <link rel="stylesheet" href="tailwind-local.css?v=20261014-admin-summary-v1">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261011-interface-fixes-v2">
-    <link rel="stylesheet" href="desktop.css?v=20261011-interface-fixes-v2" media="(min-width: 768px)">
-    <link rel="stylesheet" href="gradients.css?v=20261011-interface-fixes-v2">
-    <link rel="stylesheet" href="responsive-fit.css?v=20261011-interface-fixes-v2">
+    <link rel="stylesheet" href="style.css?v=20261014-admin-summary-v1">
+    <link rel="stylesheet" href="desktop.css?v=20261014-admin-summary-v1" media="(min-width: 768px)">
+    <link rel="stylesheet" href="gradients.css?v=20261014-admin-summary-v1">
+    <link rel="stylesheet" href="responsive-fit.css?v=20261014-admin-summary-v1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261011-interface-fixes-v2" fetchpriority="high">
-    <link rel="modulepreload" href="firebase.js?v=20261011-interface-fixes-v2">
-    <link rel="modulepreload" href="utils.js?v=20261011-interface-fixes-v2">
-    <link rel="modulepreload" href="schedule.js?v=20261011-interface-fixes-v2">
-    <script defer src="performance.js?v=20261011-interface-fixes-v2"></script>
+    <link rel="modulepreload" href="app.js?v=20261014-admin-summary-v1" fetchpriority="high">
+    <link rel="modulepreload" href="firebase.js?v=20261014-admin-summary-v1">
+    <link rel="modulepreload" href="utils.js?v=20261014-admin-summary-v1">
+    <link rel="modulepreload" href="schedule.js?v=20261014-admin-summary-v1">
+    <script defer src="performance.js?v=20261014-admin-summary-v1"></script>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
-<link rel="stylesheet" href="soft-frames.css?v=20261011-interface-fixes-v2">
-<link rel="stylesheet" href="home-overview.css?v=20261011-interface-fixes-v2">
-<link rel="stylesheet" href="redesign.css?v=20261011-interface-fixes-v2">
+<link rel="stylesheet" href="soft-frames.css?v=20261014-admin-summary-v1">
+<link rel="stylesheet" href="home-overview.css?v=20261014-admin-summary-v1">
+<link rel="stylesheet" href="redesign.css?v=20261014-admin-summary-v1">
+<link rel="stylesheet" href="site-improvements.css?v=20261014-admin-summary-v1">
 </head>
 <body class="sbp-redesign min-h-screen text-slate-800 antialiased font-sans bg-slate-50">
     <div id="sbp-launch-animation" aria-hidden="true"><span class="sbp-launch-orb"></span></div>
@@ -402,7 +403,7 @@
     </div>
 
     <header class="sbp-brandbar" data-i18n-skip>
-      <a class="sbp-brand" href="#" onclick="switchView('home');return false;"><img src="sbp-information.png?v=20261011-interface-fixes-v2" alt="" width="36" height="36"><strong>SBP Information</strong></a>
+      <a class="sbp-brand" href="#" onclick="switchView('home');return false;"><img src="sbp-information.png?v=20261014-admin-summary-v1" alt="" width="36" height="36"><strong>SBP Information</strong></a>
       <div class="sbp-language" aria-label="Язык"><button type="button" data-sbp-lang="ru" aria-pressed="true">РУС</button><button type="button" data-sbp-lang="kz" aria-pressed="false">ҚАЗ</button></div>
     </header>
     <div id="view-home" class="home-overview home-reference max-w-md mx-auto min-h-screen flex flex-col pb-20">
@@ -438,6 +439,7 @@
             </section>
 
             <section class="home-ref-today">
+                <section id="home-tomorrow-changes" data-i18n-skip aria-live="polite" hidden></section>
                 <div class="home-ref-today-head">
                     <h2 id="home-reference-title">Сегодня</h2>
                     <div class="home-ref-date">
@@ -1026,8 +1028,8 @@
         </section>
     </div>
 
-    <script type="module" src="release-notes.js?v=20261011-interface-fixes-v2"></script>
-    <script type="module" src="app.js?v=20261011-interface-fixes-v2"></script>
+    <script type="module" src="release-notes.js?v=20261014-admin-summary-v1"></script>
+    <script type="module" src="app.js?v=20261014-admin-summary-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -1049,7 +1051,7 @@
     </div>
 
     <nav id="bottom-nav" class="bottom-nav" aria-label="Навигация">
-        <div class="sbp-sidebar-brand" data-i18n-skip><img src="sbp-information.png?v=20261011-interface-fixes-v2" alt="" width="35" height="35"><strong>SBP Information</strong></div>
+        <div class="sbp-sidebar-brand" data-i18n-skip><img src="sbp-information.png?v=20261014-admin-summary-v1" alt="" width="35" height="35"><strong>SBP Information</strong></div>
 
         <button data-nav="home" onclick="handleBottomNav('home')"><i class="fa-solid fa-house"></i><span>Главная</span></button>
         <button data-nav="tracker" onclick="handleBottomNav('tracker')"><i class="fa-solid fa-book"></i><span>Журнал</span></button>
@@ -1094,10 +1096,10 @@
   template.remove();
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = 'realtime-debug.css?v=20261011-interface-fixes-v2';
+  css.href = 'realtime-debug.css?v=20261014-admin-summary-v1';
   css.onload = () => {
     const script = document.createElement('script');
-    script.src = 'realtime-debug.js?v=20261011-interface-fixes-v2';
+    script.src = 'realtime-debug.js?v=20261014-admin-summary-v1';
     script.defer = true;
     document.body.appendChild(script);
   };

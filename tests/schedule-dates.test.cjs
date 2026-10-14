@@ -9,7 +9,7 @@ async function main(){
  const localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value),removeItem:key=>store.delete(key)};
  const document={getElementById:id=>id==='schedule-container'?null:node(id),addEventListener(){},querySelectorAll:()=>[],body:{classList:{add(){},remove(){}}}};
  const context={...pure,console,Date,Math,JSON,Object,Array,String,Number,Set,Map,Promise,navigator:{onLine:true},localStorage,sessionStorage:{getItem:()=> '1'},document,
-  window:{addEventListener(){},setInterval:()=>1,__scheduleDebug:{}},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},confirm:()=>true,
+  window:{addEventListener(){},dispatchEvent(){return true;},setInterval:()=>1,__scheduleDebug:{}},CustomEvent:class CustomEvent{constructor(type){this.type=type;}},setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},confirm:()=>true,
   interfaceLocale:()=> 'ru-RU',translateUI:v=>v,doc:()=>({}),getDoc:async()=>({exists:()=>true,data:()=>writes.at(-1)}),setDoc:async(ref,data)=>writes.push(JSON.parse(JSON.stringify(data))),onSnapshot:()=>()=>{},
   dbGet:async()=>null,dbDelete:async()=>{},savePersistentValue:async(key,value)=>store.set(key,value),scheduleShareSnapshot:(data,day,type,date,mode)=>({data,day,type,date,mode}),
   getWeekTypeForDate(date){const d=new Date(date);d.setDate(d.getDate()-(d.getDay()||7)+1);return Math.abs(Math.round((d-new Date(2026,8,21))/(7*86400000)))%2===0?'denominator':'numerator';}

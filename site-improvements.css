@@ -1,0 +1,124 @@
+/* 19.02: readable narrow layouts and an authenticated administration drawer. */
+:root:root body.sbp-redesign #home-tomorrow-changes[hidden],
+:root:root body.sbp-redesign #sbp-admin-drawer[hidden],
+:root:root body.sbp-redesign #sbp-admin-drawer [hidden] { display:none!important; }
+
+:root:root body.sbp-redesign #home-tomorrow-changes {
+  margin:0 0 16px!important;padding:14px!important;border:1px solid var(--sbp-line)!important;
+  border-radius:14px!important;background:var(--sbp-tint)!important;color:var(--sbp-ink)!important;
+  min-width:0!important;max-width:100%!important;
+}
+.sbp-summary-heading { display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px; }
+:root:root body.sbp-redesign #home-tomorrow-changes h2 { font-size:15px!important;line-height:1.4!important;margin:0!important;color:var(--sbp-ink)!important; }
+.sbp-summary-heading>span { font-size:12px;color:var(--sbp-muted); }
+#home-tomorrow-changes ul { list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px; }
+#home-tomorrow-changes li { display:grid;grid-template-columns:75px minmax(0,1fr);gap:8px;font-size:13px;line-height:1.5; }
+#home-tomorrow-changes li strong { font-weight:650; }
+#home-tomorrow-changes li span { min-width:0;overflow-wrap:anywhere; }
+#home-tomorrow-changes li.cancelled { color:var(--sbp-red,#d65063); }
+
+:root:root body.sbp-redesign #sbp-admin-edge {
+  position:fixed!important;right:env(safe-area-inset-right,0px)!important;top:44%!important;z-index:55!important;
+  width:18px!important;min-width:18px!important;height:68px!important;padding:0!important;border:0!important;
+  border-radius:12px 0 0 12px!important;background:transparent!important;box-shadow:none!important;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+#sbp-admin-edge>span { width:4px;height:38px;border-radius:4px;background:var(--sbp-muted);opacity:.4; }
+#sbp-admin-edge:focus-visible { outline:2px solid var(--sbp-accent)!important;outline-offset:-2px; }
+#sbp-admin-edge:focus-visible>span { opacity:1; }
+body.sbp-admin-drawer-open { overflow:hidden; }
+:root:root body.sbp-redesign #sbp-admin-drawer { position:fixed;inset:0;z-index:65;display:block; }
+.sbp-admin-backdrop { position:absolute;inset:0;background:rgba(10,12,23,.45); }
+:root:root body.sbp-redesign #sbp-admin-drawer .sbp-admin-sheet {
+  position:absolute;right:0;top:0;bottom:0;width:min(430px,calc(100vw - 20px));height:100%;
+  display:flex;flex-direction:column;min-width:0;background:var(--sbp-surface);color:var(--sbp-ink);
+  border-left:1px solid var(--sbp-line);box-shadow:-12px 0 40px #0002;border-radius:20px 0 0 20px;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) 0;
+  animation:sbp-admin-slide .2s ease-out;
+}
+.sbp-admin-sheet>header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 16px;border-bottom:1px solid var(--sbp-line); }
+.sbp-admin-sheet>header>div { min-width:0; }
+:root:root body.sbp-redesign #sbp-admin-title { font-size:18px!important;line-height:1.35!important;margin:0!important;color:var(--sbp-ink)!important; }
+#sbp-admin-role { display:block;margin-top:4px;font-size:12px;color:var(--sbp-muted); }
+.sbp-admin-close { width:40px;min-width:40px;height:40px;font-size:27px;line-height:1;border:0;border-radius:10px;background:var(--sbp-soft);color:var(--sbp-ink); }
+.sbp-admin-content { padding:14px;overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px; }
+.sbp-admin-section { border:1px solid var(--sbp-line);border-radius:12px;min-width:0; }
+.sbp-admin-section>summary { padding:13px;font-size:15px;font-weight:650;cursor:pointer;overflow-wrap:anywhere; }
+.sbp-admin-section-body { padding:0 12px 12px;display:grid;gap:10px;min-width:0; }
+:is(#sbp-admin-schedule-context,#sbp-admin-journal-context) { font-size:12px;line-height:1.5;color:var(--sbp-muted);margin:0;overflow-wrap:anywhere; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(button,select,input,textarea) { max-width:100%;min-width:0; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is([data-admin-action],.sbp-admin-lesson-actions button) {
+  min-height:40px;padding:8px 10px;border:1px solid var(--sbp-line);border-radius:9px;
+  color:var(--sbp-accent);background:var(--sbp-tint);font-size:13px;font-weight:600;line-height:1.4;white-space:normal;overflow-wrap:anywhere;
+}
+#sbp-admin-lessons { display:grid;gap:10px; }
+.sbp-admin-lesson { padding:10px;border:1px solid var(--sbp-line);border-radius:10px;display:grid;gap:9px;min-width:0;background:var(--sbp-soft); }
+.sbp-admin-lesson>div:first-child { display:grid;gap:3px;min-width:0; }
+.sbp-admin-lesson small { font-size:12px;color:var(--sbp-muted); }
+.sbp-admin-lesson strong { font-size:14px;line-height:1.4;color:var(--sbp-ink);overflow-wrap:anywhere; }
+.sbp-admin-lesson-actions { display:grid;grid-template-columns:40px 40px minmax(0,1fr);gap:7px; }
+.sbp-admin-lesson-actions button:disabled { opacity:.35; }
+#sbp-admin-schedule-tools { display:grid;gap:10px;min-width:0; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(#schedule-edit-scope-box,#schedule-add-btn,#schedule-bell-btn,#schedule-pause-manage-btn,#roster-admin-tools) {
+  margin:0!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:12px!important;
+  border:1px solid var(--sbp-line)!important;border-radius:12px!important;background:var(--sbp-soft)!important;color:var(--sbp-ink)!important;
+}
+:root:root body.sbp-redesign #sbp-admin-drawer :is(#schedule-add-btn,#schedule-bell-btn,#schedule-pause-manage-btn) { display:flex!important;align-items:center;gap:8px; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(#schedule-add-btn,#schedule-bell-btn,#schedule-pause-manage-btn).hidden { display:none!important; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(strong,label,h3,h4,.settings-reference-summary,.settings-reference-copy strong,.admin-permission-summary) { color:var(--sbp-ink)!important; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(p,small,.settings-reference-copy small,.settings-reference-status,.text-slate-400,.text-slate-600) { color:var(--sbp-muted)!important; }
+:root:root body.sbp-redesign #sbp-admin-drawer :is(.settings-reference-card,.admin-permission-card,.settings-access-banner,input,select,textarea) {
+  color:var(--sbp-ink)!important;border-color:var(--sbp-line)!important;background:var(--sbp-soft)!important;background-image:none!important;
+}
+:root:root body.sbp-redesign #sbp-admin-drawer :is(.settings-reference-content button,#save-admin-permissions-btn,#settings-group-save,#journal-edit-tools button,#roster-admin-tools button) {
+  background:var(--sbp-tint)!important;background-image:none!important;color:var(--sbp-accent)!important;
+  border-color:var(--sbp-line)!important;min-height:40px;font-size:13px!important;white-space:normal!important;
+}
+:root:root body.sbp-redesign #sbp-admin-drawer :is(.settings-reference-content,.settings-reference-copy,fieldset,label,button,p,strong,small) {
+  min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.45;
+}
+:root:root body.sbp-redesign #sbp-admin-drawer #roster-admin-tools { display:flex;flex-wrap:wrap;gap:9px; }
+#sbp-admin-footer { padding:12px 14px;border-top:1px solid var(--sbp-line); }
+#sbp-admin-footer:empty { display:none; }
+:root:root body.sbp-redesign #sbp-admin-footer button { width:100%;margin:0!important; }
+:root:root body.sbp-redesign.sbp-admin-tools-ported #view-schedule :is(.schedule-admin-actions,.schedule-ref-admin-hint) { display:none!important; }
+@keyframes sbp-admin-slide { from { transform:translateX(100%); } to { transform:translateX(0); } }
+
+/* Let content determine row heights; keep the grid columns inside the viewport. */
+@media(max-width:600px) {
+  :root:root body.sbp-redesign :is(#view-home,#view-tracker,#view-schedule,#view-roster,#view-college) {
+    padding-inline:clamp(10px,3.5vw,18px)!important;min-width:0!important;
+  }
+  :root:root body.sbp-redesign :is(.home-ref-shell,.home-ref-group-copy,.home-ref-date,.home-ref-lesson-main,.home-ref-lesson-meta,.schedule-ref-card,.schedule-ref-date-copy,.schedule-ref-meta,.journal-ref-person,.roster-person-main,.roster-person-text,.college-card) { min-width:0!important;max-width:100%!important; }
+  :root:root body.sbp-redesign :is(.home-ref-today-head,.home-ref-section-head,.journal-ref-controls,.schedule-ref-card-head) { flex-wrap:wrap!important;height:auto!important;gap:8px!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-date { margin-left:auto!important; }
+  :root:root body.sbp-redesign :is(.home-ref-date strong,.home-ref-group-copy h1,.home-ref-lesson-main strong,.home-ref-lesson-meta strong,.schedule-ref-subject,.schedule-ref-meta b,.schedule-ref-change span,.roster-person-text strong,.leadership-card strong,.college-contact-grid a) {
+    white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;height:auto!important;
+  }
+  :root:root body.sbp-redesign #view-home .home-ref-lesson-row { grid-template-columns:24px minmax(0,1fr) minmax(0,72px)!important;padding:12px 10px!important;gap:8px!important;height:auto!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-lesson-meta { grid-template-columns:minmax(0,1fr)!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-lesson-number { width:24px!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-progress-row { padding-left:42px!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-datebar { grid-template-columns:38px minmax(0,1fr) 38px!important;gap:6px!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-date-arrow { width:38px!important;min-width:38px!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-meta { grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-meta>span { min-width:0!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-meta b { font-size:13px!important;line-height:1.4!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-meta small { font-size:11px!important; }
+  :root:root body.sbp-redesign #view-roster .group-leadership-grid { grid-template-columns:minmax(0,1fr)!important; }
+  :root:root body.sbp-redesign #view-roster .roster-person-card { flex-wrap:wrap!important;height:auto!important; }
+  :root:root body.sbp-redesign #bottom-nav { width:100%!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;padding-inline:6px!important; }
+  :root:root body.sbp-redesign #bottom-nav button span { white-space:normal!important;overflow-wrap:anywhere!important;text-align:center; }
+  :root:root body.sbp-redesign .mini-calendar { width:min(310px,calc(100vw - 28px))!important;max-width:calc(100vw - 28px)!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important; }
+  :root:root body.sbp-redesign :is(.app-drawer,.app-drawer-panel,.settings-reference-page,.bell-editor-sheet,.schedule-editor-sheet) { min-width:0!important;max-width:100%!important; }
+  :root:root body.sbp-redesign .app-drawer :is(button,.drawer-install-copy,.drawer-nav-section span) { min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important; }
+}
+@media(max-width:360px) {
+  :root:root body.sbp-redesign #view-home .home-ref-lesson-row { grid-template-columns:22px minmax(0,1fr) minmax(0,64px)!important;gap:6px!important;padding:11px 9px!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-lesson-number { width:22px!important; }
+  :root:root body.sbp-redesign #view-home .home-ref-progress-row { padding-left:37px!important; }
+  :root:root body.sbp-redesign #view-schedule .schedule-ref-meta { grid-template-columns:minmax(0,1fr)!important;gap:7px!important; }
+  #home-tomorrow-changes li { grid-template-columns:65px minmax(0,1fr);gap:6px; }
+}
+@media(prefers-reduced-motion:reduce) { .sbp-admin-sheet { animation:none!important; } }

@@ -1,9 +1,9 @@
-import { SCHEDULE_SCHEMA_VERSION, scheduleCalendarLabel, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261011-interface-fixes-v2';
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261011-interface-fixes-v2";
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261011-interface-fixes-v2";
-import { getWeekTypeForDate } from "./utils.js?v=20261011-interface-fixes-v2";
-import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261011-interface-fixes-v2";
-import { scheduleShareSnapshot } from './group-tools-data.js?v=20261011-interface-fixes-v2';
+import { SCHEDULE_SCHEMA_VERSION, scheduleCalendarLabel, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261014-admin-summary-v1';
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261014-admin-summary-v1";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261014-admin-summary-v1";
+import { getWeekTypeForDate } from "./utils.js?v=20261014-admin-summary-v1";
+import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261014-admin-summary-v1";
+import { scheduleShareSnapshot } from './group-tools-data.js?v=20261014-admin-summary-v1';
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
@@ -493,6 +493,17 @@ export function getScheduleDataForWeek(type, reference = new Date()) {
         const date = new Date(monday); date.setDate(date.getDate()+index);
         return [day,getSchedulePauseState(date).active ? [] : scheduleForDate(schedulePayload(),date,type)];
     }));
+}
+// Only explicit changes for this exact date feed the Home summary.
+export function getScheduleChangeSource(date, type = getWeekTypeForDate(date)) {
+    const day = SCHEDULE_DAY_KEYS[date.getDay() - 1];
+    const override = scheduleDateOverrides[scheduleDateKey(date)];
+    if (!day || getSchedulePauseState(date).active || override?.weekType !== type || !Array.isArray(override.lessons)) return null;
+    const template = type === 'numerator' ? scheduleDataNumerator : scheduleDataDenominator;
+    return {baseline:template[day] || [], actual:override.lessons};
+}
+export function getScheduleAdminSnapshot() {
+    return {date:scheduleDateForDay(currentScheduleDay), weekType:currentScheduleWeekType, scope:scheduleEditScope, lessons:getCurrentScheduleList() || []};
 }
 window.setScheduleEditScope = function(scope) {
     scheduleEditScope = scope === 'template' ? 'template' : 'date';
@@ -1073,6 +1084,8 @@ export function renderSchedule(dayKey = currentScheduleDay) {
     if (SCHEDULE_DAY_KEYS.includes(dayKey)) currentScheduleDay = dayKey;
 
     updateScheduleReferenceControls();
+    window.refreshAdminDrawer?.();
+    window.refreshTomorrowChanges?.();
     const list = getCurrentScheduleList() || [];
     const entries = buildScheduleEntries(list);
     const selectedDate = scheduleDateForDay(currentScheduleDay);
