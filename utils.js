@@ -1,4 +1,4 @@
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261015-admin-access-fix-v1";
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261015-admin-edge-size-v1";
 // Общие независимые функции проекта.
 // Здесь нет доступа к Firebase и состоянию журнала.
 

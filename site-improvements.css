@@ -19,12 +19,12 @@
 
 :root:root body.sbp-redesign #sbp-admin-edge {
   position:fixed!important;right:env(safe-area-inset-right,0px)!important;top:44%!important;z-index:55!important;
-  width:44px!important;min-width:44px!important;height:96px!important;padding:0!important;border:0!important;
+  width:52px!important;min-width:52px!important;height:112px!important;padding:0!important;border:0!important;
   border-radius:12px 0 0 12px!important;background:transparent!important;box-shadow:none!important;
   touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;
   display:flex!important;align-items:center!important;justify-content:flex-end!important;padding-right:8px!important;
 }
-#sbp-admin-edge>span { position:relative;overflow:hidden;width:4px;height:44px;border-radius:4px;background:var(--sbp-muted);opacity:.5;pointer-events:none; }
+#sbp-admin-edge>span { position:relative;overflow:hidden;width:8px;height:60px;border-radius:6px;background:var(--sbp-muted);opacity:.65;pointer-events:none; }
 #sbp-admin-edge>span::after { content:"";position:absolute;inset:0;background:var(--sbp-accent);transform:scaleY(0);transform-origin:bottom; }
 #sbp-admin-edge.is-holding>span { opacity:1; }
 #sbp-admin-edge.is-holding>span::after { animation:sbp-admin-hold 3s linear forwards; }

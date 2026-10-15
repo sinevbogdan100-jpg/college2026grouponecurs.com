@@ -1,8 +1,8 @@
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261015-admin-access-fix-v1';
-import { doc, writeBatch } from './firebase.js?v=20261015-admin-access-fix-v1';
-import { currentLang, translateUI } from './i18n.js?v=20261015-admin-access-fix-v1';
-import { getScheduleShareData } from './schedule.js?v=20261015-admin-access-fix-v1';
-import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261015-admin-access-fix-v1';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261015-admin-edge-size-v1';
+import { doc, writeBatch } from './firebase.js?v=20261015-admin-edge-size-v1';
+import { currentLang, translateUI } from './i18n.js?v=20261015-admin-edge-size-v1';
+import { getScheduleShareData } from './schedule.js?v=20261015-admin-edge-size-v1';
+import { pinnedAnnouncement, wrapCanvasText } from './group-tools-data.js?v=20261015-admin-edge-size-v1';
 
 export const WORDS = {
   share: ['Поделиться расписанием','Сабақ кестесімен бөлісу'], day: ['День','Күн'], week: ['Неделя','Апта'],

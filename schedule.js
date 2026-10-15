@@ -1,9 +1,9 @@
-import { SCHEDULE_SCHEMA_VERSION, scheduleCalendarLabel, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261015-admin-access-fix-v1';
-import { interfaceLocale, translateUI } from "./i18n.js?v=20261015-admin-access-fix-v1";
-import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261015-admin-access-fix-v1";
-import { getWeekTypeForDate } from "./utils.js?v=20261015-admin-access-fix-v1";
-import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261015-admin-access-fix-v1";
-import { scheduleShareSnapshot } from './group-tools-data.js?v=20261015-admin-access-fix-v1';
+import { SCHEDULE_SCHEMA_VERSION, scheduleCalendarLabel, scheduleDateKey, scheduleForDate, ensureDateSchedule, migrateLegacySchedule } from './schedule-dates.js?v=20261015-admin-edge-size-v1';
+import { interfaceLocale, translateUI } from "./i18n.js?v=20261015-admin-edge-size-v1";
+import { doc, setDoc, getDoc, onSnapshot } from "./firebase.js?v=20261015-admin-edge-size-v1";
+import { getWeekTypeForDate } from "./utils.js?v=20261015-admin-edge-size-v1";
+import { dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261015-admin-edge-size-v1";
+import { scheduleShareSnapshot } from './group-tools-data.js?v=20261015-admin-edge-size-v1';
 
 const CLOUD_ROOT = ['toe_group', 'shared'];
 const PENDING_SCHEDULE_KEY = 'toe_pending_schedule_v1';
