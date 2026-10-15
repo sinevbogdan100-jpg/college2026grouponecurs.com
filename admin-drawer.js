@@ -52,7 +52,7 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         ['settings-backups-section', 'sbp-admin-backup-tools'], ['settings-logout', 'sbp-admin-footer']
     ];
     const anchors = new Map();
-    let trigger = null, holdTimer = null, startPoint = null, previousFocus = null, lessonSignature = '';
+    let trigger = null, menuButton = null, holdTimer = null, startPoint = null, previousFocus = null, lessonSignature = '';
     const allowed = permission => {
         const state = access();
         return hasAdministrativeRole(state) && (!permission || state[permission] === true);
@@ -61,6 +61,7 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         clearTimeout(holdTimer);
         holdTimer = null;
         startPoint = null;
+        trigger?.classList.remove('is-holding');
     }
     function close(returnFocus = true) {
         cancelHold();
@@ -69,7 +70,7 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         document.body.classList.remove('sbp-admin-drawer-open');
         trigger?.setAttribute('aria-expanded', 'false');
         if (wasOpen && returnFocus) {
-            const target = previousFocus?.isConnected ? previousFocus : trigger;
+            const target = previousFocus?.isConnected && previousFocus.getClientRects().length ? previousFocus : trigger;
             target?.focus({preventScroll:true});
         }
     }
@@ -117,6 +118,8 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
             close(false);
             trigger?.remove();
             trigger = null;
+            menuButton?.remove();
+            menuButton = null;
             root.querySelectorAll('[data-permission]').forEach(node => { node.hidden = true; });
             document.body.classList.remove('sbp-admin-tools-ported');
             return;
@@ -134,22 +137,47 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
             trigger.innerHTML = '<span aria-hidden="true"></span>';
             trigger.addEventListener('pointerdown', event => {
                 if (!allowed() || event.button > 0 || event.isPrimary === false) return;
+                event.preventDefault();
                 cancelHold();
                 startPoint = {x:event.clientX, y:event.clientY, pointerId:event.pointerId};
-                trigger.setPointerCapture?.(event.pointerId);
-                holdTimer = setTimeout(() => { holdTimer = null; open(); }, 3000);
+                // Some touch browsers release capture or reject it during a layout
+                // change. Capture is an optimization; it must not block the timer.
+                try { trigger.setPointerCapture?.(event.pointerId); } catch (_) {}
+                trigger.classList.add('is-holding');
+                holdTimer = setTimeout(() => { cancelHold(); open(); }, 3000);
             });
             trigger.addEventListener('pointermove', event => {
-                if (startPoint && (Math.abs(event.clientX - startPoint.x) > 10 || Math.abs(event.clientY - startPoint.y) > 10)) cancelHold();
+                if (startPoint && event.pointerId === startPoint.pointerId &&
+                    Math.hypot(event.clientX - startPoint.x, event.clientY - startPoint.y) > 24) cancelHold();
             });
-            ['pointerup','pointercancel','lostpointercapture','blur'].forEach(type => trigger.addEventListener(type, cancelHold));
+            ['pointerup','pointercancel','lostpointercapture'].forEach(type => trigger.addEventListener(type, endHold));
+            trigger.addEventListener('blur', cancelHold);
             trigger.addEventListener('contextmenu', event => event.preventDefault());
             trigger.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); }
             });
+            trigger.addEventListener('click', event => {
+                // Assistive technology activates buttons without pointer events.
+                if (event.detail === 0) open();
+            });
             document.body.appendChild(trigger);
         }
+        if (!menuButton) {
+            const supportButton = document.getElementById('menu-support-button');
+            if (supportButton?.parentElement) {
+                menuButton = document.createElement('button');
+                menuButton.id = 'menu-admin-drawer-button';
+                menuButton.type = 'button';
+                menuButton.dataset.i18nSkip = '';
+                menuButton.setAttribute('aria-controls', root.id);
+                menuButton.setAttribute('aria-haspopup', 'dialog');
+                menuButton.innerHTML = '<i class="fa-solid fa-user-shield" aria-hidden="true"></i><span></span>';
+                menuButton.addEventListener('click', () => open());
+                supportButton.after(menuButton);
+            }
+        }
         trigger.setAttribute('aria-label', labels.trigger);
+        if (menuButton) menuButton.querySelector('span').textContent = labels.title;
         closeButton.setAttribute('aria-label', labels.close);
         document.getElementById('sbp-admin-title').textContent = labels.title;
         document.getElementById('sbp-admin-role').textContent = state.role === 'owner' ? labels.owner : labels.admin;
@@ -164,6 +192,7 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         applyTranslations(root);
     }
     function open(section = '') {
+        cancelHold();
         if (!allowed()) return false;
         actions.beforeOpen?.();
         refresh();
@@ -204,6 +233,15 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         if (!allowed(permissions[action]) || !actions[action]) return;
         close(false);
         actions[action]();
+    });
+    function endHold(event) {
+        if (startPoint && event.pointerId === startPoint.pointerId) cancelHold();
+    }
+    // Also observe release outside the handle when capture is not available.
+    ['pointerup','pointercancel'].forEach(type => document.addEventListener(type, endHold));
+    document.addEventListener('pointermove', event => {
+        if (startPoint && event.pointerId === startPoint.pointerId &&
+            Math.hypot(event.clientX - startPoint.x, event.clientY - startPoint.y) > 24) cancelHold();
     });
     document.addEventListener('keydown', event => {
         if (root.hidden) return;

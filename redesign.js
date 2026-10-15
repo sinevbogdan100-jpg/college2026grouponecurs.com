@@ -1,4 +1,4 @@
-import { COLLEGE, COLLEGE_SOURCES } from './college-data.js?v=20261014-admin-summary-v1';
+import { COLLEGE, COLLEGE_SOURCES } from './college-data.js?v=20261015-admin-access-fix-v1';
 const labels={
  ru:{college:'О колледже',theme:'Тема оформления',themeHint:'Выберите удобный внешний вид',light:'Светлая',dark:'Тёмная',system:'Как на устройстве',language:'Язык',menu:'Меню',group:'Группа',home:'Главная',settings:'Настройки',notifications:'Уведомления'},
  kz:{college:'Колледж туралы',theme:'Безендіру тақырыбы',themeHint:'Ыңғайлы көріністі таңдаңыз',light:'Ашық',dark:'Қараңғы',system:'Құрылғыдағыдай',language:'Тіл',menu:'Мәзір',group:'Топ',home:'Басты бет',settings:'Баптаулар',notifications:'Хабарландырулар'}

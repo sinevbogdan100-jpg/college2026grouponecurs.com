@@ -80,6 +80,8 @@ function domFixture() {
     for(const id of ['settings-admins-section','schedule-edit-scope-box','schedule-pause-manage-btn','schedule-add-btn','schedule-bell-btn','journal-edit-tools','roster-admin-tools','settings-group-section','admin-panel','settings-backups-section','settings-logout']){
         const node=document.createElement(id.startsWith('settings-')?'details':'div');node.id=id;parent.appendChild(node);
     }
+    const menu=document.createElement('div');menu.id='app-menu-drawer';body.appendChild(menu);
+    const support=document.createElement('button');support.id='menu-support-button';menu.appendChild(support);
     return {document,Element,parent};
 }
 
@@ -136,28 +138,46 @@ async function main() {
     let state={role:'viewer',schedule:true,journal:true,students:true,groupInfo:true,backups:true,notifications:true},lang='ru',edited=-1,opened=0;
     const drawer=context.init({access:()=>state,language:()=>lang,snapshot:()=>({date:new Date(2026,9,15),weekType:'numerator',scope:'date',lessons:base}),formatDate:()=> '15.10.2026',actions:{editLesson:index=>{edited=index;},openSchedule:()=>{opened++;}}});
     assert.equal(document.getElementById('sbp-admin-edge'),null,'a viewer has no sidebar target even with forged permission flags');
+    assert.equal(document.getElementById('menu-admin-drawer-button'),null,'a viewer has no alternative entry');
     assert.equal(drawer.open(),false);
     state={...state,role:'admin',journal:false,backups:false};drawer.refresh();
     const trigger=document.getElementById('sbp-admin-edge'),overlay=document.getElementById('sbp-admin-drawer');
+    const menuButton=document.getElementById('menu-admin-drawer-button');
+    assert.ok(menuButton,'an authenticated admin has an alternative entry in the menu');
     assert.ok(trigger);assert.ok(document.getElementById('sbp-admin-journal').hidden);
     assert.equal(document.getElementById('schedule-add-btn').parentNode.id,'sbp-admin-schedule-tools','existing controls are moved, not duplicated');
     trigger.focus();trigger.fire('pointerdown');tick(2999);assert.equal(overlay.hidden,true);tick(1);assert.equal(overlay.hidden,false,'three-second hold opens the drawer');
     document.fire('keydown',{key:'Escape',preventDefault(){}});assert.equal(overlay.hidden,true);assert.equal(document.activeElement,trigger);
     trigger.fire('pointerdown');trigger.fire('pointerup');tick(3000);assert.equal(overlay.hidden,true,'ordinary tap does not open');
-    trigger.fire('pointerdown');trigger.fire('pointermove',{clientX:120});tick(3000);assert.equal(overlay.hidden,true,'scrolling movement cancels a hold');
+    trigger.fire('click',{detail:1});assert.equal(overlay.hidden,true,'a short pointer click remains inactive');
+    trigger.fire('click',{detail:0});assert.equal(overlay.hidden,false,'assistive button activation opens the drawer');drawer.close();
+    trigger.setPointerCapture=()=>{throw new Error('Pointer capture unavailable');};
+    trigger.fire('pointerdown');tick(3000);assert.equal(overlay.hidden,false,'a failed pointer capture must not prevent opening');
+    drawer.close();trigger.setPointerCapture=()=>{};
+    trigger.fire('pointerdown');assert.ok(trigger.classList.contains('is-holding'));
+    document.fire('pointerup',{pointerId:1});tick(3000);assert.equal(overlay.hidden,true,'release outside the handle cancels the timer');
+    assert.ok(!trigger.classList.contains('is-holding'),'cancelling resets visible progress');
+    trigger.fire('pointerdown');trigger.fire('pointerup',{pointerId:2});tick(3000);assert.equal(overlay.hidden,false,'an unrelated pointer does not interrupt a hold');drawer.close();
+    trigger.fire('pointerdown',{pointerType:'touch'});trigger.fire('pointermove',{clientX:115});tick(3000);assert.equal(overlay.hidden,false,'a small finger drift must not cancel the hold');
+    drawer.close();
+    trigger.fire('pointerdown');trigger.fire('pointermove',{clientX:140});tick(3000);assert.equal(overlay.hidden,true,'scrolling movement cancels a hold');
     trigger.fire('pointerdown',{button:2});tick(3000);assert.equal(overlay.hidden,true,'context click does not open');
     trigger.fire('keydown',{key:'Enter'});assert.equal(overlay.hidden,false,'keyboard access remains available');
     lang='kz';drawer.refresh();assert.equal(document.getElementById('sbp-admin-title').textContent,'Әкімші панелі');
     assert.ok(trigger.getAttribute('aria-label').includes('3 секунд'));
+    assert.equal(menuButton.querySelector('span').textContent,'Әкімші панелі','open interface changes language together with the menu entry');
     const edit=overlay.querySelector('[data-lesson-action="edit"]');edit.fire('click');assert.equal(edited,0);assert.equal(overlay.hidden,true);
     drawer.open();const action=overlay.querySelector('[data-admin-action="openSchedule"]');
     state.schedule=false;action.fire('click');assert.equal(opened,0,'click rechecks permissions after a revocation');
     state.role='viewer';drawer.refresh();assert.equal(overlay.hidden,true);assert.equal(document.getElementById('sbp-admin-edge'),null);
     assert.equal(document.getElementById('schedule-add-btn').parentNode,fixture.parent,'logout restores the original DOM');
     assert.ok(!document.getElementById('settings-admins-section').classList.contains('hidden'),'login remains reachable');
+    assert.equal(document.getElementById('menu-admin-drawer-button'),null,'logout removes the menu entry');
+    menuButton.fire('click');assert.equal(overlay.hidden,true,'a stale menu button cannot grant access after logout');
     state={...state,role:'owner',schedule:true,journal:true,backups:true};drawer.refresh();assert.equal(document.getElementById('sbp-admin-role').textContent,'Иесі');
+    const ownerMenuButton=document.getElementById('menu-admin-drawer-button');ownerMenuButton.fire('click');assert.equal(overlay.hidden,false,'the owner can open the drawer from the menu');drawer.close();
     const lastTrigger=document.getElementById('sbp-admin-edge');lastTrigger.fire('pointerdown');state.role='viewer';tick(3000);assert.equal(overlay.hidden,true,'losing the role during a hold cannot grant access');
     assert.deepEqual(Object.keys(summary.summaryLabels('ru')).sort(),Object.keys(summary.summaryLabels('kz')).sort());
-    console.log('Site improvements: actual-date changes, removals, cancellations, bells, pause, RU/KZ, escaped text, immutable data, authenticated roles, permission revocation, three-second hold, cancellation, keyboard access, language refresh and DOM restoration passed.');
+    console.log('Site improvements passed: real-date summaries, RU/KZ, authenticated roles, owner/admin menu access, pointer-capture failure, finger drift, outside release, three-second progress, short-tap cancellation, assistive/keyboard access, permission revocation and logout restoration.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
