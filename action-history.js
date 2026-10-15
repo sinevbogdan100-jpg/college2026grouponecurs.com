@@ -1,7 +1,7 @@
-import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261015-admin-edge-size-v1';
-import { currentLang, translateUI } from './i18n.js?v=20261015-admin-edge-size-v1';
-import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261015-admin-edge-size-v1';
-import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261015-admin-edge-size-v1';
+import { doc, setDoc, getDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from './firebase.js?v=20261015-language-labels-v1';
+import { currentLang, translateUI } from './i18n.js?v=20261015-language-labels-v1';
+import { gt, escapeGT, openGTModal } from './group-tools.js?v=20261015-language-labels-v1';
+import { attendanceChanges, scheduleChanges } from './group-tools-data.js?v=20261015-language-labels-v1';
 
 let bridge = {}, context = '', entries = [], remote = [], unsubscribe = null, cloudStatus = 'offline', flushing = false, flushAgain = false;
 const byId = id => document.getElementById(id);

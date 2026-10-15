@@ -1,11 +1,11 @@
-import { nextCalendarDay, summarizeScheduleChanges, scheduleSummaryMarkup } from './schedule-summary.js?v=20261015-admin-edge-size-v1';
-import { initAdminDrawer } from './admin-drawer.js?v=20261015-admin-edge-size-v1';
-import { initRedesign } from './redesign.js?v=20261015-admin-edge-size-v1';
-import { scheduleCalendarLabel } from './schedule-dates.js?v=20261015-admin-edge-size-v1';
-import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261015-admin-edge-size-v1';
-import { createArrivalTracker } from './notification-state.js?v=20261015-admin-edge-size-v1';
-import { createNotificationCenter } from './notification-center.js?v=20261015-admin-edge-size-v1';
-import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261015-admin-edge-size-v1';
+import { nextCalendarDay, summarizeScheduleChanges, scheduleSummaryMarkup } from './schedule-summary.js?v=20261015-language-labels-v1';
+import { initAdminDrawer } from './admin-drawer.js?v=20261015-language-labels-v1';
+import { initRedesign } from './redesign.js?v=20261015-language-labels-v1';
+import { scheduleCalendarLabel } from './schedule-dates.js?v=20261015-language-labels-v1';
+import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261015-language-labels-v1';
+import { createArrivalTracker } from './notification-state.js?v=20261015-language-labels-v1';
+import { createNotificationCenter } from './notification-center.js?v=20261015-language-labels-v1';
+import { getSiteVersion, incomingSupportCount, unreadSupportCount } from './support-state.js?v=20261015-language-labels-v1';
 import {
     createFirebaseServices,
     signInAnonymously,
@@ -23,7 +23,7 @@ import {
     updateDoc,
     deleteDoc,
     deleteField
-} from "./firebase.js?v=20261015-admin-edge-size-v1";
+} from "./firebase.js?v=20261015-language-labels-v1";
 
 import {
     getWeekTypeForDate,
@@ -35,8 +35,8 @@ import {
     formatCalendarLabel,
     getStatusName,
     getStatusBadgeClass
-} from "./utils.js?v=20261015-admin-edge-size-v1";
-import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261015-admin-edge-size-v1";
+} from "./utils.js?v=20261015-language-labels-v1";
+import { dbPut, dbGet, dbDelete, savePersistentValue } from "./storage.js?v=20261015-language-labels-v1";
 import {
     configureSchedule,
     loadScheduleData,
@@ -51,17 +51,17 @@ import {
     getScheduleAdminSnapshot,
     restoreScheduleSelection,
     syncPendingScheduleData
-} from "./schedule.js?v=20261015-admin-edge-size-v1";
-import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261015-admin-edge-size-v1";
-import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261015-admin-edge-size-v1';
-import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261015-admin-edge-size-v1';
+} from "./schedule.js?v=20261015-language-labels-v1";
+import { currentLang, interfaceLocale, translateUI, applyKzTranslations, startInterfaceTranslations } from "./i18n.js?v=20261015-language-labels-v1";
+import { configureGroupTools, updateGroupAnnouncements, pinControl, bindPinControls, gt, refreshGroupTools } from './group-tools.js?v=20261015-language-labels-v1';
+import { configureActionHistory, refreshActionHistoryAccess, recordActionHistory, confirmActionHistory } from './action-history.js?v=20261015-language-labels-v1';
 
         
 let homeScheduleExpanded=false;
 let homeOverviewStudyDate='';
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
 window.__MOBILE_FAST_MODE__ = MOBILE_FAST_MODE;
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.04-admin-edge-size-2026-10-15-v1';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.05-language-labels-2026-10-15-v1';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
