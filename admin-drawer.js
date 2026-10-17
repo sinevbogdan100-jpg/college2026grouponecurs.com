@@ -3,7 +3,7 @@ const escape = text => String(text ?? '').replace(/[&<>"']/g, char => ({'&':'&am
 export function adminDrawerLabels(language) {
     return language === 'kz' ? {
         title:'Әкімші панелі', owner:'Иесі', admin:'Әкімші', close:'Панельді жабу',
-        trigger:'Әкімші панелін ашу үшін 3 секунд басып тұрыңыз', schedule:'Сабақ кестесі',
+        trigger:'Әкімші панелін ашу', schedule:'Сабақ кестесі',
         journal:'Журнал', roster:'Топ құрамы', notifications:'Хабарландырулар', access:'Қол жеткізу және құқықтар',
         openJournal:'Журналды ашу', openRoster:'Топты ашу', openSchedule:'Кестені ашу', publish:'Хабарландыру жариялау',
         edit:'Өзгерту', up:'Жоғары жылжыту', down:'Төмен жылжыту', empty:'Таңдалған күнде сабақтар жоқ',
@@ -11,7 +11,7 @@ export function adminDrawerLabels(language) {
         dateScope:'Тек таңдалған күнге', templateScope:'Тұрақты сабақ кестесі'
     } : {
         title:'Панель администратора', owner:'Владелец', admin:'Администратор', close:'Закрыть панель',
-        trigger:'Удерживайте 3 секунды, чтобы открыть панель администратора', schedule:'Расписание',
+        trigger:'Открыть панель администратора', schedule:'Расписание',
         journal:'Журнал', roster:'Состав группы', notifications:'Уведомления', access:'Доступ и права',
         openJournal:'Открыть журнал', openRoster:'Открыть группу', openSchedule:'Открыть расписание', publish:'Опубликовать уведомление',
         edit:'Изменить', up:'Поднять выше', down:'Опустить ниже', empty:'На выбранный день занятий нет',
@@ -52,19 +52,12 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         ['settings-backups-section', 'sbp-admin-backup-tools'], ['settings-logout', 'sbp-admin-footer']
     ];
     const anchors = new Map();
-    let trigger = null, menuButton = null, holdTimer = null, startPoint = null, previousFocus = null, lessonSignature = '';
+    let trigger = null, menuButton = null, previousFocus = null, lessonSignature = '';
     const allowed = permission => {
         const state = access();
         return hasAdministrativeRole(state) && (!permission || state[permission] === true);
     };
-    function cancelHold() {
-        clearTimeout(holdTimer);
-        holdTimer = null;
-        startPoint = null;
-        trigger?.classList.remove('is-holding');
-    }
     function close(returnFocus = true) {
-        cancelHold();
         const wasOpen = !root.hidden;
         root.hidden = true;
         document.body.classList.remove('sbp-admin-drawer-open');
@@ -134,31 +127,10 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
             trigger.setAttribute('aria-controls', root.id);
             trigger.setAttribute('aria-haspopup', 'dialog');
             trigger.setAttribute('aria-expanded', 'false');
-            trigger.innerHTML = '<span aria-hidden="true"></span>';
-            trigger.addEventListener('pointerdown', event => {
-                if (!allowed() || event.button > 0 || event.isPrimary === false) return;
-                event.preventDefault();
-                cancelHold();
-                startPoint = {x:event.clientX, y:event.clientY, pointerId:event.pointerId};
-                // Some touch browsers release capture or reject it during a layout
-                // change. Capture is an optimization; it must not block the timer.
-                try { trigger.setPointerCapture?.(event.pointerId); } catch (_) {}
-                trigger.classList.add('is-holding');
-                holdTimer = setTimeout(() => { cancelHold(); open(); }, 3000);
-            });
-            trigger.addEventListener('pointermove', event => {
-                if (startPoint && event.pointerId === startPoint.pointerId &&
-                    Math.hypot(event.clientX - startPoint.x, event.clientY - startPoint.y) > 24) cancelHold();
-            });
-            ['pointerup','pointercancel','lostpointercapture'].forEach(type => trigger.addEventListener(type, endHold));
-            trigger.addEventListener('blur', cancelHold);
-            trigger.addEventListener('contextmenu', event => event.preventDefault());
-            trigger.addEventListener('keydown', event => {
-                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); }
-            });
+            trigger.innerHTML = '<span aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>';
             trigger.addEventListener('click', event => {
-                // Assistive technology activates buttons without pointer events.
-                if (event.detail === 0) open();
+                if (event.button > 0) return;
+                open();
             });
             document.body.appendChild(trigger);
         }
@@ -177,6 +149,7 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
             }
         }
         trigger.setAttribute('aria-label', labels.trigger);
+        trigger.setAttribute('title', labels.trigger);
         if (menuButton) menuButton.querySelector('span').textContent = labels.title;
         closeButton.setAttribute('aria-label', labels.close);
         document.getElementById('sbp-admin-title').textContent = labels.title;
@@ -192,7 +165,6 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         applyTranslations(root);
     }
     function open(section = '') {
-        cancelHold();
         if (!allowed()) return false;
         actions.beforeOpen?.();
         refresh();
@@ -234,15 +206,6 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         close(false);
         actions[action]();
     });
-    function endHold(event) {
-        if (startPoint && event.pointerId === startPoint.pointerId) cancelHold();
-    }
-    // Also observe release outside the handle when capture is not available.
-    ['pointerup','pointercancel'].forEach(type => document.addEventListener(type, endHold));
-    document.addEventListener('pointermove', event => {
-        if (startPoint && event.pointerId === startPoint.pointerId &&
-            Math.hypot(event.clientX - startPoint.x, event.clientY - startPoint.y) > 24) cancelHold();
-    });
     document.addEventListener('keydown', event => {
         if (root.hidden) return;
         if (event.key === 'Escape') { event.preventDefault(); close(); return; }
@@ -252,8 +215,6 @@ export function initAdminDrawer({access, language, snapshot, formatDate, journal
         if (event.shiftKey && (document.activeElement === first || !sheet.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && (document.activeElement === last || !sheet.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
     });
-    window.addEventListener('blur', cancelHold);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible') cancelHold(); });
     window.refreshAdminDrawer = refresh;
     window.openAdminDrawer = open;
     window.closeAdminDrawer = close;

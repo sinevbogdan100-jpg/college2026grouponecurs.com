@@ -130,10 +130,7 @@ async function main() {
     assert.equal(api.getScheduleChangeSource(new Date(2026,9,15),'numerator'),null,'vacation hides tomorrow changes without deleting them');
 
     const fixture=domFixture();const {document}=fixture;
-    const timer=new Map();let clock=0,nextId=0;
-    const tick=delta=>{clock+=delta;for(const [id,job] of [...timer])if(job.at<=clock){timer.delete(id);job.fn();}};
-    const context={document,window:{addEventListener(){}},console,Set,Map,Array,Object,Number,String,JSON,Math,
-        setTimeout(fn,ms){const id=++nextId;timer.set(id,{fn,at:clock+ms});return id;},clearTimeout:id=>timer.delete(id)};
+    const context={document,window:{addEventListener(){}},console,Set,Map,Array,Object,Number,String,JSON,Math};
     vm.createContext(context);vm.runInContext(read('admin-drawer.js').replaceAll('export ','')+'\nglobalThis.init=initAdminDrawer;',context);
     let state={role:'viewer',schedule:true,journal:true,students:true,groupInfo:true,backups:true,notifications:true},lang='ru',edited=-1,opened=0;
     const drawer=context.init({access:()=>state,language:()=>lang,snapshot:()=>({date:new Date(2026,9,15),weekType:'numerator',scope:'date',lessons:base}),formatDate:()=> '15.10.2026',actions:{editLesson:index=>{edited=index;},openSchedule:()=>{opened++;}}});
@@ -146,25 +143,18 @@ async function main() {
     assert.ok(menuButton,'an authenticated admin has an alternative entry in the menu');
     assert.ok(trigger);assert.ok(document.getElementById('sbp-admin-journal').hidden);
     assert.equal(document.getElementById('schedule-add-btn').parentNode.id,'sbp-admin-schedule-tools','existing controls are moved, not duplicated');
-    trigger.focus();trigger.fire('pointerdown');tick(2999);assert.equal(overlay.hidden,true);tick(1);assert.equal(overlay.hidden,false,'three-second hold opens the drawer');
+    assert.equal(trigger.tagName,'BUTTON','native button supports keyboard activation');
+    assert.equal(trigger.type,'button');
+    assert.equal(trigger.getAttribute('aria-label'),'Открыть панель администратора');
+    trigger.focus();trigger.fire('click',{detail:1,pointerType:'mouse'});
+    assert.equal(overlay.hidden,false,'one mouse click opens immediately without a timer');
     document.fire('keydown',{key:'Escape',preventDefault(){}});assert.equal(overlay.hidden,true);assert.equal(document.activeElement,trigger);
-    trigger.fire('pointerdown');trigger.fire('pointerup');tick(3000);assert.equal(overlay.hidden,true,'ordinary tap does not open');
-    trigger.fire('click',{detail:1});assert.equal(overlay.hidden,true,'a short pointer click remains inactive');
-    trigger.fire('click',{detail:0});assert.equal(overlay.hidden,false,'assistive button activation opens the drawer');drawer.close();
-    trigger.setPointerCapture=()=>{throw new Error('Pointer capture unavailable');};
-    trigger.fire('pointerdown');tick(3000);assert.equal(overlay.hidden,false,'a failed pointer capture must not prevent opening');
-    drawer.close();trigger.setPointerCapture=()=>{};
-    trigger.fire('pointerdown');assert.ok(trigger.classList.contains('is-holding'));
-    document.fire('pointerup',{pointerId:1});tick(3000);assert.equal(overlay.hidden,true,'release outside the handle cancels the timer');
-    assert.ok(!trigger.classList.contains('is-holding'),'cancelling resets visible progress');
-    trigger.fire('pointerdown');trigger.fire('pointerup',{pointerId:2});tick(3000);assert.equal(overlay.hidden,false,'an unrelated pointer does not interrupt a hold');drawer.close();
-    trigger.fire('pointerdown',{pointerType:'touch'});trigger.fire('pointermove',{clientX:115});tick(3000);assert.equal(overlay.hidden,false,'a small finger drift must not cancel the hold');
-    drawer.close();
-    trigger.fire('pointerdown');trigger.fire('pointermove',{clientX:140});tick(3000);assert.equal(overlay.hidden,true,'scrolling movement cancels a hold');
-    trigger.fire('pointerdown',{button:2});tick(3000);assert.equal(overlay.hidden,true,'context click does not open');
-    trigger.fire('keydown',{key:'Enter'});assert.equal(overlay.hidden,false,'keyboard access remains available');
+    trigger.fire('pointerdown',{pointerType:'touch'});trigger.fire('pointerup',{pointerType:'touch'});
+    trigger.fire('click',{detail:1,pointerType:'touch'});assert.equal(overlay.hidden,false,'one touch activation opens immediately');drawer.close();
+    trigger.fire('click',{detail:0});assert.equal(overlay.hidden,false,'keyboard and assistive button activation remain available');
     lang='kz';drawer.refresh();assert.equal(document.getElementById('sbp-admin-title').textContent,'Әкімші панелі');
-    assert.ok(trigger.getAttribute('aria-label').includes('3 секунд'));
+    assert.equal(trigger.getAttribute('aria-label'),'Әкімші панелін ашу');
+    assert.equal(trigger.getAttribute('title'),'Әкімші панелін ашу');
     assert.equal(menuButton.querySelector('span').textContent,'Әкімші панелі','open interface changes language together with the menu entry');
     const edit=overlay.querySelector('[data-lesson-action="edit"]');edit.fire('click');assert.equal(edited,0);assert.equal(overlay.hidden,true);
     drawer.open();const action=overlay.querySelector('[data-admin-action="openSchedule"]');
@@ -176,8 +166,9 @@ async function main() {
     menuButton.fire('click');assert.equal(overlay.hidden,true,'a stale menu button cannot grant access after logout');
     state={...state,role:'owner',schedule:true,journal:true,backups:true};drawer.refresh();assert.equal(document.getElementById('sbp-admin-role').textContent,'Иесі');
     const ownerMenuButton=document.getElementById('menu-admin-drawer-button');ownerMenuButton.fire('click');assert.equal(overlay.hidden,false,'the owner can open the drawer from the menu');drawer.close();
-    const lastTrigger=document.getElementById('sbp-admin-edge');lastTrigger.fire('pointerdown');state.role='viewer';tick(3000);assert.equal(overlay.hidden,true,'losing the role during a hold cannot grant access');
+    const lastTrigger=document.getElementById('sbp-admin-edge');lastTrigger.fire('click',{detail:1});assert.equal(overlay.hidden,false,'one click also opens for the owner');drawer.close();
+    state.role='viewer';lastTrigger.fire('click',{detail:1});assert.equal(overlay.hidden,true,'a stale edge button cannot grant access after role revocation');
     assert.deepEqual(Object.keys(summary.summaryLabels('ru')).sort(),Object.keys(summary.summaryLabels('kz')).sort());
-    console.log('Site improvements passed: real-date summaries, RU/KZ, authenticated roles, owner/admin menu access, pointer-capture failure, finger drift, outside release, three-second progress, short-tap cancellation, assistive/keyboard access, permission revocation and logout restoration.');
+    console.log('Site improvements passed: real-date summaries, RU/KZ, authenticated roles, owner/admin menu access, immediate mouse/touch activation, native button semantics, assistive/keyboard activation, permission revocation and logout restoration.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

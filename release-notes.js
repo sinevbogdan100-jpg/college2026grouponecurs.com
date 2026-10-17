@@ -1,4 +1,4 @@
-import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261015-language-labels-v1';
+import { releaseForBuild, releasesForBuild, releaseTypeLabel } from './release-data.js?v=20261017-admin-tap-v1';
 
 const build = document.querySelector('meta[name="app-build"]')?.content;
 const currentRelease = releaseForBuild(build);
