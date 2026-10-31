@@ -58,7 +58,7 @@ const box=locator=>locator.boundingBox();
       assert.ok(language.y<45,'language should be high in viewport '+where+'/'+width);
       assert.ok(menu.x+menu.width<=title.x+2,'menu does not overlap title '+where+'/'+width);
       assert.ok(title.x+title.width<=bell.x+2,'title does not overlap bell '+where+'/'+width);
-      assert.ok(bell.x+bell.width<=language.x+4,'bell does not overlap language '+where+'/'+width);
+      assert.ok(bell.x+bell.width<=language.x+4,'bell does not overlap language '+where+'/'+width+' '+JSON.stringify({bell,language}));
       assert.ok(first.y < 180,'first content is pulled up '+where+'/'+width);
       const scrollWidth=await page.evaluate(()=>document.documentElement.scrollWidth);
       assert.ok(scrollWidth<=width+2,'no horizontal overflow '+where+'/'+width+' '+scrollWidth);
