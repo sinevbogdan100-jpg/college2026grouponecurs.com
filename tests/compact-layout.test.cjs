@@ -18,7 +18,7 @@ test('compact header replaces logo bar without removing language and navigation'
  }
  assert.ok((html.match(/onclick="openAppMenu\(\)"/g)||[]).length>=5);
  assert.ok((html.match(/onclick="openNotifications\(\)"/g)||[]).length>=5);
- assert.match(css, /grid-template-columns:42px minmax\(0,1fr\) 42px 74px/);
+ assert.match(css, /grid-template-columns:42px minmax\(0,1fr\) 42px 88px/);
 });
 test('covers remain editable, no longer take a grid row, and work in both themes',()=>{
  assert.match(css, /#view-home #sbp-home-banner/);
