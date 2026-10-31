@@ -1,0 +1,442 @@
+/* SBP Information 19.09 – cohesive dark appearance for website and installed PWA.
+   Explicitly scoped to selected/resolved dark mode; never changes light mode.
+   Surfaces and semantic status colours share a contrast-tested palette. */
+:root[data-sbp-theme="dark"] {
+  --sbp-page:#0b0f18;
+  --sbp-surface:#151b29;
+  --sbp-soft:#202838;
+  --sbp-raised:#263149;
+  --sbp-sunken:#111723;
+  --sbp-line:#39445c;
+  --sbp-ink:#f2f5ff;
+  --sbp-muted:#b8c4d9;
+  --sbp-accent:#c1b2ff;
+  --sbp-accent-ink:#171124;
+  --sbp-tint:#322a4f;
+  --sbp-green:#8ee2bb;
+  --sbp-green-soft:#173b32;
+  --sbp-green-line:#366c56;
+  --sbp-danger:#ff9da9;
+  --sbp-danger-soft:#45242e;
+  --sbp-warning:#ffd18a;
+  --sbp-warning-soft:#493720;
+  --sbp-blue:#a7cfff;
+  --sbp-blue-soft:#1c3451;
+  --sbp-backdrop:rgba(4,7,14,.78);
+  --sbp-shadow:0 12px 36px rgba(0,0,0,.32);
+  --frame-soft:var(--sbp-line);
+  --frame-control:var(--sbp-line);
+  --frame-active:var(--sbp-accent);
+  --brand:var(--sbp-accent);
+  --line:var(--sbp-line);
+  --text:var(--sbp-ink);
+  color-scheme:dark;
+  background:var(--sbp-page);
+}
+:root[data-sbp-theme="dark"]::selection {background:#6451a4;color:#fff}
+:root[data-sbp-theme="dark"] body ::selection {background:#6451a4;color:#fff}
+:root[data-sbp-theme="dark"] { scrollbar-color:#49536b #121824; }
+:root:root[data-sbp-theme="dark"] body.sbp-redesign {
+  background:var(--sbp-page)!important;
+  background-image:none!important;
+  color:var(--sbp-ink)!important;
+  color-scheme:dark;
+}
+:root:root[data-sbp-theme="dark"] body.sbp-redesign ::-webkit-scrollbar {width:9px;height:9px}
+:root:root[data-sbp-theme="dark"] body.sbp-redesign ::-webkit-scrollbar-track {background:var(--sbp-page)}
+:root:root[data-sbp-theme="dark"] body.sbp-redesign ::-webkit-scrollbar-thumb {background:#46516b;border-radius:12px}
+:root:root[data-sbp-theme="dark"] body.sbp-redesign ::-webkit-scrollbar-thumb:hover {background:#64708c}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(#view-home,#view-tracker,#view-schedule,#view-roster,#view-college,
+    #admin-settings-modal,.settings-reference-page,.settings-reference-list,
+    .help-navigation-panel,.notification-panel,.support-panel,.report-preview-sheet,
+    .release-notes-sheet,.app-drawer,.drawer-panel,.app-menu,.group-tools-sheet,
+    .schedule-editor-sheet,.schedule-pause-editor-card,.student-profile-modal-card,
+    .leader-profile-modal-card,.gt-modal-card,.sbp-banner-dialog) {
+  background-color:var(--sbp-page)!important;color:var(--sbp-ink)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.app-overlay,.release-notes-overlay,.modal-backdrop,
+    .student-profile-modal,.leader-profile-modal,.bell-editor-overlay,
+    .gt-overlay,.sbp-banner-modal,.fixed.inset-0:not(#admin-settings-modal)) {
+  background-color:var(--sbp-backdrop)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.app-overlay>section,.app-overlay>div,.app-overlay>aside,
+    .release-notes-overlay>section,.release-notes-overlay>div,
+    .fixed.inset-0:not(#admin-settings-modal)>section,
+    .fixed.inset-0:not(#admin-settings-modal)>div,
+    .sheet-panel,.sheet-head,.notification-composer,.notification-list,
+    .support-active-thread,.support-compose,.support-inbox,
+    .student-profile-modal-card,.leader-profile-modal-card,
+    .bell-editor-sheet,.gt-modal-card,.report-preview-sheet,
+    .sbp-banner-dialog,.release-notes-sheet,.app-drawer,
+    .settings-reference-card,.journal-ref-panel,.journal-ref-editor,
+    .college-card,.home-ref-group-card,.roster-person-card,.leadership-card,
+    .schedule-ref-card) {
+  background-color:var(--sbp-surface)!important;
+   background-image:none!important;
+   color:var(--sbp-ink)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-brandbar,.home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,
+    .roster-ref-topbar,.college-topbar,.settings-reference-header,
+    .settings-modal-header,.modal-sticky-header,.drawer-head,.release-notes-header,
+    .notification-modal-header,.student-profile-modal-head,.leader-profile-modal-head,
+    .schedule-pause-editor-header,.journal-ref-head,.sheet-head,
+    .sbp-banner-dialog-header) {
+  background-color:var(--sbp-surface)!important;
+   background-image:none!important;
+   border-color:var(--sbp-line)!important;
+   color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,
+    .roster-ref-topbar,.college-topbar,.sbp-brandbar) {
+  background-color:transparent!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(#bottom-nav,.sbp-sidebar-menu,.sbp-language,.sbp-theme-options,
+    .drawer-nav-section,.settings-device-options,.settings-group-form) {
+  background-color:var(--sbp-surface)!important;
+   border-color:var(--sbp-line)!important;color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-day-status,.home-ref-status,.home-day-status,
+    .home-ref-notification-card,.home-ref-notification-empty,
+    .home-ref-progress,.home-ref-progress-row,
+    .journal-ref-controls,.journal-ref-datebar,.journal-ref-table,
+    .journal-ref-students,.journal-ref-head,.journal-section-tabs,
+    .journal-history-row,.journal-student-card,.journal-inline-actions,
+    .journal-ref-note-view,.journal-ref-note-editor,.journal-ref-admin-hint,
+    .assessment-list-head,.assessment-student-row,.assessment-detail-head,
+    .assessment-detail-stats>div,.analytics-summary>div,
+    .assessment-group-summary,.journal-group-tiles>div,
+    .schedule-ref-datebar,.schedule-ref-date-copy,.schedule-ref-week-switch,
+    .schedule-ref-days,.schedule-ref-day-summary,.schedule-ref-day-state,
+    .schedule-ref-progress,.schedule-ref-break,.schedule-ref-break-card,
+    .schedule-pause-status,.schedule-pause-placeholder,
+    .schedule-pause-manage,.schedule-pause-editor-note,
+    .schedule-pause-editor-auto,.home-schedule-pause-card,
+    .roster-profile-tools,.roster-section-divider,.roster-person-actions,
+    .student-profile-field,.student-profile-preview,.leader-profile-preview,
+    .student-gender-switch,.settings-reference-content,.settings-access-banner,
+    .settings-reference-status,.settings-system-grid,.settings-group-count,
+    .settings-group-icon-row,.settings-group-icon-options,
+    .settings-reference-summary,.device-mode-btn,
+    .drawer-beta-card,.drawer-ai-note,.drawer-note,.drawer-nav-section>button,
+    .notification-preferences,.notification-setting-button,
+    .notification-card,.notification-ref-card,.notification-item,
+    .notification-item-actions,.notification-composer,
+    .support-intro,.support-staff-inbox,.support-msg,.support-thread-btn,
+    .support-messages,.support-compose,.support-active-thread,
+    .release-card,.release-history-item,.release-notes-content,
+    .release-notes-footer,.release-notes-actions,
+    .help-navigation-hero,.help-navigation-card,.help-navigation-tip,
+    .help-beta-note,.gt-pin-card,.gt-share-preview,.gt-audit-row,
+    .gt-pinned-announcement,.gt-modal-card,.sp-section,.sp-request,.sp-demo,
+    .sp-entry,.sp-local,.mini-calendar,.calendar-dropdown,.calendar-trigger,
+    .mini-calendar-head,.mini-calendar-days,.report-preview-content,
+    .report-preview-head,.report-preview-sheet) {
+  background-color:var(--sbp-soft)!important;
+   background-image:none!important;
+   border-color:var(--sbp-line)!important;
+   color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.journal-ref-row,.journal-ref-person,.journal-ref-table-row,
+    .journal-ref-students>.journal-ref-row,.history-row,
+    .roster-person-card,.assessment-student-row,.notification-item,
+    .support-thread-btn,.settings-reference-card,.release-card,.college-card,
+    .home-ref-lesson-card,.schedule-ref-card) {
+  background-color:var(--sbp-surface)!important;
+   background-image:none!important;border-color:var(--sbp-line)!important;
+   color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-slate-200,.bg-gray-50,
+    .bg-gray-100,.bg-indigo-50,.bg-purple-50,.bg-violet-50,
+    .bg-blue-50,.bg-blue-100,.bg-indigo-100,.bg-purple-100) {
+  background-color:var(--sbp-soft)!important;
+   background-image:none!important;border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.border-slate-100,.border-slate-200,.border-slate-300,
+    .border-indigo-100,.border-indigo-200,.border-violet-200,
+    .border-gray-200,.border-gray-300,.border-white) {
+  border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.text-slate-950,.text-slate-900,.text-slate-800,.text-slate-700,
+    .text-slate-600,.text-gray-900,.text-gray-800,.text-gray-700,
+    .text-indigo-900,.text-indigo-800) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.text-slate-500,.text-slate-400,.text-slate-300,.text-slate-200,
+    .text-gray-500,.text-gray-400,.text-gray-300,
+    .text-indigo-500,.text-indigo-600,.text-indigo-700,
+    .text-violet-600,.text-purple-600) {
+  color:var(--sbp-muted)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(h1,h2,h3,h4,h5,h6,legend,
+    .notification-title-stack>strong,.settings-reference-copy strong,
+    .drawer-head strong,.drawer-install-copy strong,
+    .journal-ref-name,.journal-ref-note-view strong,
+    .assessment-student-main strong,.schedule-ref-subject,
+    .home-ref-lesson-main strong,.home-ref-notification-copy strong,
+    .support-msg strong,.release-card h3,.release-card h4,.college-card h2) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.settings-reference-summary small,.settings-reference-copy small,
+    .settings-reference-status,.drawer-note,.drawer-install-copy small,
+    .notification-item-body>p,.notification-author,.notification-item-actions>span,
+    .roster-person-text span,.leadership-card span,.journal-ref-row small,
+    .journal-ref-index,.journal-history-row span,.release-card time,
+    .release-translation,.schedule-ref-meta span,.schedule-ref-meta small,
+    .schedule-ref-progress span,.home-ref-student-line,.home-ref-date span,
+    .home-ref-lesson-meta span,.home-ref-lesson-meta strong,.home-ref-break-main,
+    .support-msg span,.support-intro p,.support-thread-btn p,.sp-meta,
+    .college-card p,.college-intro,.college-city) {
+  color:var(--sbp-muted)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,textarea,[contenteditable="true"],.settings-group-form input,
+    .notification-composer input,.notification-composer textarea,
+    .support-compose textarea,.student-profile-field input) {
+  color-scheme:dark;background-color:var(--sbp-sunken)!important;
+   background-image:none!important;color:var(--sbp-ink)!important;
+   border:1px solid var(--sbp-line)!important;box-shadow:none!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(input::placeholder,textarea::placeholder,
+    .student-profile-field input::placeholder) {
+  color:var(--sbp-muted)!important;opacity:1!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(input[type="checkbox"],input[type="radio"],input[type="range"]) {
+  accent-color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(select option,.mini-calendar-day,.calendar-dropdown option) {
+  color:var(--sbp-ink)!important;background-color:var(--sbp-surface)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(input[type="file"]::file-selector-button) {
+  background:var(--sbp-raised);color:var(--sbp-ink);
+   border:1px solid var(--sbp-line);border-radius:9px;padding:7px 10px;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(button:disabled,.device-mode-btn:disabled) {
+  opacity:.64;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.drawer-nav-section>button:hover,.settings-reference-summary:hover,
+    .mini-calendar-day:not(:disabled):hover,.journal-ref-row:hover,
+    .roster-person-card:hover,.support-thread-btn:hover,
+    .notification-item:hover,.calendar-trigger:hover,.secondary:hover) {
+  background-color:var(--sbp-raised)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.primary,.primary-wide,.settings-reference-save,
+    .bg-indigo-600,.bg-indigo-500,.bg-violet-600,
+    .notification-composer button[type="submit"],
+    .support-compose button[type="submit"],
+    .sbp-banner-actions button:last-child) {
+  background-color:var(--sbp-accent)!important;
+   background-image:none!important;color:var(--sbp-accent-ink)!important;
+   border-color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.primary :is(span,strong,i,.text-white),
+    .primary-wide :is(span,strong,i,.text-white),
+    .bg-indigo-600 :is(span,strong,i,.text-white),
+    .settings-reference-save :is(span,strong,i,.text-white)) {
+  color:var(--sbp-accent-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.primary:hover,.primary-wide:hover,
+    .settings-reference-save:hover,.bg-indigo-600:hover,
+    .sbp-banner-actions button:last-child:hover) {
+  background-color:#d0c6ff!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.secondary,.bg-slate-100,.bg-slate-50,.device-mode-btn,
+    .sbp-banner-actions button:not(:last-child),.sbp-banner-file-label,
+    .sbp-theme-options button,.sbp-banner-dialog-header>button) {
+  background-color:var(--sbp-raised)!important;color:var(--sbp-ink)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-theme-options button[aria-pressed="true"],
+    .device-mode-btn.active,.journal-section-tabs button.active,
+    .schedule-ref-week-switch button.active,.schedule-ref-days button.active,
+    #bottom-nav button.active,.home-lesson-state-badge.next,
+    #home-schedule-toggle) {
+  background-color:var(--sbp-tint)!important;color:var(--sbp-accent)!important;
+   border-color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-theme-options button[aria-pressed="true"] :is(i,span),
+    .device-mode-btn.active :is(i,span,strong),
+    .schedule-ref-days button.active :is(span,strong),
+    #bottom-nav button.active :is(i,span)) {
+  color:inherit!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-lesson-card.current,.schedule-ref-row.current .schedule-ref-card,
+    .home-day-status.lesson,.home-ref-lesson-card.lesson) {
+  background-color:var(--sbp-green-soft)!important;
+   border-color:var(--sbp-green-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-lesson-card.current,.schedule-ref-row.current .schedule-ref-card) {
+  border-left:4px solid var(--sbp-green)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-lesson-card.current .home-ref-lesson-main strong,
+    .schedule-ref-row.current .schedule-ref-subject) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.schedule-ref-state.current,.home-ref-live-badge,.home-ref-progress-remaining,
+    .home-day-status.lesson .home-day-status-timer>strong) {
+  color:var(--sbp-green)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.schedule-ref-row.current .schedule-ref-number) {
+  background:var(--sbp-green)!important;color:#11251e!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.schedule-ref-row.current .schedule-ref-number :is(span,strong,i)) {
+  color:#11251e!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.home-ref-lesson-card.cancelled,.schedule-ref-row.cancelled .schedule-ref-card,
+    .home-ref-lesson-card.absent) {
+  background-color:var(--sbp-danger-soft)!important;
+   border-color:#79404e!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="offline"],
+    .system-status-banner[data-kind="warning"]) {
+  background-color:var(--sbp-warning-soft)!important;
+   border-color:#7e6039!important;color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="error"],
+    #toast[data-type="error"]>div) {
+  background-color:var(--sbp-danger-soft)!important;
+   border-color:#79404e!important;color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="success"]) {
+  background-color:var(--sbp-green-soft)!important;
+   border-color:var(--sbp-green-line)!important;color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="offline"] .system-status-icon,
+    .system-status-banner[data-kind="warning"] .system-status-icon) {
+  background-color:#624724!important;color:var(--sbp-warning)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="error"] .system-status-icon) {
+  background-color:#67323d!important;color:var(--sbp-danger)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-banner[data-kind="success"] .system-status-icon) {
+  background-color:var(--sbp-green-soft)!important;color:var(--sbp-green)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.system-status-copy strong,.system-status-copy span) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.app-update-bar,.system-status-banner) {
+  border-color:var(--sbp-line)!important;
+   color:var(--sbp-ink)!important;box-shadow:var(--sbp-shadow)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.app-update-bar,.app-update-copy) {
+  background-color:var(--sbp-raised)!important;color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.app-update-copy strong,.app-update-copy span) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.mini-calendar-day.today,.calendar-dropdown .today) {
+  border-color:var(--sbp-accent)!important;color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.mini-calendar-day.selected,.calendar-dropdown .selected) {
+  background-color:var(--sbp-tint)!important;color:var(--sbp-accent)!important;
+   border-color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.mini-calendar-day.muted,.mini-calendar-day.weekend,.calendar-dropdown .disabled) {
+  color:var(--sbp-muted)!important;opacity:.64;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-cover-banner) {
+  background:linear-gradient(120deg,#252043,#332b50 55%,#202943)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-roster-icon) {
+  background:var(--sbp-tint)!important;color:var(--sbp-accent)!important;
+   border:4px solid var(--sbp-page)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-banner-edit) {
+  background:rgba(23,27,43,.92)!important;color:var(--sbp-ink)!important;
+   border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-banner-dialog) {
+  color-scheme:dark!important;background-color:var(--sbp-surface)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.sbp-banner-slider-label input[type="range"]) {
+  accent-color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.gt-share-button,.notification-type-chip,.notification-item-icon,
+    .settings-reference-icon,.drawer-nav-section>button>i,
+    .college-icon,.release-notes-icon) {
+  color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.gt-pinned-announcement,.gt-pin-card) {
+  border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.college-quick a,.college-links a,.college-contact-grid a,
+    .sbp-brand,a[href]:not([class])) {
+  color:var(--sbp-accent)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.college-hero h1,.college-card h2,.college-leaders strong,
+    .college-contact-grid strong) {
+  color:var(--sbp-ink)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.college-specialties details,.college-leaders>div,.college-life>div,
+    .college-timeline li) {
+  border-color:var(--sbp-line)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(.college-specialties summary,.college-count,.college-expand,
+    .college-leaders small,.college-contact-grid small) {
+  color:var(--sbp-muted)!important;
+}
+
+:root:root[data-sbp-theme="dark"] body.sbp-redesign :is(:focus-visible) {
+  outline:2px solid var(--sbp-accent)!important;outline-offset:3px;
+}
