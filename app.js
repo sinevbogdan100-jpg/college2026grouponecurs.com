@@ -1501,6 +1501,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             deputyAvatar: '',
             groupIcon: 'user-group',
             groupAvatar: '',
+            homeBanner: '',
+            groupBanner: '',
+            homeBannerPosition: 50,
+            groupBannerPosition: 50,
             studentCount: 19
         };
 
@@ -1517,6 +1521,133 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const avatar = String(value || '');
             return /^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(avatar) && avatar.length <= 40000 ? avatar : '';
         }
+
+        function normalizeGroupBanner(value) {
+            const image = String(value || '');
+            return /^data:image\/(?:jpeg|png|webp);base64,/i.test(image) && image.length <= 125000 ? image : '';
+        }
+        function normalizeBannerPosition(value) {
+            return Number.isFinite(Number(value)) ? Math.min(100, Math.max(0, Number(value))) : 50;
+        }
+        function bannerText(ru, kz) { return currentLang() === 'kz' ? kz : ru; }
+        let bannerEditorKind = 'home';
+        let bannerEditorDraft = '';
+        let bannerEditorPosition = 50;
+        function renderGroupBanners(info = getGroupInfo()) {
+            for (const kind of ['home','group']) {
+                const container = document.getElementById('sbp-' + kind + '-banner');
+                if (!container) continue;
+                const image = normalizeGroupBanner(info[kind + 'Banner']);
+                const position = normalizeBannerPosition(info[kind + 'BannerPosition']);
+                const img = container.querySelector('img');
+                if (img) {
+                    img.hidden = !image;
+                    if (image) img.src = image;
+                    else img.removeAttribute('src');
+                    img.style.objectPosition = 'center ' + position + '%';
+                }
+                container.classList.toggle('has-image', !!image);
+                const edit = container.querySelector('.sbp-banner-edit');
+                if (edit) edit.hidden = !canEditGroupInfo();
+            }
+            const rosterIcon = document.getElementById('group-icon-roster');
+            if (rosterIcon) {
+                const avatar = normalizeLeaderAvatar(info.groupAvatar);
+                rosterIcon.innerHTML = avatar ? '<img src="' + avatar + '" alt="">' : '<i class="fa-solid fa-' + normalizeGroupIcon(info.groupIcon) + '"></i>';
+                rosterIcon.disabled = !canEditGroupInfo();
+            }
+        }
+        window.openBannerEditor = function(kind) {
+            if (!canEditGroupInfo() || !['home','group'].includes(kind)) return;
+            bannerEditorKind = kind;
+            const info = getGroupInfo();
+            bannerEditorDraft = normalizeGroupBanner(info[kind + 'Banner']);
+            bannerEditorPosition = normalizeBannerPosition(info[kind + 'BannerPosition']);
+            const modal = document.getElementById('sbp-banner-editor');
+            if (!modal) return;
+            modal.hidden = false;
+            document.getElementById('sbp-banner-editor-title').textContent = kind === 'home'
+                ? bannerText('Баннер главной', 'Басты беттің баннері')
+                : bannerText('Баннер группы', 'Топ баннері');
+            document.getElementById('sbp-banner-file').value = '';
+            updateBannerEditorPreview();
+        };
+        window.closeBannerEditor = function() {
+            document.getElementById('sbp-banner-editor').hidden = true;
+        };
+        function updateBannerEditorPreview() {
+            const preview = document.getElementById('sbp-banner-editor-preview');
+            const img = preview?.querySelector('img');
+            if (img) {
+                img.hidden = !bannerEditorDraft;
+                if (bannerEditorDraft) img.src = bannerEditorDraft;
+                else img.removeAttribute('src');
+                img.style.objectPosition = 'center ' + bannerEditorPosition + '%';
+            }
+            if (preview) preview.classList.toggle('has-image', !!bannerEditorDraft);
+            const slider = document.getElementById('sbp-banner-position');
+            if (slider) slider.value = String(bannerEditorPosition);
+        }
+        window.setBannerPosition = function(value) {
+            bannerEditorPosition = normalizeBannerPosition(value);
+            updateBannerEditorPreview();
+        };
+        window.removeBannerImage = function() {
+            bannerEditorDraft = '';
+            updateBannerEditorPreview();
+        };
+        window.chooseBannerImage = async function(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/') || file.size > 8 * 1024 * 1024) {
+                showToast(bannerText('Выберите изображение до 8 МБ', '8 МБ-қа дейінгі суретті таңдаңыз'));
+                input.value = ''; return;
+            }
+            try {
+                const url = URL.createObjectURL(file);
+                const image = new Image();
+                try {
+                    await new Promise((resolve,reject) => {
+                        image.onload = resolve; image.onerror = reject; image.src = url;
+                    });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 960; canvas.height = 320;
+                    const ctx = canvas.getContext('2d');
+                    const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+                    const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
+                    ctx.drawImage(image, (960-w)/2, (320-h)/2, w, h);
+                    let output = '';
+                    for (const quality of [0.75,0.60,0.45,0.30,0.20]) {
+                        output = canvas.toDataURL('image/jpeg', quality);
+                        if (output.length <= 115000) break;
+                    }
+                    if (output.length > 125000) throw new Error('large');
+                    bannerEditorDraft = output;
+                    updateBannerEditorPreview();
+                } finally { URL.revokeObjectURL(url); }
+            } catch (e) {
+                showToast(bannerText('Не удалось обработать изображение', 'Суретті өңдеу мүмкін болмады'));
+            }
+            input.value = '';
+        };
+        window.saveBannerImage = async function() {
+            if (!canEditGroupInfo()) return;
+            const btn = document.getElementById('sbp-banner-save');
+            if (btn) btn.disabled = true;
+            try {
+                const info = getGroupInfo();
+                const next = {...info, [bannerEditorKind + 'Banner']: bannerEditorDraft,
+                    [bannerEditorKind + 'BannerPosition']: bannerEditorPosition};
+                if (new Blob([JSON.stringify(next)]).size > 850000) throw new Error('large');
+                saveGroupInfoLocally(next);
+                const ok = await persistGroupInfoToCloud(next);
+                closeBannerEditor();
+                showToast(ok ? bannerText('Баннер сохранён', 'Баннер сақталды')
+                    : bannerText('Баннер сохранён только на устройстве', 'Баннер тек құрылғыда сақталды'));
+            } catch (e) {
+                showToast(bannerText('Не удалось сохранить баннер', 'Баннерді сақтау мүмкін болмады'));
+            } finally { if (btn) btn.disabled = false; }
+        };
 
         function readLocalGroupInfo() {
             try {
@@ -1590,6 +1721,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             });
             renderLeaderAvatars(info);
             renderGroupIcon(info);
+            renderGroupBanners(info);
             loadGroupInfoToAdminForm();
         }
 
@@ -1604,6 +1736,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 deputyAvatar: normalizeLeaderAvatar(data.deputyAvatar),
                 groupIcon: normalizeGroupIcon(data.groupIcon),
                 groupAvatar: normalizeLeaderAvatar(data.groupAvatar),
+                homeBanner: normalizeGroupBanner(data.homeBanner),
+                groupBanner: normalizeGroupBanner(data.groupBanner),
+                homeBannerPosition: normalizeBannerPosition(data.homeBannerPosition),
+                groupBannerPosition: normalizeBannerPosition(data.groupBannerPosition),
                 studentCount: Number.isFinite(Number(data.studentCount)) ? Number(data.studentCount) : DEFAULT_GROUP_INFO.studentCount
             };
         }
@@ -2410,6 +2546,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             updateGroupAnnouncements(notificationsCache);
             if (!scheduleAllowed) window.closeScheduleBellEditor?.();
             document.body.classList.toggle('group-info-edit-mode', groupInfoAllowed);
+            renderGroupBanners();
             document.body.classList.toggle('students-edit-mode', studentsAllowed);
 
             const hint = document.getElementById('journal-admin-hint');
