@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'dark-mode.css'
+      - 'compact-layout.css'
+      - 'tests/compact-layout.test.cjs'
+      - 'tests/compact-layout-browser.cjs'
       - 'redesign.js'
       - 'redesign.css'
       - 'app.js'
@@ -18,6 +21,9 @@ on:
     branches: [main]
     paths:
       - 'dark-mode.css'
+      - 'compact-layout.css'
+      - 'tests/compact-layout.test.cjs'
+      - 'tests/compact-layout-browser.cjs'
       - 'redesign.js'
       - 'redesign.css'
       - 'app.js'
@@ -39,11 +45,11 @@ jobs:
         with:
           node-version: '22'
       - name: Check theme state, bilingual release and contrast palette
-        run: node --test tests/dark-mode.test.cjs
+        run: node --test tests/dark-mode.test.cjs tests/compact-layout.test.cjs
       - name: Run existing website and schedule regression tests
         # Legacy group-tools test requires optional canvas; notification-center test has an unrelated baseline failure.
         run: node --test tests/action-history.test.cjs tests/app-update.test.cjs tests/banners.test.cjs tests/release-notes.test.cjs tests/schedule-dates.test.cjs tests/site-improvements.test.cjs
       - name: Install browser test dependency
         run: npm install --no-save --no-package-lock --ignore-scripts playwright-core@1.56.1
       - name: Check mobile and desktop CSS in Chrome
-        run: node tests/dark-mode-browser.cjs
+        run: node tests/dark-mode-browser.cjs && node tests/compact-layout-browser.cjs
