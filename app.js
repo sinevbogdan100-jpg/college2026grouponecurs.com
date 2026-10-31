@@ -61,7 +61,7 @@ let homeScheduleExpanded=false;
 let homeOverviewStudyDate='';
 const MOBILE_FAST_MODE = window.matchMedia?.('(max-width: 767px), (hover: none) and (pointer: coarse)')?.matches === true;
 window.__MOBILE_FAST_MODE__ = MOBILE_FAST_MODE;
-window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.06-admin-tap-2026-10-17-v1';
+window.__SITE_BUILD__ = document.querySelector('meta[name="app-build"]')?.content || 'step19.09-unified-dark-mode-2026-10-31-v1';
 window.__journalDateInitialized = false;
 const FIREBASE_DIAGNOSTICS_ENABLED = new URLSearchParams(location.search).get('debug') === '1';
 console.info('[SBP Information] build', window.__SITE_BUILD__);
