@@ -56,7 +56,7 @@ test('switching light, dark and system theme persists and updates accessibility 
  const events={},mediaEvents={};
  const mq={matches:false,addEventListener(event,fn){mediaEvents[event]=fn;}};
  const makeButton=value=>({dataset:{sbpTheme:value},attributes:{},
-  getAttribute(key){return this.attributes[key]},setAttribute(key,value){this.attributes[key]=value;}});
+  getAttribute(key){return this.attributes[key]},setAttribute(key,value){this.attributes[key]=value;},addEventListener(){} });
  const buttons=['light','dark','system'].map(makeButton);
  const meta={attributes:{content:'#fafafe'},getAttribute(k){return this.attributes[k]},
   setAttribute(k,v){this.attributes[k]=v;}};
