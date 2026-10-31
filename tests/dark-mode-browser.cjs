@@ -9,7 +9,7 @@ function styleTag(name,media=''){
  return '<style '+(media?'media="'+media+'"':'')+' data-css="'+name+'">'+load(name)+'</style>';
 }
 const styles=['tailwind-local.css','style.css','desktop.css','gradients.css','responsive-fit.css',
-'soft-frames.css','home-overview.css','group-banners.css','redesign.css','site-improvements.css','dark-mode.css']
+'soft-frames.css','home-overview.css','group-banners.css','redesign.css','site-improvements.css','dark-mode.css','compact-layout.css']
 .map(x=>styleTag(x,x==='desktop.css'?'(min-width: 768px)':'')).join('');
 const fixture='<!doctype html><html lang="ru" data-sbp-theme="dark"><head><meta charset="utf-8">'+styles+'</head>'+
 '<body class="sbp-redesign">'+

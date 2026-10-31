@@ -22,8 +22,8 @@ test('new dark theme is only enabled by resolved dark setting',()=>{
  assert.ok((dark.match(/:root:root\[data-sbp-theme="dark"\]/g)||[]).length>30);
  assert.match(html,/dark-mode\.css\?v=20261031-dark-mode-v1/);
  assert.match(sw,/dark-mode\.css\?v=20261031-dark-mode-v1/);
- assert.match(html,/step19\.09-unified-dark-mode-2026-10-31-v1/);
- assert.match(sw,/sbp-shell-20261031-dark-mode-v1/);
+ assert.match(html,/step19\.10-compact-layout-2026-10-31-v1/);
+ assert.match(sw,/sbp-shell-20261031-compact-v1/);
  assert.match(html,/redesign\.css\?v=20261031-dark-mode-v1/);
  assert.match(sw,/redesign\.css\?v=20261031-dark-mode-v1/);
  assert.match(app,/redesign\.js\?v=20261031-dark-mode-v1/);

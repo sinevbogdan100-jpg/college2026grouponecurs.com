@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261031-dark-mode-v1';
+const CACHE_NAME = 'sbp-shell-20261031-compact-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './site-improvements.css?v=20261017-admin-tap-v1',
@@ -7,6 +7,7 @@ const CORE_ASSETS = [
   './admin-drawer.js?v=20261017-admin-tap-v1',
   './redesign.css?v=20261031-dark-mode-v1',
   './dark-mode.css?v=20261031-dark-mode-v1',
+  './compact-layout.css?v=20261031-compact-v1',
   './redesign.js?v=20261031-dark-mode-v1',
   './college-data.js?v=20261017-admin-tap-v1',
   './college-illustration.svg',
@@ -20,8 +21,8 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './soft-frames.css?v=20261017-admin-tap-v1',
-  './release-notes.js?v=20261031-dark-mode-v1',
-  './release-data.js?v=20261031-dark-mode-v1',
+  './release-notes.js?v=20261031-compact-v1',
+  './release-data.js?v=20261031-compact-v1',
   './app.js?v=20261031-dark-mode-v1',
   './style.css?v=20261017-admin-tap-v1',
   './desktop.css?v=20261017-admin-tap-v1',
