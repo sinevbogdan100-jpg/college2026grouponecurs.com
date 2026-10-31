@@ -29,9 +29,17 @@ export function initRedesign(){
  if(!['light','dark','system'].includes(selected))selected='light';
  const choice=()=>selected;
  function applyTheme(){
-  const theme=resolvedTheme(choice(),query?.matches);document.documentElement.dataset.sbpTheme=theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#13151e':'#fafafe');
-  document.querySelectorAll('button[data-sbp-theme]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sbpTheme===choice())));
+  const theme=resolvedTheme(choice(),query?.matches);
+  const root=document.documentElement;
+  if(root.dataset.sbpTheme!==theme)root.dataset.sbpTheme=theme;
+  if(root.style.colorScheme!==theme)root.style.colorScheme=theme;
+  const meta=document.querySelector('meta[name="theme-color"]');
+  const themeColor=theme==='dark'?'#0b0f18':'#fafafe';
+  if(meta?.getAttribute('content')!==themeColor)meta?.setAttribute('content',themeColor);
+  document.querySelectorAll('button[data-sbp-theme]').forEach(button=>{
+    const pressed=String(button.dataset.sbpTheme===choice());
+    if(button.getAttribute('aria-pressed')!==pressed)button.setAttribute('aria-pressed',pressed);
+  });
  }
  function refresh(){
   const w=redesignLabels(lang());document.querySelectorAll('[data-sbp-text]').forEach(n=>{if(w[n.dataset.sbpText])n.textContent=w[n.dataset.sbpText];});
