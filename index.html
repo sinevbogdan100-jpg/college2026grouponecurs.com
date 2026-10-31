@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBP Information</title>
-    <meta name="app-build" content="step19.07-group-banners-2026-10-31-v1">
+    <meta name="app-build" content="step19.08-banner-language-fix-2026-10-31-v1">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261017-admin-tap-v1">
@@ -148,7 +148,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261031-group-banners-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261031-banner-freeze-fix-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261017-admin-tap-v1">
     <link rel="modulepreload" href="utils.js?v=20261017-admin-tap-v1">
     <link rel="modulepreload" href="schedule.js?v=20261017-admin-tap-v1">
@@ -1036,8 +1036,8 @@
         </section>
     </div>
 
-    <script type="module" src="release-notes.js?v=20261031-group-banners-v1"></script>
-    <script type="module" src="app.js?v=20261031-group-banners-v1"></script>
+    <script type="module" src="release-notes.js?v=20261031-banner-freeze-fix-v1"></script>
+    <script type="module" src="app.js?v=20261031-banner-freeze-fix-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -1126,9 +1126,20 @@
 </div>
 <script>
 (function(){
- const translateBanners=()=>{const kz=document.documentElement.lang==='kk'||document.documentElement.lang==='kz'||localStorage.getItem('toe_ui_language')==='kz'||localStorage.getItem('sbp_lang')==='kz';document.querySelectorAll('[data-ru][data-kz]').forEach(el=>el.textContent=el.dataset[kz?'kz':'ru']);document.querySelectorAll('[data-aria-ru][data-aria-kz]').forEach(el=>el.setAttribute('aria-label',el.dataset[kz?'ariaKz':'ariaRu']));};
- new MutationObserver(translateBanners).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
- document.addEventListener('click',e=>{if(e.target.closest('[data-sbp-lang]'))setTimeout(translateBanners,0)});
+ // Avoid observing <html lang>: i18n writes it on every translation pass.
+ // Observing it and rewriting label nodes caused an endless MutationObserver loop.
+ const translateBanners=()=>{
+   const kz=localStorage.getItem('toe_ui_language')==='kz';
+   document.querySelectorAll('[data-ru][data-kz]').forEach(el=>{
+     const copy=el.dataset[kz?'kz':'ru'];
+     if(el.textContent!==copy)el.textContent=copy;
+   });
+   document.querySelectorAll('[data-aria-ru][data-aria-kz]').forEach(el=>{
+     const copy=el.dataset[kz?'ariaKz':'ariaRu'];
+     if(el.getAttribute('aria-label')!==copy)el.setAttribute('aria-label',copy);
+   });
+ };
+ window.refreshBannerLabels=translateBanners;
  translateBanners();
 })();
 </script>
