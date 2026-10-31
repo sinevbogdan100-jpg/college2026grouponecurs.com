@@ -1533,6 +1533,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         let bannerEditorKind = 'home';
         let bannerEditorDraft = '';
         let bannerEditorPosition = 50;
+        let bannerProcessing = false;
         function renderGroupBanners(info = getGroupInfo()) {
             for (const kind of ['home','group']) {
                 const container = document.getElementById('sbp-' + kind + '-banner');
@@ -1542,9 +1543,9 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 const img = container.querySelector('img');
                 if (img) {
                     img.hidden = !image;
-                    if (image) img.src = image;
-                    else img.removeAttribute('src');
-                    img.style.objectPosition = 'center ' + position + '%';
+                    if (image && img.getAttribute('src') !== image) img.src = image;
+                    else if (!image) img.removeAttribute('src');
+                    img.style.objectPosition = position + '% ' + position + '%';
                 }
                 container.classList.toggle('has-image', !!image);
                 const edit = container.querySelector('.sbp-banner-edit');
@@ -1553,7 +1554,8 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const rosterIcon = document.getElementById('group-icon-roster');
             if (rosterIcon) {
                 const avatar = normalizeLeaderAvatar(info.groupAvatar);
-                rosterIcon.innerHTML = avatar ? '<img src="' + avatar + '" alt="">' : '<i class="fa-solid fa-' + normalizeGroupIcon(info.groupIcon) + '"></i>';
+                const markup = avatar ? '<img src="' + avatar + '" alt="">' : '<i class="fa-solid fa-' + normalizeGroupIcon(info.groupIcon) + '"></i>';
+                if (rosterIcon.innerHTML !== markup) rosterIcon.innerHTML = markup;
                 rosterIcon.disabled = !canEditGroupInfo();
             }
         }
@@ -1566,11 +1568,15 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const modal = document.getElementById('sbp-banner-editor');
             if (!modal) return;
             modal.hidden = false;
-            document.getElementById('sbp-banner-editor-title').textContent = kind === 'home'
-                ? bannerText('Баннер главной', 'Басты беттің баннері')
-                : bannerText('Баннер группы', 'Топ баннері');
+            window.refreshBannerEditorLanguage();
             document.getElementById('sbp-banner-file').value = '';
             updateBannerEditorPreview();
+        };
+        window.refreshBannerEditorLanguage = function() {
+            const title = document.getElementById('sbp-banner-editor-title');
+            if (title) title.textContent = bannerEditorKind === 'home'
+                ? bannerText('Баннер главной', 'Басты беттің баннері')
+                : bannerText('Баннер группы', 'Топ баннері');
         };
         window.closeBannerEditor = function() {
             document.getElementById('sbp-banner-editor').hidden = true;
@@ -1580,13 +1586,15 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const img = preview?.querySelector('img');
             if (img) {
                 img.hidden = !bannerEditorDraft;
-                if (bannerEditorDraft) img.src = bannerEditorDraft;
-                else img.removeAttribute('src');
-                img.style.objectPosition = 'center ' + bannerEditorPosition + '%';
+                if (bannerEditorDraft && img.getAttribute('src') !== bannerEditorDraft) img.src = bannerEditorDraft;
+                else if (!bannerEditorDraft) img.removeAttribute('src');
+                img.style.objectPosition = bannerEditorPosition + '% ' + bannerEditorPosition + '%';
             }
             if (preview) preview.classList.toggle('has-image', !!bannerEditorDraft);
             const slider = document.getElementById('sbp-banner-position');
             if (slider) slider.value = String(bannerEditorPosition);
+            const save = document.getElementById('sbp-banner-save');
+            if (save) save.disabled = bannerProcessing;
         }
         window.setBannerPosition = function(value) {
             bannerEditorPosition = normalizeBannerPosition(value);
@@ -1599,10 +1607,13 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
         window.chooseBannerImage = async function(input) {
             const file = input?.files?.[0];
             if (!file) return;
-            if (!file.type.startsWith('image/') || file.size > 8 * 1024 * 1024) {
-                showToast(bannerText('Выберите изображение до 8 МБ', '8 МБ-қа дейінгі суретті таңдаңыз'));
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) {
+                showToast(bannerText('Выберите JPG, PNG или WebP до 8 МБ', '8 МБ-қа дейінгі JPG, PNG немесе WebP суретін таңдаңыз'));
                 input.value = ''; return;
             }
+            if (bannerProcessing) return;
+            bannerProcessing = true;
+            updateBannerEditorPreview();
             try {
                 const url = URL.createObjectURL(file);
                 const image = new Image();
@@ -1610,28 +1621,37 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                     await new Promise((resolve,reject) => {
                         image.onload = resolve; image.onerror = reject; image.src = url;
                     });
+                    if (!image.naturalWidth || !image.naturalHeight ||
+                        image.naturalWidth * image.naturalHeight > 60000000) throw new Error('invalid-dimensions');
                     const canvas = document.createElement('canvas');
-                    canvas.width = 960; canvas.height = 320;
                     const ctx = canvas.getContext('2d');
-                    const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
-                    const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
-                    ctx.drawImage(image, (960-w)/2, (320-h)/2, w, h);
+                    if (!ctx) throw new Error('canvas-unavailable');
                     let output = '';
-                    for (const quality of [0.75,0.60,0.45,0.30,0.20]) {
-                        output = canvas.toDataURL('image/jpeg', quality);
-                        if (output.length <= 115000) break;
+                    outer: for (const maxSide of [960, 800, 640, 480]) {
+                        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+                        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+                        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+                        ctx.fillStyle = '#ede6ff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        for (const quality of [0.75, 0.60, 0.45, 0.30, 0.20]) {
+                            output = canvas.toDataURL('image/jpeg', quality);
+                            if (output.length <= 115000) break outer;
+                        }
                     }
                     if (output.length > 125000) throw new Error('large');
                     bannerEditorDraft = output;
-                    updateBannerEditorPreview();
                 } finally { URL.revokeObjectURL(url); }
             } catch (e) {
                 showToast(bannerText('Не удалось обработать изображение', 'Суретті өңдеу мүмкін болмады'));
+            } finally {
+                bannerProcessing = false;
+                input.value = '';
+                updateBannerEditorPreview();
             }
-            input.value = '';
         };
         window.saveBannerImage = async function() {
-            if (!canEditGroupInfo()) return;
+            if (!canEditGroupInfo() || bannerProcessing) return;
             const btn = document.getElementById('sbp-banner-save');
             if (btn) btn.disabled = true;
             try {
@@ -3929,6 +3949,7 @@ window.setInterfaceLanguage = function(lang) {
     localStorage.setItem(UI_LANG_KEY, lang === 'kz' ? 'kz' : 'ru');
     updateLanguageButtons();
     applyKzTranslations();
+    window.refreshBannerEditorLanguage?.();
     renderHomeDayTimeline();
     renderSchedule(getCurrentScheduleDay());
     renderMiniCalendar();
