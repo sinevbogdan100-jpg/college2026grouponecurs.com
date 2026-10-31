@@ -1,0 +1,36 @@
+name: Banner regression tests
+
+on:
+  pull_request:
+    paths:
+      - 'app.js'
+      - 'index.html'
+      - 'group-banners.css'
+      - 'release-data.js'
+      - 'release-notes.js'
+      - 'notifications-sw.js'
+      - 'tests/banners.test.cjs'
+      - '.github/workflows/banner-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'index.html'
+      - 'group-banners.css'
+      - 'release-data.js'
+      - 'release-notes.js'
+      - 'notifications-sw.js'
+      - 'tests/banners.test.cjs'
+      - '.github/workflows/banner-tests.yml'
+
+jobs:
+  banners:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test banner and release integration
+        run: node --test tests/banners.test.cjs

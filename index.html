@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBP Information</title>
-    <meta name="app-build" content="step19.06-admin-tap-2026-10-17-v1">
+    <meta name="app-build" content="step19.07-group-banners-2026-10-31-v1">
     <meta name="application-name" content="SBP Information">
     <meta name="apple-mobile-web-app-title" content="SBP Information">
     <link rel="manifest" href="manifest.webmanifest?v=20261017-admin-tap-v1">
@@ -148,7 +148,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="modulepreload" href="app.js?v=20261017-admin-tap-v1" fetchpriority="high">
+    <link rel="modulepreload" href="app.js?v=20261031-group-banners-v1" fetchpriority="high">
     <link rel="modulepreload" href="firebase.js?v=20261017-admin-tap-v1">
     <link rel="modulepreload" href="utils.js?v=20261017-admin-tap-v1">
     <link rel="modulepreload" href="schedule.js?v=20261017-admin-tap-v1">
@@ -158,6 +158,7 @@
 
 <link rel="stylesheet" href="soft-frames.css?v=20261017-admin-tap-v1">
 <link rel="stylesheet" href="home-overview.css?v=20261017-admin-tap-v1">
+<link rel="stylesheet" href="group-banners.css?v=20261031-group-banners-v1">
 <link rel="stylesheet" href="redesign.css?v=20261017-admin-tap-v1">
 <link rel="stylesheet" href="site-improvements.css?v=20261017-admin-tap-v1">
 </head>
@@ -430,6 +431,9 @@
 
         <main class="home-ref-shell">
             <section id="home-pinned-announcement" class="gt-pinned-announcement" data-i18n-skip hidden></section>
+            <section id="sbp-home-banner" class="sbp-cover-banner" aria-label="Баннер главной страницы" data-aria-ru="Баннер главной страницы" data-aria-kz="Басты беттің баннері">
+                <img alt="" hidden><button type="button" class="sbp-banner-edit" onclick="openBannerEditor('home')" hidden data-i18n-skip>✎ <span class="sbp-banner-edit-text" data-ru="Изменить баннер" data-kz="Баннерді өзгерту">Изменить баннер</span></button>
+            </section>
             <section class="home-ref-group-card">
                 <button type="button" id="group-icon-home" class="home-ref-group-icon" onclick="openGroupSettings()" disabled aria-disabled="true" aria-label="Изменить иконку группы"><i class="fa-solid fa-user-group"></i></button>
                 <div class="home-ref-group-copy">
@@ -685,6 +689,10 @@
                 <i class="fa-regular fa-bell"></i>
             </button>
         </div>
+        <section id="sbp-group-banner" class="sbp-cover-banner sbp-roster-cover" aria-label="Баннер группы" data-aria-ru="Баннер группы" data-aria-kz="Топ баннері">
+            <img alt="" hidden><button type="button" class="sbp-banner-edit" onclick="openBannerEditor('group')" hidden data-i18n-skip>✎ <span class="sbp-banner-edit-text" data-ru="Изменить баннер" data-kz="Баннерді өзгерту">Изменить баннер</span></button>
+        </section>
+        <button id="group-icon-roster" type="button" class="sbp-roster-icon" onclick="openGroupSettings()" disabled aria-label="Иконка группы" data-aria-ru="Иконка группы" data-aria-kz="Топ белгішесі"><i class="fa-solid fa-user-group"></i></button>
 
         <div class="section-skeleton section-skeleton-roster" aria-hidden="true">
             <div class="skeleton-grid skeleton-grid-3">
@@ -1028,8 +1036,8 @@
         </section>
     </div>
 
-    <script type="module" src="release-notes.js?v=20261017-admin-tap-v1"></script>
-    <script type="module" src="app.js?v=20261017-admin-tap-v1"></script>
+    <script type="module" src="release-notes.js?v=20261031-group-banners-v1"></script>
+    <script type="module" src="app.js?v=20261031-group-banners-v1"></script>
 
     <div id="report-preview-modal" onclick="if(event.target===this) closeReportPreview()" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
         <div class="report-preview-sheet w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
@@ -1107,6 +1115,23 @@
 })();
 </script>
 
+<div id="sbp-banner-editor" class="sbp-banner-modal" hidden data-i18n-skip role="dialog" aria-modal="true" aria-labelledby="sbp-banner-editor-title" onclick="if(event.target===this)closeBannerEditor()">
+    <div class="sbp-banner-dialog">
+        <div class="sbp-banner-dialog-header"><h2 id="sbp-banner-editor-title">Баннер</h2><button type="button" onclick="closeBannerEditor()" aria-label="Закрыть" data-aria-ru="Закрыть" data-aria-kz="Жабу">✕</button></div>
+        <div id="sbp-banner-editor-preview" class="sbp-cover-banner"><img alt="" hidden></div>
+        <label class="sbp-banner-file-label"><span data-ru="Выбрать изображение" data-kz="Суретті таңдау">Выбрать изображение</span><input id="sbp-banner-file" type="file" accept="image/*" onchange="chooseBannerImage(this)"></label>
+        <label class="sbp-banner-slider-label"><span data-ru="Положение изображения" data-kz="Суреттің орналасуы">Положение изображения</span><input id="sbp-banner-position" type="range" min="0" max="100" value="50" oninput="setBannerPosition(this.value)"></label>
+        <div class="sbp-banner-actions"><button type="button" onclick="removeBannerImage()" data-ru="Удалить изображение" data-kz="Суретті жою">Удалить изображение</button><button id="sbp-banner-save" type="button" onclick="saveBannerImage()" data-ru="Сохранить" data-kz="Сақтау">Сохранить</button></div>
+    </div>
+</div>
+<script>
+(function(){
+ const translateBanners=()=>{const kz=document.documentElement.lang==='kk'||document.documentElement.lang==='kz'||localStorage.getItem('toe_ui_language')==='kz'||localStorage.getItem('sbp_lang')==='kz';document.querySelectorAll('[data-ru][data-kz]').forEach(el=>el.textContent=el.dataset[kz?'kz':'ru']);document.querySelectorAll('[data-aria-ru][data-aria-kz]').forEach(el=>el.setAttribute('aria-label',el.dataset[kz?'ariaKz':'ariaRu']));};
+ new MutationObserver(translateBanners).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+ document.addEventListener('click',e=>{if(e.target.closest('[data-sbp-lang]'))setTimeout(translateBanners,0)});
+ translateBanners();
+})();
+</script>
 </body>
 </html>
 

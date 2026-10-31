@@ -1501,6 +1501,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             deputyAvatar: '',
             groupIcon: 'user-group',
             groupAvatar: '',
+            homeBanner: '',
+            groupBanner: '',
+            homeBannerPosition: 50,
+            groupBannerPosition: 50,
             studentCount: 19
         };
 
@@ -1517,6 +1521,153 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             const avatar = String(value || '');
             return /^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(avatar) && avatar.length <= 40000 ? avatar : '';
         }
+
+        function normalizeGroupBanner(value) {
+            const image = String(value || '');
+            return /^data:image\/(?:jpeg|png|webp);base64,/i.test(image) && image.length <= 125000 ? image : '';
+        }
+        function normalizeBannerPosition(value) {
+            return Number.isFinite(Number(value)) ? Math.min(100, Math.max(0, Number(value))) : 50;
+        }
+        function bannerText(ru, kz) { return currentLang() === 'kz' ? kz : ru; }
+        let bannerEditorKind = 'home';
+        let bannerEditorDraft = '';
+        let bannerEditorPosition = 50;
+        let bannerProcessing = false;
+        function renderGroupBanners(info = getGroupInfo()) {
+            for (const kind of ['home','group']) {
+                const container = document.getElementById('sbp-' + kind + '-banner');
+                if (!container) continue;
+                const image = normalizeGroupBanner(info[kind + 'Banner']);
+                const position = normalizeBannerPosition(info[kind + 'BannerPosition']);
+                const img = container.querySelector('img');
+                if (img) {
+                    img.hidden = !image;
+                    if (image && img.getAttribute('src') !== image) img.src = image;
+                    else if (!image) img.removeAttribute('src');
+                    img.style.objectPosition = position + '% ' + position + '%';
+                }
+                container.classList.toggle('has-image', !!image);
+                const edit = container.querySelector('.sbp-banner-edit');
+                if (edit) edit.hidden = !canEditGroupInfo();
+            }
+            const rosterIcon = document.getElementById('group-icon-roster');
+            if (rosterIcon) {
+                const avatar = normalizeLeaderAvatar(info.groupAvatar);
+                const markup = avatar ? '<img src="' + avatar + '" alt="">' : '<i class="fa-solid fa-' + normalizeGroupIcon(info.groupIcon) + '"></i>';
+                if (rosterIcon.innerHTML !== markup) rosterIcon.innerHTML = markup;
+                rosterIcon.disabled = !canEditGroupInfo();
+            }
+        }
+        window.openBannerEditor = function(kind) {
+            if (!canEditGroupInfo() || !['home','group'].includes(kind)) return;
+            bannerEditorKind = kind;
+            const info = getGroupInfo();
+            bannerEditorDraft = normalizeGroupBanner(info[kind + 'Banner']);
+            bannerEditorPosition = normalizeBannerPosition(info[kind + 'BannerPosition']);
+            const modal = document.getElementById('sbp-banner-editor');
+            if (!modal) return;
+            modal.hidden = false;
+            window.refreshBannerEditorLanguage();
+            document.getElementById('sbp-banner-file').value = '';
+            updateBannerEditorPreview();
+        };
+        window.refreshBannerEditorLanguage = function() {
+            const title = document.getElementById('sbp-banner-editor-title');
+            if (title) title.textContent = bannerEditorKind === 'home'
+                ? bannerText('Баннер главной', 'Басты беттің баннері')
+                : bannerText('Баннер группы', 'Топ баннері');
+        };
+        window.closeBannerEditor = function() {
+            document.getElementById('sbp-banner-editor').hidden = true;
+        };
+        function updateBannerEditorPreview() {
+            const preview = document.getElementById('sbp-banner-editor-preview');
+            const img = preview?.querySelector('img');
+            if (img) {
+                img.hidden = !bannerEditorDraft;
+                if (bannerEditorDraft && img.getAttribute('src') !== bannerEditorDraft) img.src = bannerEditorDraft;
+                else if (!bannerEditorDraft) img.removeAttribute('src');
+                img.style.objectPosition = bannerEditorPosition + '% ' + bannerEditorPosition + '%';
+            }
+            if (preview) preview.classList.toggle('has-image', !!bannerEditorDraft);
+            const slider = document.getElementById('sbp-banner-position');
+            if (slider) slider.value = String(bannerEditorPosition);
+            const save = document.getElementById('sbp-banner-save');
+            if (save) save.disabled = bannerProcessing;
+        }
+        window.setBannerPosition = function(value) {
+            bannerEditorPosition = normalizeBannerPosition(value);
+            updateBannerEditorPreview();
+        };
+        window.removeBannerImage = function() {
+            bannerEditorDraft = '';
+            updateBannerEditorPreview();
+        };
+        window.chooseBannerImage = async function(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024) {
+                showToast(bannerText('Выберите JPG, PNG или WebP до 8 МБ', '8 МБ-қа дейінгі JPG, PNG немесе WebP суретін таңдаңыз'));
+                input.value = ''; return;
+            }
+            if (bannerProcessing) return;
+            bannerProcessing = true;
+            updateBannerEditorPreview();
+            try {
+                const url = URL.createObjectURL(file);
+                const image = new Image();
+                try {
+                    await new Promise((resolve,reject) => {
+                        image.onload = resolve; image.onerror = reject; image.src = url;
+                    });
+                    if (!image.naturalWidth || !image.naturalHeight ||
+                        image.naturalWidth * image.naturalHeight > 60000000) throw new Error('invalid-dimensions');
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) throw new Error('canvas-unavailable');
+                    let output = '';
+                    outer: for (const maxSide of [960, 800, 640, 480]) {
+                        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+                        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+                        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+                        ctx.fillStyle = '#ede6ff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        for (const quality of [0.75, 0.60, 0.45, 0.30, 0.20]) {
+                            output = canvas.toDataURL('image/jpeg', quality);
+                            if (output.length <= 115000) break outer;
+                        }
+                    }
+                    if (output.length > 125000) throw new Error('large');
+                    bannerEditorDraft = output;
+                } finally { URL.revokeObjectURL(url); }
+            } catch (e) {
+                showToast(bannerText('Не удалось обработать изображение', 'Суретті өңдеу мүмкін болмады'));
+            } finally {
+                bannerProcessing = false;
+                input.value = '';
+                updateBannerEditorPreview();
+            }
+        };
+        window.saveBannerImage = async function() {
+            if (!canEditGroupInfo() || bannerProcessing) return;
+            const btn = document.getElementById('sbp-banner-save');
+            if (btn) btn.disabled = true;
+            try {
+                const info = getGroupInfo();
+                const next = {...info, [bannerEditorKind + 'Banner']: bannerEditorDraft,
+                    [bannerEditorKind + 'BannerPosition']: bannerEditorPosition};
+                if (new Blob([JSON.stringify(next)]).size > 850000) throw new Error('large');
+                saveGroupInfoLocally(next);
+                const ok = await persistGroupInfoToCloud(next);
+                closeBannerEditor();
+                showToast(ok ? bannerText('Баннер сохранён', 'Баннер сақталды')
+                    : bannerText('Баннер сохранён только на устройстве', 'Баннер тек құрылғыда сақталды'));
+            } catch (e) {
+                showToast(bannerText('Не удалось сохранить баннер', 'Баннерді сақтау мүмкін болмады'));
+            } finally { if (btn) btn.disabled = false; }
+        };
 
         function readLocalGroupInfo() {
             try {
@@ -1590,6 +1741,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             });
             renderLeaderAvatars(info);
             renderGroupIcon(info);
+            renderGroupBanners(info);
             loadGroupInfoToAdminForm();
         }
 
@@ -1604,6 +1756,10 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
                 deputyAvatar: normalizeLeaderAvatar(data.deputyAvatar),
                 groupIcon: normalizeGroupIcon(data.groupIcon),
                 groupAvatar: normalizeLeaderAvatar(data.groupAvatar),
+                homeBanner: normalizeGroupBanner(data.homeBanner),
+                groupBanner: normalizeGroupBanner(data.groupBanner),
+                homeBannerPosition: normalizeBannerPosition(data.homeBannerPosition),
+                groupBannerPosition: normalizeBannerPosition(data.groupBannerPosition),
                 studentCount: Number.isFinite(Number(data.studentCount)) ? Number(data.studentCount) : DEFAULT_GROUP_INFO.studentCount
             };
         }
@@ -2410,6 +2566,7 @@ console.info('[SBP Information] build', window.__SITE_BUILD__);
             updateGroupAnnouncements(notificationsCache);
             if (!scheduleAllowed) window.closeScheduleBellEditor?.();
             document.body.classList.toggle('group-info-edit-mode', groupInfoAllowed);
+            renderGroupBanners();
             document.body.classList.toggle('students-edit-mode', studentsAllowed);
 
             const hint = document.getElementById('journal-admin-hint');
@@ -3792,6 +3949,7 @@ window.setInterfaceLanguage = function(lang) {
     localStorage.setItem(UI_LANG_KEY, lang === 'kz' ? 'kz' : 'ru');
     updateLanguageButtons();
     applyKzTranslations();
+    window.refreshBannerEditorLanguage?.();
     renderHomeDayTimeline();
     renderSchedule(getCurrentScheduleDay());
     renderMiniCalendar();
