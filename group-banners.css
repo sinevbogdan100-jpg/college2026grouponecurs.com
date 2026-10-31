@@ -25,3 +25,16 @@
 .sbp-banner-actions button:last-child{background:#7656be;color:#fff}
 .sbp-banner-actions button:disabled{opacity:.6}
 @media(max-width:400px){.sbp-cover-banner{border-radius:16px;min-height:90px}.sbp-banner-edit{font-size:11px;padding:7px 9px}.sbp-roster-icon{width:66px;height:66px;min-width:66px}}
+
+/* Full-width placement within the desktop home dashboard grid. */
+#view-home .home-ref-shell > #sbp-home-banner { grid-column:1 / -1; min-width:0; }
+.sbp-banner-modal .sbp-banner-dialog { color-scheme:light; }
+html[data-sbp-theme="dark"] .sbp-banner-modal .sbp-banner-dialog {
+  color-scheme:dark;background:#222133;color:#f3effe;
+}
+html[data-sbp-theme="dark"] .sbp-banner-file-label,
+html[data-sbp-theme="dark"] .sbp-banner-actions button:not(:last-child),
+html[data-sbp-theme="dark"] .sbp-banner-dialog-header button {
+  color:#f3effe;background:#38314e;
+}
+html[data-sbp-theme="dark"] .sbp-roster-icon {border-color:#252137}
