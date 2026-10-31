@@ -25,9 +25,9 @@ test('banner controls, styles, release metadata and PWA cache are aligned', () =
   assert.match(sw, /group-banners\.css\?v=20261031-group-banners-v1/);
   assert.match(sw, /sbp-shell-20261031-compact-v1/);
   assert.match(html, /release-notes\.js\?v=20261031-compact-v1/);
-  assert.match(sw, /release-notes\.js\?v=20261031-dark-mode-v1/);
+  assert.match(sw, /release-notes\.js\?v=20261031-compact-v1/);
   assert.match(notes, /release-data\.js\?v=20261031-compact-v1/);
-  assert.match(sw, /release-data\.js\?v=20261031-dark-mode-v1/);
+  assert.match(sw, /release-data\.js\?v=20261031-compact-v1/);
   assert.match(releases, /version:'19\.10'/);
   assert.match(releases, /kz:\[/);
   assert.match(releases, /ru:\[/);
