@@ -18,22 +18,29 @@ test('banner controls, styles, release metadata and PWA cache are aligned', () =
   assert.match(html, /id="group-icon-roster"/);
   assert.match(html, /openBannerEditor\('home'\)/);
   assert.match(html, /openBannerEditor\('group'\)/);
-  assert.match(html, /step19\.07-group-banners-2026-10-31-v1/);
-  assert.match(html, /app\.js\?v=20261031-group-banners-v1/);
-  assert.match(sw, /app\.js\?v=20261031-group-banners-v1/);
+  assert.match(html, /step19\.08-banner-language-fix-2026-10-31-v1/);
+  assert.match(html, /app\.js\?v=20261031-banner-freeze-fix-v1/);
+  assert.match(sw, /app\.js\?v=20261031-banner-freeze-fix-v1/);
   assert.match(html, /group-banners\.css\?v=20261031-group-banners-v1/);
   assert.match(sw, /group-banners\.css\?v=20261031-group-banners-v1/);
-  assert.match(sw, /sbp-shell-20261031-group-banners-v1/);
-  assert.match(html, /release-notes\.js\?v=20261031-group-banners-v1/);
-  assert.match(sw, /release-notes\.js\?v=20261031-group-banners-v1/);
-  assert.match(notes, /release-data\.js\?v=20261031-group-banners-v1/);
-  assert.match(sw, /release-data\.js\?v=20261031-group-banners-v1/);
-  assert.match(releases, /version:'19\.07'/);
+  assert.match(sw, /sbp-shell-20261031-banner-freeze-fix-v1/);
+  assert.match(html, /release-notes\.js\?v=20261031-banner-freeze-fix-v1/);
+  assert.match(sw, /release-notes\.js\?v=20261031-banner-freeze-fix-v1/);
+  assert.match(notes, /release-data\.js\?v=20261031-banner-freeze-fix-v1/);
+  assert.match(sw, /release-data\.js\?v=20261031-banner-freeze-fix-v1/);
+  assert.match(releases, /version:'19\.08'/);
   assert.match(releases, /kz:\[/);
   assert.match(releases, /ru:\[/);
   assert.match(css, /grid-column:1 \/ -1/);
 });
 
+test('banner labels cannot trigger a translation MutationObserver feedback loop', () => {
+  assert.doesNotMatch(html, /new MutationObserver\(translateBanners\)/);
+  assert.match(html, /window\.refreshBannerLabels=translateBanners/);
+  assert.match(app, /window\.refreshBannerLabels\?\.\(\)/);
+  assert.match(html, /if\(el\.textContent!==copy\)el\.textContent=copy/);
+  assert.match(html, /if\(el\.getAttribute\('aria-label'\)!==copy\)/);
+});
 test('application module parses after stripping import declarations', () => {
   const source = app.replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\s*/gm, '');
   assert.doesNotThrow(() => new Function(source));

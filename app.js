@@ -3949,6 +3949,7 @@ window.setInterfaceLanguage = function(lang) {
     localStorage.setItem(UI_LANG_KEY, lang === 'kz' ? 'kz' : 'ru');
     updateLanguageButtons();
     applyKzTranslations();
+    window.refreshBannerLabels?.();
     window.refreshBannerEditorLanguage?.();
     renderHomeDayTimeline();
     renderSchedule(getCurrentScheduleDay());
