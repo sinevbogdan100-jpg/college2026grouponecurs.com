@@ -40,6 +40,8 @@ jobs:
           node-version: '22'
       - name: Check theme state, bilingual release and contrast palette
         run: node --test tests/dark-mode.test.cjs
+      - name: Run full website regression tests
+        run: node --test tests/*.test.cjs
       - name: Install browser test dependency
         run: npm install --no-save --no-package-lock --ignore-scripts playwright-core@1.56.1
       - name: Check mobile and desktop CSS in Chrome
