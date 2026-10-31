@@ -1,5 +1,5 @@
 // SBP Information PWA service worker: fast app-shell caching + Web Push.
-const CACHE_NAME = 'sbp-shell-20261017-admin-tap-v1';
+const CACHE_NAME = 'sbp-shell-20261031-group-banners-v1';
 const CACHE_PREFIX = 'sbp-shell-';
 const CORE_ASSETS = [
   './site-improvements.css?v=20261017-admin-tap-v1',
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   './college-data.js?v=20261017-admin-tap-v1',
   './college-illustration.svg',
   './home-overview.css?v=20261017-admin-tap-v1',
+  './group-banners.css?v=20261031-group-banners-v1',
   './home-overview.js?v=20261017-admin-tap-v1',
   './schedule-dates.js?v=20261017-admin-tap-v1',
   './group-tools.js?v=20261017-admin-tap-v1',
@@ -20,7 +21,7 @@ const CORE_ASSETS = [
   './soft-frames.css?v=20261017-admin-tap-v1',
   './release-notes.js?v=20261017-admin-tap-v1',
   './release-data.js?v=20261017-admin-tap-v1',
-  './app.js?v=20261017-admin-tap-v1',
+  './app.js?v=20261031-group-banners-v1',
   './style.css?v=20261017-admin-tap-v1',
   './desktop.css?v=20261017-admin-tap-v1',
   './gradients.css?v=20261017-admin-tap-v1',
