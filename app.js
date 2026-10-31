@@ -1,6 +1,6 @@
 import { nextCalendarDay, summarizeScheduleChanges, scheduleSummaryMarkup } from './schedule-summary.js?v=20261017-admin-tap-v1';
 import { initAdminDrawer } from './admin-drawer.js?v=20261017-admin-tap-v1';
-import { initRedesign } from './redesign.js?v=20261017-admin-tap-v1';
+import { initRedesign } from './redesign.js?v=20261031-dark-mode-v1';
 import { scheduleCalendarLabel } from './schedule-dates.js?v=20261017-admin-tap-v1';
 import { selectHomeOverviewEntries, homeOverviewToggleLabel } from './home-overview.js?v=20261017-admin-tap-v1';
 import { createArrivalTracker } from './notification-state.js?v=20261017-admin-tap-v1';
