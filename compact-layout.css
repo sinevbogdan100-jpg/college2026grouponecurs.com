@@ -29,6 +29,7 @@
   height:38px;
   min-height:38px;
   min-width:74px;
+  width:74px!important;
   padding:2px;
   gap:1px;
   border-radius:10px;
@@ -51,7 +52,7 @@
 :root:root body.sbp-redesign :is(#view-home,#view-tracker,#view-schedule,#view-roster,#view-college)
   :is(.home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,.roster-ref-topbar,.college-topbar) {
   display:grid!important;
-  grid-template-columns:42px minmax(0,1fr) 42px 74px!important;
+  grid-template-columns:42px minmax(0,1fr) 42px 88px!important;
   align-items:center!important;
   gap:6px!important;
   min-height:42px!important;
@@ -216,7 +217,7 @@
   :root:root body.sbp-redesign:not(.layout-phone)
     :is(#view-home,#view-tracker,#view-schedule,#view-roster,#view-college)
     :is(.home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,.roster-ref-topbar,.college-topbar) {
-    grid-template-columns:48px minmax(0,1fr) 48px 74px!important;
+    grid-template-columns:48px minmax(0,1fr) 48px 88px!important;
     min-height:44px!important;
     margin-bottom:8px!important;
   }
@@ -229,7 +230,7 @@
   :root:root body.sbp-redesign
     :is(#view-home,#view-tracker,#view-schedule,#view-roster,#view-college)
     :is(.home-ref-topbar,.journal-ref-topbar,.schedule-ref-topbar,.roster-ref-topbar,.college-topbar) {
-    grid-template-columns:38px minmax(0,1fr) 38px 74px!important;
+    grid-template-columns:38px minmax(0,1fr) 38px 88px!important;
     gap:4px!important;
   }
   :root:root body.sbp-redesign
